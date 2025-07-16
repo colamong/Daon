@@ -1,10 +1,10 @@
-# 📦 Vue 3 데이터 전송 방법 정리
+# Vue 3 데이터 전송 방법 정리
 
 Vue 3에서는 컴포넌트 간 데이터 전송을 위해 다음과 같은 3가지 방식이 자주 사용됩니다.
 
 ---
 
-## ✅ 1. Props / Emit (부모 ↔ 자식)
+## 1. Props / Emit (부모 ↔ 자식)
 
 가장 기본적인 방식이며, Vue의 공식적인 데이터 흐름입니다.
 
@@ -13,7 +13,7 @@ Vue 3에서는 컴포넌트 간 데이터 전송을 위해 다음과 같은 3가
 | ⬇️ 부모 → 자식 | `props`를 통해 데이터 전달 |
 | ⬆️ 자식 → 부모 | `emit`을 통해 이벤트와 함께 데이터 전달 |
 
-### 🔹 사용 예시
+### 사용 예시
 
 ```vue
 <!-- ParentComponent.vue -->
@@ -54,25 +54,25 @@ export default {
 </script>
 ```
 
-### 💡 장점
+### 장점
 - Vue 기본 기능으로 가볍고 직관적
 
-### ⚠️ 단점
+### 단점
 - 다단계 컴포넌트 전송 시 구조가 복잡해짐
 
 ---
 
-## ✅ 2. Mitt (이벤트 버스 방식)
+## 2. Mitt (이벤트 버스 방식)
 
 형제 또는 멀리 떨어진 컴포넌트 간 통신에 적합한 방식입니다.  
 `mitt` 라이브러리를 통해 전역 이벤트 시스템을 구성합니다.
 
-### 🔹 설치
+### 설치
 ```bash
 npm install mitt
 ```
 
-### 🔹 설정 (mitt.js)
+### 설정 (mitt.js)
 ```js
 // src/mitt/index.js
 import mitt from 'mitt';
@@ -80,7 +80,7 @@ const emitter = mitt();
 export default emitter;
 ```
 
-### 🔹 사용 예시
+### 사용 예시
 ```vue
 <!-- A.vue -->
 <script setup>
@@ -103,32 +103,32 @@ onMounted(() => {
 </script>
 ```
 
-### 💡 장점
+### 장점
 - 형제 또는 비연결된 컴포넌트 간 손쉬운 통신
 
-### ⚠️ 단점
+### 단점
 - 이벤트 네이밍 관리 필요
 - 상태 추적이 어려울 수 있음
 
 ---
 
-## ✅ 3. Pinia (전역 상태 관리)
+## 3. Pinia (전역 상태 관리)
 
 Vue 3 공식 상태 관리 라이브러리이며, Vuex의 후속입니다.  
 컴포넌트 간 상태를 공유하고 반응형으로 관리할 수 있습니다.
 
-### 🔹 설치
+### 설치
 ```bash
 npm install pinia
 ```
 
-### 🔹 설정 (main.js)
+### 설정 (main.js)
 ```js
 import { createPinia } from 'pinia'
 app.use(createPinia())
 ```
 
-### 🔹 store 생성 (useResultStore.js)
+### store 생성 (useResultStore.js)
 ```js
 import { defineStore } from 'pinia'
 
@@ -142,7 +142,7 @@ export const useResultStore = defineStore('result', {
 })
 ```
 
-### 🔹 사용 예시
+### 사용 예시
 ```vue
 <!-- A.vue -->
 <script setup>
@@ -161,16 +161,16 @@ console.log('A에서 설정한 값:', store.result)
 </script>
 ```
 
-### 💡 장점
+### 장점
 - 상태 추적이 쉽고 구조적 개발에 적합
 
-### ⚠️ 단점
+### 단점
 - 초기 셋업 필요
 - 작은 프로젝트에는 다소 과할 수 있음
 
 ---
 
-## 🔍 정리 표
+## 정리 표
 
 | 구분            | 방식            | 전송 대상               | 특징                                   |
 |-----------------|-----------------|--------------------------|----------------------------------------|
@@ -180,7 +180,7 @@ console.log('A에서 설정한 값:', store.result)
 
 ---
 
-## 📁 추천 폴더 구조
+## 추천 폴더 구조
 
 ```
 src/
