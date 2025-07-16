@@ -36,6 +36,8 @@ export default {
       if (provider === "google") {
         // 구글 OAuth2 로그인 엔드포인트로 리디렉트
         window.location.href = "http://localhost:8080/oauth2/authorization/google";
+      } else if (provider === "kakao") {
+        window.location.href = "http://localhost:8080/oauth2/authorization/kakao";
       } else {
         alert(`${provider} 로그인은 아직 지원하지 않습니다.`);
       }
