@@ -1,0 +1,34 @@
+.idea/             # IntelliJ 관련
+.vscode/           # VS Code 관련
+*.iml              # IntelliJ 모듈 파일
+*.sublime*         # Sublime Text 설정
+.DS_Store          # macOS 파일 탐색기 캐시
+Thumbs.db          # Windows 이미지 캐시
+
+*.log              # 로그 파일
+*.class            # Java 컴파일 결과물
+*.pyc              # Python 바이트코드
+*.out              # C/C++ 실행 파일
+*.exe              # Windows 실행 파일
+dist/
+build/
+target/            # Maven, Gradle 빌드 결과물
+
+node_modules/      # Node.js
+.env               # 환경 변수 파일 (민감정보 포함)
+.env.*             # 다양한 환경 설정 파일들
+*.env
+package-lock.json  # 필요에 따라 무시 (보통은 커밋함)
+yarn.lock          # 필요에 따라 무시 (보통은 커밋함)
+
+*.swp              # Vim 임시파일
+*.bak              # 백업파일
+*.tmp              # 임시파일
+*.log              # 로그파일
+
+*.pem              # AWS 인증서
+*.key              # 개인키
+*.crt              # 인증서 파일
+.sass-cache/
+.cache/
+*.tfstate          # Terraform 상태파일
