@@ -44,5 +44,18 @@ public class ConversationResult {
 
 	@Column(name = "created_at")
 	private LocalDateTime createdAt = LocalDateTime.now();
+
+	public static ConversationResult of(ChildProfile child, ConversationTopic topic,
+		String emotionReport, String analysisResult, String sttText) {
+		ConversationResult result = new ConversationResult();
+		result.child = child;
+		result.topic = topic;
+		result.emotionReport = emotionReport;
+		result.analysisResult = analysisResult;
+		result.sttText = sttText;
+		result.createdAt = LocalDateTime.now();
+		return result;
+	}
+
 }
 
