@@ -34,7 +34,7 @@ public class OpenAiClient {
 	public String requestGpt(String prompt) {
 		try {
 			Map<String, Object> userMsg = Map.of("role", "user", "content", prompt);
-			Map<String, Object> systemMsg = Map.of("role", "system", "content", "감정 분석과 대화 전체를 요약하는 분석가 역할이야. 최소 30자에서 최대 60자로 말해.");
+			Map<String, Object> systemMsg = Map.of("role", "system", "content", "감정 분석과 대화 전체를 요약하는 분석가 역할이야. 최소 50자에서 최대 100자로 말하고 친절하게 습니다 말투를 써야 돼.");
 
 			Map<String, Object> requestBody = Map.of(
 				"model", "gpt-4.1-nano",

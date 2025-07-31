@@ -41,10 +41,6 @@ public class ChildExpressionServiceImpl implements ChildExpressionService {
 		resultRepo.save(result);
 
 		// 응답 DTO 반환
-		return new ChildExpressionResponseDto(
-			gptResponse.getEmotion(),
-			gptResponse.getSummary(),
-			gptResponse.getCreatedAt()
-		);
+		return ChildExpressionResponseDto.fromEntity(result);
 	}
 }
