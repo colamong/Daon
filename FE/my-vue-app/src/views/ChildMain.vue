@@ -27,7 +27,7 @@
       >
       
           <router-link
-          to="/child/chat"
+          to="/child/pet"
           class="block bg-purple-300 rounded-2xl overflow-hidden shadow hover:shadow-lg transition"
           >
           <div class="p-4">
@@ -71,9 +71,7 @@ const router = useRouter();
 function goBack() {
   router.back();
 }
-function closeApp() {
-  window.close();
-}
+
 </script>
 
 <style scoped>
