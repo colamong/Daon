@@ -1,0 +1,6 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="120" rx="16" fill="#F3F4F6"/>
+  <path d="M40 80L55 60L70 75L85 55L100 80H40Z" fill="#CBD5E1"/>
+  <circle cx="52" cy="48" r="6" fill="#94A3B8"/>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="12" fill="#64748B">Image</text>
+</svg>
