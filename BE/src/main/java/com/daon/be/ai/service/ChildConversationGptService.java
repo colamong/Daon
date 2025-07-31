@@ -1,9 +1,9 @@
 package com.daon.be.ai.service;
 
-import com.daon.be.ai.dto.ChildConversationAnalysisResultDto;
+import com.daon.be.ai.dto.GptChildConversationResponseDto;
 
 public interface ChildConversationGptService {
 
-	ChildConversationAnalysisResultDto analyzeChildConversation(String childAnswerText);
+	GptChildConversationResponseDto analyzeText(String sttText);
 
 }

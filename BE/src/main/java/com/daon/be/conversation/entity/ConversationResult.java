@@ -2,6 +2,8 @@ package com.daon.be.conversation.entity;
 
 import java.time.LocalDateTime;
 
+import com.daon.be.ai.dto.GptChildConversationResponseDto;
+import com.daon.be.child.dto.ChildExpressionResponseDto;
 import com.daon.be.child.entity.ChildProfile;
 
 import jakarta.persistence.Entity;
@@ -37,7 +39,7 @@ public class ConversationResult {
 	private String sttText; // 전체 대화 STT 결과
 
 	@Column(name = "analysis_result", columnDefinition = "TEXT")
-	private String analysisResult; // 줄거리 요약 (그림일기용)
+	private String analysisResult; // 대화 요약 (그림일기용)
 
 	@Column(name = "emotion_report", columnDefinition = "TEXT")
 	private String emotionReport; // 감정 요약
@@ -45,16 +47,22 @@ public class ConversationResult {
 	@Column(name = "created_at")
 	private LocalDateTime createdAt = LocalDateTime.now();
 
-	public static ConversationResult of(ChildProfile child, ConversationTopic topic,
-		String emotionReport, String analysisResult, String sttText) {
+	public static ConversationResult createFromAi(ChildProfile child, ConversationTopic topic,
+		GptChildConversationResponseDto gptResponse, String sttText) {
+
 		ConversationResult result = new ConversationResult();
 		result.child = child;
 		result.topic = topic;
-		result.emotionReport = emotionReport;
-		result.analysisResult = analysisResult;
+		result.emotionReport = gptResponse.getEmotion();
+		result.analysisResult = gptResponse.getSummary();
 		result.sttText = sttText;
 		result.createdAt = LocalDateTime.now();
+
 		return result;
+	}
+
+	public ChildExpressionResponseDto toResponseDto() {
+		return new ChildExpressionResponseDto(this.emotionReport, this.analysisResult, this.createdAt);
 	}
 
 }

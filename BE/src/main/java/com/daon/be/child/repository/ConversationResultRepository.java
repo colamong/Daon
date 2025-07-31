@@ -1,4 +1,7 @@
 package com.daon.be.child.repository;
 
-public class ConversationResultRepository {
+import com.daon.be.conversation.entity.ConversationResult;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ConversationResultRepository extends JpaRepository<ConversationResult, Long> {
 }

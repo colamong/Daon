@@ -1,9 +1,8 @@
 package com.daon.be.child.service;
 
-import java.util.List;
-
-import com.daon.be.child.dto.ConversationRequestDto;
+import com.daon.be.child.dto.ChildExpressionResponseDto;
 
 public interface ChildExpressionService {
-	void analyzeAndSave(Long childId, List<ConversationRequestDto> dtoList);
+
+	ChildExpressionResponseDto analyzeAndSave(Long childId, Long topicId, String sttText);
 }
