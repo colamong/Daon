@@ -1,16 +1,16 @@
 @font-face {
-  font-family: 'PaperlogyRegular';
-  src: url('../fonts/Paperlogy-4Regular.ttf') format('truetype');
+  font-family: "PaperlogyRegular";
+  src: url("../fonts/Paperlogy-4Regular.ttf") format("truetype");
 }
 @font-face {
-  font-family: 'PaperlogySemiBold';
-  src: url('../fonts/Paperlogy-6SemiBold.ttf') format('truetype');
+  font-family: "PaperlogySemiBold";
+  src: url("../fonts/Paperlogy-6SemiBold.ttf") format("truetype");
 }
 @font-face {
-  font-family: 'PaperlogyBold';
-  src: url('../fonts/Paperlogy-7Bold.ttf') format('truetype');
+  font-family: "PaperlogyBold";
+  src: url("../fonts/Paperlogy-7Bold.ttf") format("truetype");
 }
 @font-face {
-  font-family: 'BabyShark';
-  src: url('../fonts/Pinkfong Baby Shark Font_ Regular.ttf') format('truetype');
+  font-family: "BabyShark";
+  src: url("../fonts/BabyShark_Regular.ttf") format("truetype");
 }

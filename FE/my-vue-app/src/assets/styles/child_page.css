@@ -1,0 +1,15 @@
+/* src/assets/styles/text-outline.css */
+.text-outline-white {
+  /* 텍스트 색상은 현재 color: 값 그대로 사용 */
+  color: currentColor;
+
+  /* 8방향에 흰색 그림자 */
+  text-shadow: 2px 2px 0 #fff, -2px 2px 0 #fff, 2px -2px 0 #fff,
+    -2px -2px 0 #fff, 2px 0 0 #fff, -2px 0 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff;
+}
+
+.absolute {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
