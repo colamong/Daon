@@ -1,7 +1,10 @@
 <template>
-  <div class="h-screen relative bg-amber-50 overflow-hidden p-4 pt-2">
-    <!-- 1) 고정 헤더 -->
-    <header class="fixed top-4 left-4 z-20">
+  <div
+    :style="{ backgroundImage: `url(${bgImg})` }"
+    class="h-screen relative bg-cover bg-center"
+  >
+    <!-- 1) 고정 헤더 (맨 위, z-30) -->
+    <header class="fixed top-4 left-4 z-30">
       <button
         @click="goBack"
         class="w-20 h-20 bg-white rounded-lg shadow flex items-center justify-center"
@@ -14,30 +17,26 @@
       </button>
     </header>
 
-    <!-- 2) 구름 위에 월 표시 -->
-    <div class="flex justify-center items-center mb-6 space-x-4">
+    <!-- 2) 월 네비게이션 (z-30) -->
+    <div class="flex justify-center items-center mb-2 space-x-4 z-30">
       <button
         @click="prevMonth"
         class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
       >
         ◀
       </button>
-
       <div class="relative cloud-header w-64 h-32">
-        <!-- 구름 이미지 -->
         <img
           :src="cloudImg"
-          alt="cloud background"
+          alt="cloud"
           class="absolute inset-0 w-full h-full object-contain"
         />
-        <!-- 구름 위 텍스트 -->
         <span
           class="absolute inset-0 flex items-center justify-center text-4xl font-shark text-gray-800"
         >
           {{ formattedMonth }}
         </span>
       </div>
-
       <button
         @click="nextMonth"
         class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
@@ -46,11 +45,17 @@
       </button>
     </div>
 
-    <!-- 1) 캘린더 컨테이너로 너비 제한 -->
-    <div class="calendar-container font-shark">
-      <!-- 2) FullCalendar 렌더 -->
+    <!-- 3) 달력 컨테이너 (z-0) -->
+    <div class="calendar-container relative z-0 font-shark">
       <FullCalendar ref="calendarRef" :options="calendarOptions" />
     </div>
+
+    <!-- 달력 오른쪽 상단 연주 펭귄 -->
+    <img
+      :src="playPenImg"
+      alt="playing penguin"
+      class="fixed bottom-4 right-4 w-28 h-28 pointer-events-none z-20"
+    />
   </div>
 </template>
 
@@ -64,8 +69,13 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 
 import HomeIcon from "../assets/images/Home.png";
 import cloudImg from "../assets/images/cloud.png";
+import snowImg from "../assets/images/snow.png";
+import playPenImg from "../assets/images/play_pen.png";
+import bgImg from "../assets/images/child_calender.png";
 
+// ————————————————
 // 1) 레퍼런스 & 라우터
+// ————————————————
 const calendarRef = ref(null);
 const route = useRoute();
 const router = useRouter();
@@ -74,7 +84,9 @@ function goBack() {
   router.back();
 }
 
-// 2) 연·월 상태 & 포맷
+// ————————————————
+// 2) 연·월 상태 & formatted
+// ————————————————
 const today = new Date();
 const currentYear = ref(today.getFullYear());
 const currentMonth = ref(today.getMonth() + 1);
@@ -82,7 +94,9 @@ const formattedMonth = computed(
   () => `${currentMonth.value}월 ${currentYear.value}`
 );
 
-// 3) 그림일기 데이터 로드
+// ————————————————
+// 3) 그림일기 로드
+// ————————————————
 const diaries = ref([]);
 async function fetchDiaries() {
   try {
@@ -90,8 +104,8 @@ async function fetchDiaries() {
       params: { year: currentYear.value, month: currentMonth.value },
     });
     diaries.value = res.data;
-  } catch (err) {
-    console.error("그림일기 로드 실패:", err);
+  } catch (e) {
+    console.error("그림일기 로드 실패:", e);
   }
 }
 const diariesMap = computed(() =>
@@ -101,28 +115,42 @@ const diariesMap = computed(() =>
   }, {})
 );
 
+// ————————————————
 // 4) FullCalendar 옵션
+// ————————————————
 const calendarOptions = reactive({
   plugins: [dayGridPlugin],
   initialView: "dayGridMonth",
   headerToolbar: false,
+
+  // 높이 고정
+  height: 500,
+  contentHeight: 500,
+
+  views: {
+    dayGridMonth: {
+      fixedWeekCount: false,
+      showNonCurrentDates: false,
+    },
+  },
+
   initialDate: today,
+
   dayCellDidMount(info) {
-    // 날짜 숫자 뒤 구름 + 폰트
+    // 숫자 뒤 구름 + font-shark
     const numEl = info.el.querySelector(".fc-daygrid-day-number");
     if (numEl) {
       numEl.classList.add("font-shark");
       Object.assign(numEl.style, {
         display: "inline-flex",
-        width: "32px",
-        height: "32px",
+        width: "26px",
+        height: "26px",
         alignItems: "center",
         justifyContent: "center",
         backgroundImage: `url(${cloudImg})`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
-        fontSize: "1.25rem",
-        fontWeight: "bold",
+        fontSize: "1rem",
         color: "#000",
       });
     }
@@ -150,7 +178,9 @@ const calendarOptions = reactive({
   },
 });
 
-// 5) 버튼 핸들러: 연·월 상태만 바꾸기
+// ————————————————
+// 5) 이전/다음 달
+// ————————————————
 function prevMonth() {
   if (currentMonth.value === 1) {
     currentYear.value--;
@@ -168,28 +198,44 @@ function nextMonth() {
   }
 }
 
-// 6) 연·월 변경 감지: ①데이터 로드 → ②뷰 이동 → ③강제 렌더
+// ————————————————
+// 6) 연·월 변경 감지 → 데이터와 뷰 갱신
+// ————————————————
 watch(
   [currentYear, currentMonth],
   async ([y, m]) => {
-    // ① 새 달 그림일기 불러오기
+    // 1) 그림일기 다시 불러오기
     await fetchDiaries();
-
-    // ② FullCalendar 뷰 이동
+    // 2) 캘린더 이동
     const api = calendarRef.value.getApi();
     api.gotoDate(`${y}-${String(m).padStart(2, "0")}-01`);
-
-    // ③ 강제 렌더링 (dayCellDidMount 훅 재실행)
+    // 3) 강제 렌더 (dayCellDidMount 재실행)
     api.render();
   },
   { immediate: true }
 );
 </script>
 
-<style scoped>
-/* 2) 캘린더를 이 영역 안으로 강제 축소 */
+<style>
+/* 달력 너비 제한 및 흰 배경 */
 .calendar-container {
   max-width: 1200px;
   margin: 0 auto;
+}
+.calendar-container .fc,
+.calendar-container .fc .fc-daygrid-day-frame {
+  background-color: #fff;
+}
+
+/* 숫자 뒤에 구름 */
+.calendar-container .fc-daygrid-day-number {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: url("../assets/images/cloud.png") center/cover no-repeat !important;
+  color: #000;
 }
 </style>
