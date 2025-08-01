@@ -13,3 +13,4 @@ public class ChildAnswerRequestDto {
 	private String question;       // 질문 내용 (예: "오늘 기분이 어땠어요?")
 	private String answer;         // 아이의 음성/텍스트 답변 결과
 }
+
