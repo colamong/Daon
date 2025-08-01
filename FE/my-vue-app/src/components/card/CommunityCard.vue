@@ -1,11 +1,47 @@
+<!-- 커뮤니티 자체에 6칸씩 보여줄 카드 -->
 <template>
-  <div class="">컴포넌트 초안</div>
+  <router-link
+    :to="link"
+    class="bg-white rounded-xl shadow-md w-64 h-64 flex flex-col justify-between hover:shadow-lg transition-shadow"
+  >
+    <!-- 이미지 영역 -->
+    <div class="flex justify-center items-center h-2/3">
+      <img
+        :src="resolvedImage"
+        alt="대표 이미지"
+        class="w-20 h-20 object-contain opacity-30"
+      />
+    </div>
+
+    <!-- 텍스트 영역 -->
+    <div class="bg-gray-50 px-4 py-3 rounded-b-xl">
+      <div class="text-xs text-gray-400 flex justify-between mb-1">
+        <span>{{ formattedDate }}</span>
+      </div>
+      <div class="text-sm text-gray-800 font-paper">{{ location }}</div>
+    </div>
+  </router-link>
 </template>
 
 <script setup>
-// 필요 시 스크립트 작성
-</script>
+import { computed } from 'vue'
+import { useAttrs } from 'vue'
 
-<style scoped>
-/* 필요 시 스타일 작성 */
-</style>
+const attrs = useAttrs()
+
+const location = attrs.location || ''
+const date = attrs.date || ''
+const resolvedImage = computed(() =>
+  attrs.image || new URL('@/assets/icons/image-placeholder.svg', import.meta.url).href
+)
+const link = computed(() => attrs.link || '#')
+
+const formattedDate = computed(() => {
+  const d = new Date(date)
+  return d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit'
+  })
+})
+</script>
