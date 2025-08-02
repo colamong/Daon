@@ -27,7 +27,7 @@
         <!-- 오른쪽 버튼 영역 -->
         <div class="mt-8 md:mt-0 md:ml-20 flex space-x-4">
           <router-link
-            to="/register"
+            :to="{ name: 'signup' }"
             class="px-6 py-3 bg-blue-600 rounded-lg text-white font-medium hover:bg-blue-700 transition font-paper"
           >
             회원가입

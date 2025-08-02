@@ -1,28 +1,49 @@
 import { defineStore } from "pinia";
-import axios from "axios";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    token: "",
-    user: null,
+    // 새로고침 시 localStorage에서 가져오기
+    token: localStorage.getItem("auth_token") || "",
+    user: JSON.parse(localStorage.getItem("auth_user") || "null"),
   }),
   getters: {
-    isAuthenticated: (state) => !!state.token,
+    isAuthenticated: (s) => !!s.token,
   },
   actions: {
+    async signup({ nickname, email, password, country }) {
+      // (여기에 mock or real API 호출)
+      const fakeToken = "mock-token-" + Math.random().toString(36).slice(2);
+      const fakeUser = { nickname, email, country };
+
+      // 스토어에 저장
+      this.token = fakeToken;
+      this.user = fakeUser;
+
+      // localStorage에도 저장
+      localStorage.setItem("auth_token", fakeToken);
+      localStorage.setItem("auth_user", JSON.stringify(fakeUser));
+
+      return Promise.resolve({ token: fakeToken, user: fakeUser });
+    },
+
     async login({ email, password }) {
-      // 실제 API가 없을 땐 mock adapter로 대응
-      const { data } = await axios.post("/api/login", { email, password });
-      this.token = data.token;
-      this.user = data.user;
+      const fakeToken = "mock-token-" + Math.random().toString(36).slice(2);
+      const fakeUser = { nickname: "MockUser", email, country: "대한민국" };
+
+      this.token = fakeToken;
+      this.user = fakeUser;
+
+      localStorage.setItem("auth_token", fakeToken);
+      localStorage.setItem("auth_user", JSON.stringify(fakeUser));
+
+      return Promise.resolve({ token: fakeToken, user: fakeUser });
     },
-    async fetchMe() {
-      const { data } = await axios.get("/api/me");
-      this.user = data.user;
-    },
+
     logout() {
       this.token = "";
       this.user = null;
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
     },
   },
 });
