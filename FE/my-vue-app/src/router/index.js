@@ -1,4 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
+// 비로그인 시 메인
+import LandingPage from "@/views/LandingPage.vue";
+import Dashboard from "@/views/Dashboard.vue";
+import { useAuthStore } from "@/store/auth";
 
 //레이아웃
 import BaseAppLayout from "@/components/layout/BaseAppLayout.vue";
@@ -16,6 +20,18 @@ import ChildDrawing from "@/views/ChildDrawing.vue";
 const Login = () => import("@/views/Login.vue");
 const SignUp = () => import("@/views/SignUp.vue");
 const routes = [
+  {
+    path: "/",
+    name: "Landing",
+    component: LandingPage,
+    meta: { requiresAuth: false },
+  },
+  {
+    path: "/dashboard",
+    name: "Dashboard",
+    component: Dashboard,
+    meta: { requiresAuth: true },
+  },
   // BaseAppLayout 적용 (헤더/푸터 포함)
   {
     path: "/",
@@ -72,6 +88,20 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+// mock 사용으로 인한 전역 가드
+router.beforeEach((to, from, next) => {
+  const auth = useAuthStore();
+  const needsAuth = to.meta.requiresAuth;
+
+  if (needsAuth && !auth.isAuthenticated) {
+    return next({ name: "Landing" });
+  }
+  if (!needsAuth && auth.isAuthenticated && to.name === "Landing") {
+    return next({ name: "Dashboard" });
+  }
+  next();
 });
 
 export default router;
