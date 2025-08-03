@@ -1,9 +1,38 @@
 <template>
-  <div class="">컴포넌트 초안</div>
+  <ul class="bg-white border border-gray-200 rounded-md shadow-md w-full mt-2 max-h-80 overflow-y-auto space-y-1">
+    <li
+      v-for="(item, index) in suggestions"
+      :key="index"
+      @mouseover="hoveredIndex = index"
+      @mouseleave="hoveredIndex = null"
+      @click="$emit('select', item)"
+    >
+      <CommunityRegionCard
+        :title="item.title"
+        :description="item.subtitle"
+        :image="item.image"
+        :link="item.link"
+        :class="[
+          'transition-colors',
+          hoveredIndex === index ? 'bg-blue-100' : 'hover:bg-hover-blue/20'
+        ]"
+      />
+    </li>
+  </ul>
 </template>
 
 <script setup>
-// 필요 시 스크립트 작성
+import { ref } from 'vue'
+import CommunityRegionCard from '@/components/card/CommunityRegionCard.vue' // 경로 확인 필요!
+
+const props = defineProps({
+  suggestions: {
+    type: Array,
+    required: true,
+  },
+})
+
+const hoveredIndex = ref(null)
 </script>
 
 <style scoped>
