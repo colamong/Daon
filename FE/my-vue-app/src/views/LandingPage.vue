@@ -33,7 +33,7 @@
             회원가입
           </router-link>
           <router-link
-            to="/login"
+            :to="{ name: 'login' }"
             class="px-6 py-3 border-2 border-blue-600 rounded-lg text-blue-600 font-medium hover:bg-blue-50 transition font-paper"
           >
             로그인
