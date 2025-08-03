@@ -1,13 +1,15 @@
 <!-- src/components/layout/BaseAuthLayout.vue -->
 <template>
-  <div class="min-h-screen w-full bg-cover bg-center flex items-center justify-center"
-       style="background-image: url('@/assets/images/login-bg.jpg');">
+  <div
+    class="min-h-screen w-full bg-cover bg-center flex items-center justify-center"
+    :style="{ backgroundImage: `url(${bgImage})` }"
+  >
     <router-view />
   </div>
 </template>
 
 <script setup>
-// 배경 이미지 경로는 실제 프로젝트 기준으로 조정
+import bgImage from "../../assets/images/login-bg.png";
 </script>
 
 <style scoped>

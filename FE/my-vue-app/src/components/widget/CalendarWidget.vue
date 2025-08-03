@@ -1,24 +1,34 @@
+<!-- src/components/widget/CalendarWidget.vue -->
 <template>
-  <div class="p-6 rounded-xl border shadow-md bg-white w-full max-w-lg">
+  <div
+    class="p-6 rounded-xl border shadow-md bg-white w-full h-full overflow-hidden"
+  >
     <!-- 헤더 -->
     <div class="flex items-center justify-between mb-4">
-      <!-- 왼쪽: 월 및 네비게이션 -->
       <div class="flex items-center space-x-3">
-        <button @click="prevMonth" aria-label="이전 달" class="text-lg text-gray-600 hover:text-black">
+        <button
+          @click="prevMonth"
+          aria-label="이전 달"
+          class="text-lg text-gray-600 hover:text-black"
+        >
           ‹
         </button>
-        <span class="text-xl font-paperBold">{{ currentMonthLabel }}</span>
-        <button @click="nextMonth" aria-label="다음 달" class="text-lg text-gray-600 hover:text-black">
+        <span class="text-2xl font-paperBold">{{ currentMonthLabel }}</span>
+        <button
+          @click="nextMonth"
+          aria-label="다음 달"
+          class="text-lg text-gray-600 hover:text-black"
+        >
           ›
         </button>
       </div>
-
-      <!-- 오른쪽: 연도 -->
       <div class="text-lg font-paper text-gray-700">{{ currentYear }}</div>
     </div>
 
-    <!-- 요일 헤더 -->
-    <div class="grid grid-cols-7 text-center text-sm font-paper text-gray-500 mb-2">
+    <!-- 요일 -->
+    <div
+      class="grid grid-cols-7 text-center text-m font-paper text-gray-500 mb-2"
+    >
       <div
         v-for="day in weekdays"
         :key="day"
@@ -28,98 +38,135 @@
       </div>
     </div>
 
-    <!-- 날짜들 -->
+    <!-- 날짜 -->
     <div class="grid grid-cols-7 gap-y-2">
       <div
-        v-for="(day, index) in calendarDays"
-        :key="index"
+        v-for="(day, idx) in calendarDays"
+        :key="idx"
         class="w-12 h-12 flex items-center justify-center"
       >
+        <!-- 이번 달 날짜 -->
         <div
           v-if="day.isCurrentMonth"
-          :class="[
-            'w-full h-full flex items-center justify-center rounded-full text-base font-paper cursor-pointer',
-            day.isToday ? 'bg-blue-100' : '',
-            hasSchedule(day.date) ? 'ring-2 ring-blue-200' : ''
-          ]"
           @click="selectDate(day.date)"
+          class="cursor-pointer flex items-center justify-center"
         >
-          {{ day.date.getDate() }}
+          <div
+            class="rounded-full flex items-center justify-center"
+            :class="day.isToday ? 'bg-blue-100' : ''"
+            :style="ringStyle(day.date)"
+          >
+            <span class="text-base font-paper">{{ day.date.getDate() }}</span>
+          </div>
         </div>
 
+        <!-- 다음 달 날짜 -->
         <div
           v-else-if="day.isNextMonth"
-          class="w-full h-full flex items-center justify-center text-gray-300 text-base font-paper"
+          class="w-full h-full flex items-center justify-center text-gray-400 text-base font-paper"
         >
           {{ day.date.getDate() }}
         </div>
 
-        <div
-          v-else-if="day.isPrevMonth"
-          class="w-full h-full"
-        >
-          <!-- 이전달 빈칸 -->
-        </div>
+        <!-- 이전 달(빈칸) -->
+        <div v-else class="w-full h-full"></div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import dayjs from 'dayjs'
+import { ref, computed } from "vue";
+import dayjs from "dayjs";
 
-const today = dayjs()
-const current = ref(today.startOf('month'))
-const selected = ref(null)
+const emit = defineEmits(["update-month"]);
+const props = defineProps({
+  events: { type: Array, required: true },
+});
 
-const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const today = dayjs();
+const current = ref(today.startOf("month"));
+const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
 
-const currentYear = computed(() => current.value.year())
-const currentMonthLabel = computed(() => `${current.value.month() + 1}`)
+const currentYear = computed(() => current.value.year());
+const currentMonthLabel = computed(() => `${current.value.month() + 1}`);
 
 const calendarDays = computed(() => {
-  const start = current.value.startOf('month').startOf('week')
-  const end = current.value.endOf('month').endOf('week')
-  const days = []
-  let cursor = start.clone()
+  const start = current.value.startOf("month").startOf("week");
+  const end = current.value.endOf("month").endOf("week");
+  const days = [];
+  let cursor = start.clone();
+
   while (cursor.isBefore(end) || cursor.isSame(end)) {
-    const cursorMonth = cursor.month()
-    const currentMonth = current.value.month()
-
-    const isCurrentMonth = cursorMonth === currentMonth
-    const isNextMonth = cursorMonth === (currentMonth + 1) % 12
-    const isPrevMonth = cursorMonth === (currentMonth + 11) % 12
-
+    const m = cursor.month();
+    const cm = current.value.month();
     days.push({
       date: cursor.toDate(),
-      isCurrentMonth,
-      isNextMonth,
-      isPrevMonth,
-      isToday: cursor.isSame(today, 'day')
-    })
-    cursor = cursor.add(1, 'day')
+      isCurrentMonth: m === cm,
+      isNextMonth: m === (cm + 1) % 12,
+      isToday: cursor.isSame(today, "day"),
+    });
+    cursor = cursor.add(1, "day");
   }
-  return days
-})
+  return days;
+});
 
 function prevMonth() {
-  current.value = current.value.subtract(1, 'month')
+  current.value = current.value.subtract(1, "month");
+  emit("update-month", current.value.format("YYYY-MM"));
 }
 function nextMonth() {
-  current.value = current.value.add(1, 'month')
+  current.value = current.value.add(1, "month");
+  emit("update-month", current.value.format("YYYY-MM"));
 }
 function selectDate(date) {
-  selected.value = date
-  console.log('선택된 날짜:', date)
+  /* 필요한 경우 */
 }
 
-const schedules = [
-  dayjs().date(6).toDate(),
-  dayjs().date(18).toDate(),
-  dayjs().date(22).toDate(),
-]
-function hasSchedule(date) {
-  return schedules.some(d => dayjs(d).isSame(date, 'day'))
+// 일정 색과 맞추기 위한 컬러 리스트
+const colorList = [
+  "#FF8A80",
+  "#FFB74D",
+  "#FFD54F",
+  "#81C784",
+  "#4FC3F7",
+  "#BA68C8",
+  "#90A4AE",
+  "#F06292",
+  "#A1887F",
+  "#7986CB",
+  "#AED581",
+  "#4DB6AC",
+  "#FFF176",
+  "#E57373",
+  "#64B5F6",
+  "#DCE775",
+];
+
+function getScheduleColor(date) {
+  const ev = props.events.find((e) => dayjs(e.date).isSame(date, "day"));
+  if (!ev) return null;
+  const idx = dayjs(date).date() - 1;
+  return colorList[idx % colorList.length];
+}
+
+// 원 테두리 및 크기 조정
+function ringStyle(date) {
+  const c = getScheduleColor(date);
+  if (c) {
+    return {
+      width: "2.5rem", // 48px
+      height: "2.5rem",
+      boxShadow: `0 0 0 2px ${c}`,
+    };
+  }
+  return {
+    width: "2.5rem", // 40px
+    height: "2.5rem",
+  };
 }
 </script>
+
+<style scoped>
+/* 필요시 추가 */
+</style>

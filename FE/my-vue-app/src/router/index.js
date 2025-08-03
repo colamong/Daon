@@ -1,77 +1,84 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "@/store/auth";
 
-//레이아웃
-import BaseAppLayout from "@/components/layout/BaseAppLayout.vue";
+// 레이아웃
 import BaseAuthLayout from "@/components/layout/BaseAuthLayout.vue";
+import BaseAppLayout from "@/components/layout/BaseAppLayout.vue";
 
-// 일반 페이지(헤더/푸터 있는 페이지)
+// 뷰 컴포넌트
+import LandingPage from "@/views/LandingPage.vue";
+import Login from "@/views/Login.vue";
+import SignUp from "@/views/SignUp.vue";
+import Dashboard from "@/views/Dashboard.vue";
 import Home from "@/views/Home.vue";
-
-// child 페이지 (헤더/푸터 없는 단독)
+import OCRTool from "@/views/OCRTool.vue";
+import CommunityChat from "@/views/CommunityChat.vue";
+import LearningHelper from "@/views/LearningHelper.vue";
+import RegisterChild from "@/views/RegisterChild.vue";
+import EditChild from "@/views/EditChild.vue";
 import ChildMain from "@/views/ChildMain.vue";
 import ChildPet from "@/views/ChildPet.vue";
 import ChildDrawing from "@/views/ChildDrawing.vue";
 
-// auth 페이지 (헤더/푸터 없는 인증 전용)
-const Login = () => import("@/views/Login.vue");
-const SignUp = () => import("@/views/SignUp.vue");
 const routes = [
-  // BaseAppLayout 적용 (헤더/푸터 포함)
+  // 1) 비로그인 메인
   {
     path: "/",
-    component: BaseAppLayout,
-    children: [
-      {
-        path: "",
-        name: "Home",
-        component: Home,
-      },
-      // 이 외에 Header/Footer 있는 페이지들 추가 가능
-    ],
+    name: "Landing",
+    component: LandingPage,
+    meta: { requiresAuth: false },
   },
 
-  // BaseAuthLayout 적용 (로그인/회원가입 등 풀스크린 전용)
+  // 2) 인증 전용
   {
     path: "/auth",
     component: BaseAuthLayout,
     children: [
-      {
-        path: "login",
-        name: "login",
-        component: Login,
-      },
-      {
-        path: "signup",
-        name: "signup",
-        component: SignUp,
-      },
+      { path: "login", name: "login", component: Login },
+      { path: "signup", name: "signup", component: SignUp },
     ],
   },
 
-  // 아이 페이지 관련 router(header/footer 없는 페이지 - 단독 컴포넌트 렌더링)
-  // 메인
+  // 3) 헤더·푸터 포함
   {
-    path: "/child",
-    name: "ChildMain",
-    component: ChildMain,
+    path: "/dashboard",
+    component: BaseAppLayout,
+    meta: { requiresAuth: true },
+    children: [
+      { path: "", name: "Dashboard", component: Dashboard },
+      { path: "home", name: "Home", component: Home },
+      { path: "ocr", name: "OCRTool", component: OCRTool },
+      { path: "community", name: "CommunityChat", component: CommunityChat },
+      { path: "learning", name: "LearningHelper", component: LearningHelper },
+      {
+        path: "child/register",
+        name: "RegisterChild",
+        component: RegisterChild,
+      },
+      { path: "child/edit", name: "EditChild", component: EditChild },
+    ],
   },
-  // 펭귄과 대화
-  {
-    path: "/child/pet",
-    name: "ChildPet",
-    component: ChildPet,
-  },
-  // 캘린더
-  {
-    path: "/child/drawing",
-    name: "ChildDrawing",
-    component: ChildDrawing,
-  },
+
+  // 4) 아이 전용 (헤더·푸터 없이)
+  { path: "/child", name: "ChildMain", component: ChildMain },
+  { path: "/child/pet", name: "ChildPet", component: ChildPet },
+  { path: "/child/drawing", name: "ChildDrawing", component: ChildDrawing },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+router.beforeEach((to, from, next) => {
+  const auth = useAuthStore();
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    return next({ name: "Landing" });
+  }
+  if (to.name === "Landing" && auth.isAuthenticated) {
+    return next({ name: "Dashboard" });
+  }
+  next();
 });
 
 export default router;
