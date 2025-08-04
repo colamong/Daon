@@ -156,7 +156,7 @@ const goChildProfile = () =>
     name: auth.user?.children?.length ? "EditChild" : "RegisterChild",
   });
 const goOCRTool = () => router.push({ name: "OCRTool" });
-const goCommunityChat = () => router.push({ name: "CommunityChat" });
+const goCommunityChat = () => router.push({ name: "Community" });
 const goLearningHelper = () => router.push({ name: "LearningHelper" });
 
 function handleClickOutside(e) {

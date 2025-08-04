@@ -12,12 +12,19 @@ import Login from "@/views/Login.vue";
 import SignUp from "@/views/SignUp.vue";
 import Dashboard from "@/views/Dashboard.vue";
 import Home from "@/views/Home.vue";
+// ocr
 import OCRTool from "@/views/OCRTool.vue";
 import OCRResult from "@/views/OCRResult.vue";
+// 커뮤니티
+import CommunityList from "@/views/CommunityList.vue";
 import CommunityChat from "@/views/CommunityChat.vue";
+
+// 상황별 학습
 import LearningHelper from "@/views/LearningHelper.vue";
 import RegisterChild from "@/views/RegisterChild.vue";
 import EditChild from "@/views/EditChild.vue";
+
+// 아이 활동 페이지
 import ChildMain from "@/views/ChildMain.vue";
 import ChildPet from "@/views/ChildPet.vue";
 import ChildDrawing from "@/views/ChildDrawing.vue";
@@ -51,7 +58,12 @@ const routes = [
       { path: "home", name: "Home", component: Home },
       { path: "ocr", name: "OCRTool", component: OCRTool },
       { path: "ocr/result", name: "OCRResult", component: OCRResult },
-      { path: "community", name: "CommunityChat", component: CommunityChat },
+      { path: "community", name: "Community", component: CommunityList },
+      {
+        path: "community/chat",
+        name: "CommunityChat",
+        component: CommunityChat,
+      },
       { path: "learning", name: "LearningHelper", component: LearningHelper },
       {
         path: "child/register",

@@ -78,7 +78,7 @@
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
         <BaseCard variant="schedule" link="/schedule" />
         <BaseCard variant="growth" link="/growth" />
-        <BaseCard variant="community" link="/community" />
+        <BaseCard variant="community" :to="{ name: 'Community' }" />
         <BaseCard variant="language" :to="{ name: 'OCRTool' }" />
       </div>
     </section>
