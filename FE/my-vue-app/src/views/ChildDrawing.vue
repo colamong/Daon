@@ -1,12 +1,14 @@
+<!-- src/views/ChildDrawing.vue -->
 <template>
   <div class="h-screen relative overflow-hidden pt-6">
-    <!-- background -->
+    <!-- 배경 -->
     <img
       :src="bgImage"
       alt="background"
       class="absolute inset-0 w-full h-full object-cover -z-10"
     />
-    <!-- 1) 고정 헤더 -->
+
+    <!-- 뒤로가기 버튼 -->
     <header class="fixed top-4 left-4 z-30">
       <button
         @click="goBack"
@@ -20,203 +22,239 @@
       </button>
     </header>
 
-    <!-- 2) 달력 컨테이너 (FullCalendar 기본 네비 포함) -->
+    <!-- 달력 -->
     <div
-      class="calendar-container relative z-0 font-shark pt-6 mt-6 mx-auto w-[900px]"
+      class="calendar-container relative z-0 font-shark pt-6 mt-6 mx-auto w-[1200px]"
     >
       <FullCalendar ref="calendarRef" :options="calendarOptions" />
     </div>
 
-    <!-- 3) 장식 이미지 (하단 우측 펭귄) -->
+    <!-- 우측 장식 펭귄 -->
     <img
       :src="playPenImg"
       alt="playing penguin"
       class="fixed bottom-4 right-4 w-40 h-40 pointer-events-none z-20"
     />
+
+    <!-- 그림일기 모달 -->
+    <BaseModal v-model="showModal">
+      <template #header>{{ selectedDiary.date }}</template>
+      <div class="p-4 flex items-start">
+        <div class="flex-1 text-center space-y-2">
+          <img
+            :src="selectedDiary.imageUrl"
+            alt="Diary Detail"
+            class="mx-auto rounded max-h-[400px]"
+          />
+          <p class="text-2xl font-shark">{{ selectedDiary.text }}</p>
+        </div>
+      </div>
+    </BaseModal>
+
+    <!-- 이전 버튼: showModal && hasPrev 인 경우에만 렌더링 -->
+    <IconButton
+      v-if="showModal && hasPrev"
+      variant="left-arrow"
+      label="이전 그림일기"
+      @click="prevDiary"
+      class="fixed top-1/2 -translate-y-1/2 z-50"
+      :class="leftPosition"
+    />
+
+    <!-- 다음 버튼: showModal && hasNext 인 경우에만 렌더링 -->
+    <IconButton
+      v-if="showModal && hasNext"
+      variant="right-arrow"
+      label="다음 그림일기"
+      @click="nextDiary"
+      class="bg-blue-600/80 fixed top-1/2 -translate-y-1/2 z-50"
+      :class="rightPosition"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import axios from "axios";
+import { ref, computed, reactive } from "vue";
+import { useRouter } from "vue-router";
 
 import FullCalendar from "@fullcalendar/vue3";
-import koLocale from "@fullcalendar/core/locales/ko";
 import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import koLocale from "@fullcalendar/core/locales/ko";
 
-import bgImage from "../assets/images/child_calender.png";
-import HomeIcon from "../assets/images/Home.png";
-import cloudImg from "../assets/images/cloud.png";
-import playPenImg from "../assets/images/play_pen.png";
+import BaseModal from "@/components/modal/BaseModal.vue";
+import IconButton from "@/components/button/IconButton.vue";
 
-// 1) 레퍼런스 & 라우터
-const calendarRef = ref(null);
-const route = useRoute();
+import bgImage from "@/assets/images/child_calender.png";
+import HomeIcon from "@/assets/images/Home.png";
+import cloudImg from "@/assets/images/cloud.png";
+import playPenImg from "@/assets/images/play_pen.png";
+
+import diary1 from "@/assets/images/07_28_2025.png";
+import diary2 from "@/assets/images/08_04_2025.png";
+import diary3 from "@/assets/images/08_15_2025.png";
+
+// 뒤로가기
 const router = useRouter();
-const childId = route.params.id;
-
 function goBack() {
   router.back();
 }
 
-// 2) 연·월 상태 & 포맷
-const today = new Date();
-const currentYear = ref(today.getFullYear());
-const currentMonth = ref(today.getMonth() + 1);
+// 모달 상태 & 선택된 일기
+const showModal = ref(false);
+const selectedDiary = ref({ date: "", imageUrl: "", text: "" });
 
-// 3) 그림일기 데이터 로드 (배열 보장)
-const diaries = ref([]);
-async function fetchDiaries() {
-  try {
-    const res = await axios.get(`/api/children/${childId}/diaries`, {
-      params: { year: currentYear.value, month: currentMonth.value },
-    });
-    // 배열인지, 객체 안 배열인지 판별
-    let arr = [];
-    if (Array.isArray(res.data)) {
-      arr = res.data;
-    } else if (Array.isArray(res.data.diaries)) {
-      arr = res.data.diaries;
-    }
-    diaries.value = arr;
-  } catch (e) {
-    console.error("그림일기 로드 실패:", e);
-    diaries.value = []; // 실패 시 빈 배열
-  }
+// 더미 데이터 (정렬된 배열)
+const diaries = ref([
+  { date: "2025-07-28", imageUrl: diary1, text: "오늘은 연을 날렸다." },
+  {
+    date: "2025-08-04",
+    imageUrl: diary2,
+    text: "퍼레이드 봤다. 나팔 부는 사람이 지나갔다.",
+  },
+  {
+    date: "2025-08-15",
+    imageUrl: diary3,
+    text: "동물원에 갔다. 코끼리 구경을 했다.",
+  },
+]);
+
+// 날짜 문자열 → diary 객체 매핑
+const diariesMap = computed(() =>
+  diaries.value.reduce((map, d) => {
+    map[d.date] = d;
+    return map;
+  }, {})
+);
+
+// 현재 선택된 일기의 배열 내 인덱스
+const currentIndex = computed(() =>
+  diaries.value.findIndex((d) => d.date === selectedDiary.value.date)
+);
+
+// 이전/다음 존재 여부
+const hasPrev = computed(() => currentIndex.value > 0);
+const hasNext = computed(() => currentIndex.value < diaries.value.length - 1);
+
+// 이전/다음 이동 함수
+function prevDiary() {
+  const idx = currentIndex.value;
+  if (idx > 0) selectedDiary.value = diaries.value[idx - 1];
+}
+function nextDiary() {
+  const idx = currentIndex.value;
+  if (idx < diaries.value.length - 1)
+    selectedDiary.value = diaries.value[idx + 1];
 }
 
-// 3.5) 컴포넌트 최초 마운트 시 데이터 로드
-onMounted(fetchDiaries);
+// 모달 바깥 버튼 좌/우 위치 계산
+// (카드 너비 900px → 절반 450px, 버튼 여유 8px)
+const leftPosition = computed(() => "left-[calc(50%-450px-8px)]");
+const rightPosition = computed(() => "left-[calc(50%+400px+8px)]");
 
-// 4) 날짜→이미지 URL 맵 (diaries.value가 항상 배열임을 가정)
-const diariesMap = computed(() => {
-  const arr = Array.isArray(diaries.value) ? diaries.value : [];
-  return arr.reduce((map, { date, imageUrl }) => {
-    map[date] = imageUrl;
-    return map;
-  }, {});
-});
-
-// 5) FullCalendar 옵션
+// FullCalendar 세팅
+const today = new Date();
 const calendarOptions = reactive({
-  plugins: [dayGridPlugin],
+  plugins: [dayGridPlugin, interactionPlugin],
   initialView: "dayGridMonth",
   locale: koLocale,
-  headerToolbar: {
-    left: "",
-    center: "title",
-    right: "today prev next",
-  },
-  titleFormat: {
-    year: "numeric", // → "2025"
-    month: "long", // → "8월"
-  },
-  height: 500,
+  headerToolbar: { left: "", center: "title", right: "today prev next" },
+  titleFormat: { year: "numeric", month: "long" },
+  height: 520,
   contentHeight: 500,
-  views: {
-    dayGridMonth: {
-      fixedWeekCount: false,
-      showNonCurrentDates: false,
-    },
-  },
   initialDate: today,
 
-  // 뷰(prev/next/today 포함)가 바뀔 때마다 연·월 state 갱신 + 다이어리 재로드
-  datesSet: async (info) => {
-    const d = info.start;
-    currentYear.value = d.getFullYear();
-    currentMonth.value = d.getMonth() + 1;
-    await fetchDiaries();
-    // 강제 렌더 호출하여 dayCellDidMount 재실행
-    calendarRef.value.getApi().render();
+  // 날짜 클릭 시 모달 열기
+  dateClick: (info) => {
+    const d = diariesMap.value[info.dateStr];
+    if (d) {
+      selectedDiary.value = d;
+      showModal.value = true;
+    }
   },
+
+  // 날짜 숫자 커스텀
   dayCellContent: (arg) => {
-    const dayNum = arg.date.getDate();
+    const n = arg.date.getDate();
     return {
       html: `
-      <div class="inline-flex w-6 h-6 items-center justify-center
-                      bg-[url(${cloudImg})] bg-contain bg-no-repeat
-                      font-shark text-sm text-black">
-        ${dayNum}
-      </div>
-    `,
+        <div
+          class="inline-flex w-6 h-6 items-center justify-center font-shark text-sm text-black"
+          style="
+            background-image: url('${cloudImg}');
+            background-size: contain;
+        
+          "
+        >${n}</div>
+      `,
     };
   },
 
-  // 날짜 셀 마운트 시: 구름 숫자 + 그림일기 삽입
-  dayCellDidMount(info) {
-    const numEl = info.el.querySelector(".fc-daygrid-day-number");
-    if (numEl) {
-      numEl.textContent = String(info.date.getDate());
-      numEl.classList.add("font-shark");
-      Object.assign(numEl.style, {
-        display: "inline-flex",
-        width: "20px",
-        height: "20px",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundImage: `url(${cloudImg})`,
-        backgroundSize: "contain",
+  // 썸네일 + 클릭 리스너
+  dayCellDidMount: (info) => {
+    info.el.style.position = "relative";
+    const key = info.date.toISOString().slice(0, 10);
+    const d = diariesMap.value[key];
+    if (!d) return;
 
-        fontSize: "1rem",
-        color: "#000",
-      });
-    }
-    const url = diariesMap.value[info.dateStr];
-    if (url) {
-      const wrap = document.createElement("div");
-      Object.assign(wrap.style, {
-        marginTop: "2.5rem",
-        height: "5rem",
-        overflow: "hidden",
-        borderRadius: "0.375rem",
-      });
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = "Diary";
-      Object.assign(img.style, {
-        width: "100%",
-        height: "100%",
-        objectFit: "cover",
-      });
-      wrap.appendChild(img);
-      info.el.appendChild(wrap);
-    }
+    const wrap = document.createElement("div");
+    Object.assign(wrap.style, {
+      position: "absolute",
+      top: "0.7rem",
+      left: "50%",
+      transform: "translateX(-50%)",
+      width: "100px",
+      height: "50px",
+      overflow: "hidden",
+      borderRadius: "0.25rem",
+      cursor: "pointer",
+    });
+
+    const img = document.createElement("img");
+    img.src = d.imageUrl;
+    img.alt = "Diary";
+    Object.assign(img.style, {
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+    });
+
+    wrap.appendChild(img);
+    wrap.addEventListener("click", (e) => {
+      e.stopPropagation();
+      selectedDiary.value = d;
+      showModal.value = true;
+    });
+    info.el.appendChild(wrap);
   },
 });
 </script>
 
 <style scoped>
-/* 1) 캘린더 컨테이너 너비/높이 제한 */
 .calendar-container {
-  max-width: 900px;
-  margin: 30 auto;
-  /* 원하시는 높이로 조절하세요 */
+  max-width: 1200px;
+  margin: 20 auto;
   height: 700px;
 }
 
+/* FullCalendar 헤더/캘린더 커스터마이징 */
 :deep(.fc .fc-col-header) {
   background-color: #fff !important;
 }
-/* 2) 그리드(날짜 셀) 영역은 하얀 배경 유지 */
 :deep(.fc .fc-daygrid-day-frame) {
   background-color: #fff !important;
 }
-
-/* 3) 툴바 래퍼 자체 (header-toolbar, toolbar-chunk) 투명 처리 */
 :deep(.fc .fc-header-toolbar),
 :deep(.fc .fc-header-toolbar .fc-toolbar-chunk) {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
 }
-
-/* 4) 툴바 버튼도 투명으로 (원하면 살짝 반투명) */
-
-/* 5) 툴바 가운데 title 폰트 크기 좀 줄이고 위치 조정 */
 :deep(.fc-toolbar-title) {
   font-size: 1.75rem !important;
-  /* margin/padding 조절이 필요하면 여기에 */
+}
+:deep(.fc .fc-daygrid-day) {
+  height: 70px !important;
+  min-width: 100px !important;
 }
 </style>
