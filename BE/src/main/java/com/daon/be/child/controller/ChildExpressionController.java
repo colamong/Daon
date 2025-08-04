@@ -36,10 +36,14 @@ public class ChildExpressionController {
 	}
 
 
-	// 그림일기 조회
+	// 그림일기 월별 조회
 	@GetMapping("/{childId}/diary")
 	public ResponseEntity<?> getChildDiary(@PathVariable Long childId) {
 		// 나중에 그림일기 조회 서비스 호출
 		return ResponseEntity.ok("그림일기 결과 반환");
 	}
+
+	// 그림일기 단건 조회
+
+	//
 }
