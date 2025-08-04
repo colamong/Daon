@@ -1,5 +1,7 @@
 <template>
-  <button
+  <component
+    :is="link ? 'router-link' : 'button'"
+    :to="link"
     :class="[
       // 둥근모서리 호버시 색상 전환 부드럽게
       'rounded-lg transition-colors duration-200',
@@ -19,11 +21,18 @@
     ]"
   >
     <slot />
-  </button>
+  </component>
 </template>
 
-<script setup lang="ts">
-defineProps<{
-  variant?: 'default' | 'myprofile' | 'comunity' | 'chat' | 'kidsprofile' | 'retry'
-}>()
+<script setup>
+defineProps({
+  variant: {
+    type: String,
+    default: 'default',
+  },
+  link: {
+    type: String,
+    default: '',
+  },
+})
 </script>

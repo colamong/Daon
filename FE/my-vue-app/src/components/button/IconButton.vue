@@ -15,6 +15,7 @@
         : 'bg-gray-200 text-black'
     ]"
   >
+    <!-- 닫기 버튼은 아이콘 이미지로 -->
     <img
       v-if="variant === 'close'"
       src="@/assets/icons/x.svg"
@@ -22,30 +23,36 @@
       class="w-5 h-5"
     />
     <!-- 슬롯이 제공되면 사용하고, 아니면 기본 아이콘 사용 -->
-    <slot>{{ iconSymbol }}</slot>
+    <slot v-else>{{ iconSymbol }}</slot>
   </button>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 
-const props = defineProps<{
-  variant?: 'left-arrow' | 'right-arrow' | 'close' | 'default'
-  label?: string
-}>()
+const props = defineProps({
+  variant: {
+    type: String,
+    default: 'default',
+  },
+  label: {
+    type: String,
+    default: '',
+  },
+})
 
 const emit = defineEmits(['click'])
 
 const iconSymbol = computed(() => {
   switch (props.variant) {
     case 'left-arrow':
-      return '⬅'
+      return '⬅' // 이전
     case 'right-arrow':
-      return '➡'
+      return '➡' // 이후
     case 'close':
-      return ''
+      return '' // 닫기 (이미지 사용)
     default:
-      return '?'
+      return '?' // 기타
   }
 })
 </script>

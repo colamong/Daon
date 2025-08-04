@@ -1,9 +1,24 @@
+<!-- ScheduleList.vue -->
 <template>
-  <div class="">컴포넌트 초안</div>
+  <div>
+    <ScheduleCard
+      v-for="(schedule, index) in schedules"
+      :key="index"
+      :date="schedule.date"
+      :title="schedule.title"
+    />
+  </div>
 </template>
 
 <script setup>
-// 필요 시 스크립트 작성
+import ScheduleCard from '@/components/card/ScheduleCard.vue'
+
+const props = defineProps({
+  schedules: {
+    type: Array,
+    required: true
+  }
+})
 </script>
 
 <style scoped>

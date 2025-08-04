@@ -2,6 +2,7 @@ package com.daon.be.calendar.entity;
 
 import java.time.LocalDateTime;
 
+import com.daon.be.conversation.entity.ConversationResult;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -37,4 +38,19 @@ public class ImageDiary {
 
 	@Column(name = "created_at")
 	private LocalDateTime createdAt = LocalDateTime.now();
+
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "conversation_result_id", nullable = false, unique = true)
+	private ConversationResult conversationResult;
+
+	// 그림일기 생성 팩토리 메소드
+	public static ImageDiary create(Calendar calendar, ConversationResult result, String imageUrl, String diaryText) {
+		ImageDiary diary = new ImageDiary();
+		diary.setCalendar(calendar);
+		diary.setConversationResult(result);
+		diary.setImageUrl(imageUrl);
+		diary.setDiaryText(diaryText);
+		diary.setCreatedAt(LocalDateTime.now());
+		return diary;
+	}
 }
