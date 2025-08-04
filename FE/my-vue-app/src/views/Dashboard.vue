@@ -79,7 +79,7 @@
         <BaseCard variant="schedule" link="/schedule" />
         <BaseCard variant="growth" link="/growth" />
         <BaseCard variant="community" link="/community" />
-        <BaseCard variant="language" link="/ocr" />
+        <BaseCard variant="language" :to="{ name: 'OCRTool' }" />
       </div>
     </section>
 
