@@ -4,16 +4,7 @@ import java.time.LocalDate;
 
 import com.daon.be.child.entity.ChildProfile;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -37,4 +28,7 @@ public class Calendar {
 
 	@Column(nullable = false)
 	private LocalDate date;
+
+	@OneToOne(mappedBy = "calendar")
+	private ImageDiary imageDiary;
 }
