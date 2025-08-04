@@ -1,0 +1,4 @@
+### 질문 1
+//GET http://localhost:8080/api/conversation/question?topicId=1&step=1
+
+GET http://localhost:8080/llm/test?prompt=오늘 기분 어땠어?
