@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 
 // 레이아웃
+import ModalDemo from "@/views/ModalDemo.vue";
 import BaseAuthLayout from "@/components/layout/BaseAuthLayout.vue";
 import BaseAppLayout from "@/components/layout/BaseAppLayout.vue";
 
@@ -63,6 +64,13 @@ const routes = [
   { path: "/child", name: "ChildMain", component: ChildMain },
   { path: "/child/pet", name: "ChildPet", component: ChildPet },
   { path: "/child/drawing", name: "ChildDrawing", component: ChildDrawing },
+
+  // 모달창 test
+  {
+    path: "/modal-demo",
+    name: "ModalDemo",
+    component: ModalDemo,
+  },
 ];
 
 const router = createRouter({
