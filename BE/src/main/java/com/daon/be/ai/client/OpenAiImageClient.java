@@ -21,10 +21,10 @@ public class OpenAiImageClient {
 
 	private final RestTemplate restTemplate;
 
-	@Value("${openai.api.key}")
+	@Value("${gms.api.key}}")
 	private String openAiApiKey;
 
-	@Value("${openai.image.api.url}")
+	@Value("${gms.image.api.url}")
 	private String openAiImageApiUrl;
 
 	public String generateImage(String prompt) {
