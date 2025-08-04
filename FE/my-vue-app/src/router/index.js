@@ -13,6 +13,7 @@ import SignUp from "@/views/SignUp.vue";
 import Dashboard from "@/views/Dashboard.vue";
 import Home from "@/views/Home.vue";
 import OCRTool from "@/views/OCRTool.vue";
+import OCRResult from "@/views/OCRResult.vue";
 import CommunityChat from "@/views/CommunityChat.vue";
 import LearningHelper from "@/views/LearningHelper.vue";
 import RegisterChild from "@/views/RegisterChild.vue";
@@ -49,6 +50,7 @@ const routes = [
       { path: "", name: "Dashboard", component: Dashboard },
       { path: "home", name: "Home", component: Home },
       { path: "ocr", name: "OCRTool", component: OCRTool },
+      { path: "ocr/result", name: "OCRResult", component: OCRResult },
       { path: "community", name: "CommunityChat", component: CommunityChat },
       { path: "learning", name: "LearningHelper", component: LearningHelper },
       {
