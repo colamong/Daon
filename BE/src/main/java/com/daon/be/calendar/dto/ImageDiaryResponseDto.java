@@ -1,7 +1,5 @@
 package com.daon.be.calendar.dto;
 
-package com.daon.be.calendar.dto;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

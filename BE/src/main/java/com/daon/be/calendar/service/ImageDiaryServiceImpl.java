@@ -1,15 +1,15 @@
 package com.daon.be.calendar.service;
 
 import com.daon.be.ai.service.ChildDiaryImageGptService;
-import com.daon.be.ai.service.ChildDiaryImageGptServiceImpl;
 import com.daon.be.calendar.dto.ImageDiaryResponseDto;
 import com.daon.be.calendar.entity.Calendar;
 import com.daon.be.calendar.entity.ImageDiary;
-import com.daon.be.calendar.repository.CalendarRepository;
 import com.daon.be.calendar.repository.ImageDiaryRepository;
-import com.daon.be.child.infra.ChildDiaryS3Uploader;
+import com.daon.be.global.infra.S3Uploader;
 import com.daon.be.child.repository.ConversationResultRepository;
 import com.daon.be.conversation.entity.ConversationResult;
+
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,40 +25,55 @@ public class ImageDiaryServiceImpl implements ImageDiaryService {
     private final ImageDiaryRepository imageDiaryRepository;
     private final ChildDiaryImageGptService childDiaryImageGptService;
     private final ConversationResultRepository conversationResultRepository;
-    private final ChildDiaryS3Uploader s3Uploader;
+    private final S3Uploader s3Uploader;
 
     @Transactional
     @Override
     public Long createDiary(Long conversationResultId) {
 
-        // 1. 대화 결과(요약) 엔티티 조회
+        // 대화 결과 조회
         ConversationResult result = conversationResultRepository.findById(conversationResultId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 대화 요약이 존재하지 않습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("해당 대화 요약이 존재하지 않습니다."));
 
-        // 2. summary(그림일기 소재) 추출
+        // summary 추출
         String summary = result.getAnalysisResult();
 
-        // 4. AI 도메인으로 그림일기 이미지(byte[]) 생성
+        // 이미지 생성
         byte[] imageBytes = childDiaryImageGptService.generateDiaryImage(summary);
 
-        // 5. S3 업로드
+        // S3 업로드
         String key = "diary/" + conversationResultId + "/" + UUID.randomUUID() + ".png";
         String s3Url = s3Uploader.upload(key, imageBytes, "image/png");
 
-        // 6. 그림일기 저장 (팩토리 메소드 활용, calendar → result로)
-        ImageDiary diary = ImageDiary.create(result, s3Url, summary);
+        // calendar 조회
+        Calendar calendar = result.getCalendar();
+
+        // diary 텍스트는 summary 그대로 사용
+        String diaryText = summary;
+
+        // ImageDiary 생성 및 저장
+        ImageDiary diary = ImageDiary.create(calendar, result, s3Url, diaryText);
         imageDiaryRepository.save(diary);
 
         return diary.getId();
     }
 
+
     @Override
     public ImageDiaryResponseDto getDiary(Long diaryId) {
-        return null;
+        ImageDiary diary = imageDiaryRepository.findById(diaryId)
+            .orElseThrow(() -> new EntityNotFoundException("해당 그림일기를 찾을 수 없습니다."));
+        return ImageDiaryResponseDto.from(diary); // Dto 변환 메소드 필요
     }
 
     @Override
     public List<ImageDiaryResponseDto> getMonthlyDiaries(Long childId, int year, int month) {
-        return null;
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
+        LocalDateTime end = start.withDayOfMonth(start.toLocalDate().lengthOfMonth()).plusDays(1);
+        return imageDiaryRepository
+            .findAllByCalendar_Child_IdAndCreatedAtBetweenOrderByCreatedAtDesc(childId, start, end)
+            .stream()
+            .map(ImageDiaryResponseDto::from)
+            .toList();
     }
 }

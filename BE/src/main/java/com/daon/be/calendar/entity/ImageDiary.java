@@ -44,8 +44,9 @@ public class ImageDiary {
 	private ConversationResult conversationResult;
 
 	// 그림일기 생성 팩토리 메소드
-	public static ImageDiary create(ConversationResult result, String imageUrl, String diaryText) {
+	public static ImageDiary create(Calendar calendar, ConversationResult result, String imageUrl, String diaryText) {
 		ImageDiary diary = new ImageDiary();
+		diary.setCalendar(calendar);
 		diary.setConversationResult(result);
 		diary.setImageUrl(imageUrl);
 		diary.setDiaryText(diaryText);
