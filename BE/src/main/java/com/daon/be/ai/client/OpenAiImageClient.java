@@ -21,7 +21,7 @@ public class OpenAiImageClient {
 
 	private final RestTemplate restTemplate;
 
-	@Value("${gms.api.key}}")
+	@Value("${gms.api.key}")
 	private String openAiApiKey;
 
 	@Value("${gms.image.api.url}")
@@ -34,7 +34,7 @@ public class OpenAiImageClient {
 			Map<String, Object> requestBody = Map.of(
 				"model", "dall-e-3",
 				"prompt", prompt,
-				"size", "1024x1792"
+				"size", "1792x1024"
 			);
 
 			// 요청 헤더 설정
