@@ -3,6 +3,7 @@ package com.daon.be.conversation.entity;
 import java.time.LocalDateTime;
 
 import com.daon.be.ai.dto.GptChildConversationResponseDto;
+import com.daon.be.calendar.entity.ImageDiary;
 import com.daon.be.child.dto.ChildExpressionResponseDto;
 import com.daon.be.child.entity.ChildProfile;
 
@@ -46,6 +47,9 @@ public class ConversationResult {
 
 	@Column(name = "created_at")
 	private LocalDateTime createdAt = LocalDateTime.now();
+
+	@OneToOne(mappedBy = "conversationResult")
+	private ImageDiary imageDiary;
 
 	public static ConversationResult createFromAi(ChildProfile child, ConversationTopic topic,
 		GptChildConversationResponseDto gptResponse, String sttText) {
