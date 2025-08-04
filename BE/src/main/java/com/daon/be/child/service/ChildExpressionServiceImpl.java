@@ -5,9 +5,9 @@ import com.daon.be.ai.service.ChildConversationGptService;
 import com.daon.be.child.dto.ChildExpressionResponseDto;
 import com.daon.be.child.entity.ChildProfile;
 import com.daon.be.child.repository.ChildProfileRepository;
+import com.daon.be.child.repository.ConversationResultRepository;
 import com.daon.be.conversation.entity.ConversationResult;
 import com.daon.be.conversation.entity.ConversationTopic;
-import com.daon.be.child.repository.ConversationResultRepository;
 import com.daon.be.conversation.repository.ConversationTopicRepository;
 
 import lombok.RequiredArgsConstructor;

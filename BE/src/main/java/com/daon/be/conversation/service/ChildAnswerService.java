@@ -6,25 +6,26 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.redis.core.RedisTemplate;
 
-import com.daon.be.ai.GmsOpenAiClient;
+import com.daon.be.ai.client.GmsOpenAiClient;
 import com.daon.be.child.entity.ChildProfile;
 import com.daon.be.child.repository.ChildProfileRepository;
 import com.daon.be.conversation.dto.ChildAnswerRedisDto;
 import com.daon.be.conversation.dto.ChildAnswerRequestDto;
 import com.daon.be.conversation.dto.ConversationTopicRequestDto;
 import com.daon.be.conversation.entity.ChildAnswer;
-import com.daon.be.conversation.entity.ConversationPrompt;
 import com.daon.be.conversation.entity.ConversationResult;
 import com.daon.be.conversation.entity.ConversationTopic;
 import com.daon.be.conversation.repository.ChildAnswerRepository;
 import com.daon.be.conversation.repository.ConversationPromptRepository;
-import com.daon.be.conversation.repository.ConversationResultRepository;
+import com.daon.be.child.repository.ConversationResultRepository;
 import com.daon.be.conversation.repository.ConversationTopicRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,6 +40,10 @@ public class ChildAnswerService {
 	private final ConversationPromptRepository conversationPromptRepository;
 	private final ConversationResultRepository conversationResultRepository;
 	private final GmsOpenAiClient gmsOpenAiClient;
+
+	@Value("${prompt.system.base}")
+	private String basePrompt;
+
 
 	//테스트 용도로 유지
 	@Transactional
@@ -61,16 +66,19 @@ public class ChildAnswerService {
 		Map<Integer, String> answers,
 		List<Integer> answeredSteps
 	) {
-		String redisKey = String.format("child:%d:topic:%d:answers", childId, topicId);
+		String questionKey = String.format("child:%d:topic:%d:questions", childId, topicId);
+		String answerKey = String.format("child:%d:topic:%d:answers", childId, topicId);
 
 		for (Integer step : answeredSteps) {
 			String q = questions.get(step);
 			String a = answers.get(step);
 			if (q != null && a != null) {
+				redisTemplate.opsForList().rightPush(questionKey, q);
 				ChildAnswerRedisDto dto = ChildAnswerRedisDto.of(step, q, a);
-				redisTemplate.opsForList().rightPush(redisKey, dto);
+				redisTemplate.opsForList().rightPush(answerKey, dto);
 			}
 		}
+
 	}
 
 	public List<Object> getAnswersInRedis(String redisKey) {
@@ -90,20 +98,6 @@ public class ChildAnswerService {
 
 		ChildProfile child = childRepository.getReferenceById(childId);
 		ConversationTopic topic = conversationTopicRepository.getReferenceById(topicId);
-
-		List<ChildAnswer> answers = list.stream()
-			.map(dto -> {
-				ChildAnswer entity = new ChildAnswer();
-				entity.setChild(child);
-				entity.setTopic(topic);
-				entity.setStep(dto.step());
-				entity.setQuestion(dto.question());
-				entity.setAnswer(dto.answer());
-				return entity;
-			})
-			.toList();
-
-		childAnswerRepository.saveAll(answers);
 
 		// 중복 확인 후 ConversationResult 저장
 		boolean exists = conversationResultRepository.existsByChildIdAndTopicId(childId, topicId);
@@ -134,20 +128,20 @@ public class ChildAnswerService {
 		List<Object> prevQuestions = redisTemplate.opsForList().range(questionKey, 0, -1);
 		List<Object> prevAnswers = redisTemplate.opsForList().range(answerKey, 0, -1);
 
-		// 2. 프롬프트 가져오기 (step별)
-		ConversationPrompt systemPrompt = conversationPromptRepository.findByTopic_IdAndStep(topicId, step)
-			.orElseThrow(() -> new IllegalArgumentException("해당 topicId, step 프롬프트 없음"));
+		// 2. 시스템 프롬프트 구성
+		String topicDescription = conversationTopicRepository.findById(topicId)
+			.map(ConversationTopic::getDescription)
+			.orElse("");
 
-		// 3. 메시지 구성 (이전 대화 + system 프롬프트)
-		List<Map<String, String>> messages = new ArrayList<>();
-		messages.add(Map.of("role", "system", "content", systemPrompt.getPrompt()));
+		String stepPrompt = conversationPromptRepository.findByTopic_IdAndStep(topicId, step)
+			.orElseThrow(() -> new IllegalArgumentException("해당 topicId, step 프롬프트 없음"))
+			.getPrompt();
 
-		for (int i = 0; i < prevQuestions.size(); i++) {
-			messages.add(Map.of("role", "user", "content", prevQuestions.get(i).toString()));
-			if (i < prevAnswers.size()) {
-				messages.add(Map.of("role", "assistant", "content", prevAnswers.get(i).toString()));
-			}
-		}
+		String systemPrompt = buildSystemPrompt(basePrompt, topicDescription, stepPrompt);
+
+		// 3. 전체 메시지 구성
+		List<Map<String, String>> messages = buildMessages(systemPrompt, prevQuestions, prevAnswers);
+		System.out.println("GPT Prompt Messages: " + messages);
 
 		// 4. LLM 호출
 		String nextQuestion = gmsOpenAiClient.ask(messages);
@@ -157,6 +151,48 @@ public class ChildAnswerService {
 
 		return nextQuestion;
 	}
+
+
+	//시스템 프롬프트 조립 함수
+	public String buildSystemPrompt(String basePrompt, String topicDescription, String stepPrompt) {
+		return String.join("\n\n", basePrompt, topicDescription, stepPrompt);
+	}
+
+	public List<Map<String, String>> buildMessages(String systemPrompt, List<Object> prevQuestions, List<Object> prevAnswers) {
+		List<Map<String, String>> messages = new ArrayList<>();
+		messages.add(Map.of("role", "system", "content", systemPrompt));
+
+		for (int i = 0; i < prevQuestions.size(); i++) {
+			String questionStr = prevQuestions.get(i).toString();
+			messages.add(Map.of("role", "assistant", "content", questionStr)); // 변경됨
+
+			if (i < prevAnswers.size()) {
+				Object answerObj = prevAnswers.get(i);
+				String answerStr = null;
+
+				if (answerObj instanceof ChildAnswerRedisDto dto) {
+					answerStr = dto.answer();
+				} else {
+					try {
+						String json = answerObj.toString();
+						ChildAnswerRedisDto parsed = new ObjectMapper().readValue(json, ChildAnswerRedisDto.class);
+						answerStr = parsed.answer();
+					} catch (Exception e) {
+						answerStr = answerObj.toString();
+					}
+				}
+
+				messages.add(Map.of("role", "user", "content", answerStr)); // 변경됨
+			}
+		}
+
+		return messages;
+	}
+
+
+
+
+
 
 
 	public Long getNextTopicId(Long childId) {

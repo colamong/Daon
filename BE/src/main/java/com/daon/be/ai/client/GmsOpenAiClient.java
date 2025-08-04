@@ -1,4 +1,4 @@
-package com.daon.be.ai;
+package com.daon.be.ai.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
