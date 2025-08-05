@@ -41,20 +41,26 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-semibold">일정 목록</h3>
           <button
-            @click="addEvent"
+            @click="openModal"
             class="text-sm text-blue-600 hover:underline"
           >
             + 일정 추가
           </button>
+          <AddEventModal v-model="modalVisible" @add-event="handleAddEvent" />
         </div>
         <div class="flex-1 overflow-y-auto pr-2">
           <template v-if="filteredEvents.length">
             <div class="space-y-4">
               <ScheduleCard
                 v-for="ev in filteredEvents"
-                :key="ev.date + ev.title"
+                :key="ev.id"
+                :id="ev.id"
                 :date="ev.date"
                 :title="ev.title"
+                :description="ev.description"
+                :all-events="filteredEvents"
+                @update="handleUpdate"
+                @delete="handleDelete"
               />
             </div>
           </template>
@@ -83,18 +89,17 @@
       </div>
     </section>
 
-    <!-- 4. 오늘의 활동 (기존 그대로) -->
+    <!-- 4. 오늘의 활동 -->
     <section
       class="max-w-6xl container mx-auto px-6 py-5 bg-white rounded-xl shadow mb-20 h-[520px]"
     >
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-2xl font-semibold">오늘의 활동</h3>
-        <router-link to="/child" class="text-sm text-gray-600 hover:underline">
-          자세히 보기 →
-        </router-link>
+        <router-link to="/child" class="text-sm text-gray-600 hover:underline"
+          >자세히 보기 →</router-link
+        >
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-        <!-- 왼쪽: 활동 -->
         <div class="md:col-span-2">
           <div
             class="bg-gray-500 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
@@ -117,11 +122,10 @@
             </template>
           </div>
         </div>
-        <!-- 오른쪽: 아이 프로필 -->
         <div>
           <div
             v-if="hasChild"
-            class="h-[400px] bg-yellow-100 rounded-lg p-6 h-full flex flex-col"
+            class="h-[400px] bg-yellow-100 rounded-lg p-6 flex flex-col"
           >
             <div class="flex items-center mb-4 space-x-4">
               <img
@@ -142,15 +146,13 @@
               </div>
             </div>
             <p class="text-sm text-gray-700 mb-1">
-              <span class="font-medium">나이:</span>
-              {{ child.children[0].age }}
+              <span class="font-medium">나이:</span> {{ child.children[0].age }}
             </p>
             <p class="text-sm text-gray-700">
               <span class="font-medium">관심사:</span>
               {{ child.children[0].interests }}
             </p>
           </div>
-
           <div
             v-else
             class="bg-yellow-100 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
@@ -173,42 +175,59 @@
 import { ref, computed } from "vue";
 import dayjs from "dayjs";
 
+import AddEventModal from "@/components/modal/AddEventModal.vue";
 import CalendarWidget from "@/components/widget/CalendarWidget.vue";
 import ScheduleCard from "@/components/card/ScheduleCard.vue";
 import BaseCard from "@/components/card/BaseCard.vue";
 import { useChildStore } from "@/store/child";
+import { dummyEvents } from "@/data/dummyData.js";
 
 const child = useChildStore();
-
-// 전체 더미 이벤트
-const events = ref([
-  { date: "2025-08-03", title: "저거 뭐냐 무시짱이" },
-  { date: "2025-08-06", title: "유치원 운동회" },
-  { date: "2025-08-06", title: "저거 뭐냐 무시짱이" },
-  { date: "2025-08-07", title: "또 다른 일정" },
-  { date: "2025-08-08", title: "마지막 일정" },
-  { date: "2025-08-29", title: "잠에 들고 싶어요" },
-]);
-
-// 현재 보고 있는 연·월 ("YYYY-MM")
+const events = ref(dummyEvents);
 const selectedMonth = ref(dayjs().format("YYYY-MM"));
+
 function onMonthChange(newYm) {
   selectedMonth.value = newYm;
 }
+const modalVisible = ref(false);
 
-// 필터링 + 정렬
 const filteredEvents = computed(() =>
   events.value
     .filter((ev) => dayjs(ev.date).format("YYYY-MM") === selectedMonth.value)
     .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix())
 );
 
-// 일정 추가 (더미)
-function addEvent() {
-  alert("일정 추가 모달을 구현해주세요.");
+// 일정 추가 버튼 클릭 시 모달 열기
+function openModal() {
+  modalVisible.value = true;
 }
 
-// 오늘의 활동 & 아이 등록 여부 (더미)
+// 일정 실제 등록 처리
+function handleAddEvent({ title, date, description }) {
+  events.value.push({
+    id: Date.now(),
+    title,
+    date,
+    description,
+  });
+}
+
+function handleUpdate({ oldDate, newDate, newTitle, newDescription }) {
+  const idx = events.value.findIndex(
+    (ev) => ev.date === oldDate && ev.title === newTitle
+  );
+  if (idx !== -1) {
+    events.value[idx].date = newDate;
+    events.value[idx].title = newTitle;
+    events.value[idx].description = newDescription;
+  }
+}
+
+function handleDelete(id) {
+  events.value = events.value.filter((ev) => ev.id !== id);
+}
+
+// 오늘의 활동 & 아이 정보 (더미)
 const todayDrawing = ref({
   imgUrl: "",
   profile: "",
@@ -221,5 +240,5 @@ const hasActivity = computed(() => !!todayDrawing.value.imgUrl);
 </script>
 
 <style scoped>
-/* 필요 시 추가 */
+/* 필요 시 추가 스타일을 여기에 작성하세요 */
 </style>
