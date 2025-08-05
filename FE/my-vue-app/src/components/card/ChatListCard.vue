@@ -1,4 +1,3 @@
-
 <!-- 채팅방 옆에 내 채팅방 목록 카드 -->
 <template>
   <router-link
@@ -23,20 +22,20 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = defineProps({
   location: String,
   image: String,
   link: {
     type: String,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
 const resolvedImage = computed(() =>
   props.image
     ? props.image
-    : new URL('@/assets/icons/image-placeholder.svg', import.meta.url).href
-)
+    : new URL("@/assets/icons/image-placeholder.svg", import.meta.url).href
+);
 </script>

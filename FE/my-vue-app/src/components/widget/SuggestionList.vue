@@ -1,5 +1,7 @@
 <template>
-  <ul class="bg-white border border-gray-200 rounded-md shadow-md w-full mt-2 max-h-80 overflow-y-auto space-y-1">
+  <ul
+    class="bg-white border border-gray-200 rounded-md shadow-md w-full mt-2 space-y-1"
+  >
     <li
       v-for="(item, index) in suggestions"
       :key="index"
@@ -14,7 +16,7 @@
         :link="item.link"
         :class="[
           'transition-colors',
-          hoveredIndex === index ? 'bg-blue-100' : 'hover:bg-hover-blue/20'
+          hoveredIndex === index ? 'bg-blue-100' : 'hover:bg-hover-blue/20',
         ]"
       />
     </li>
@@ -22,19 +24,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import CommunityRegionCard from '@/components/card/CommunityRegionCard.vue' // 경로 확인 필요!
+import { ref } from "vue";
+import CommunityRegionCard from "@/components/card/CommunityRegionCard.vue";
 
 const props = defineProps({
   suggestions: {
     type: Array,
     required: true,
   },
-})
+});
 
-const hoveredIndex = ref(null)
+const hoveredIndex = ref(null);
 </script>
 
 <style scoped>
-/* 필요 시 스타일 작성 */
+/* 더 이상 내부 스크롤이나 높이 제한 없음 */
 </style>
