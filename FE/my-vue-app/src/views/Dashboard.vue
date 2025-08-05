@@ -41,11 +41,12 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-semibold">일정 목록</h3>
           <button
-            @click="addEvent"
+            @click="openModal"
             class="text-sm text-blue-600 hover:underline"
           >
             + 일정 추가
           </button>
+          <AddEventModal v-model="modalVisible" @add-event="handleAddEvent" />
         </div>
         <div class="flex-1 overflow-y-auto pr-2">
           <template v-if="filteredEvents.length">
@@ -174,6 +175,7 @@
 import { ref, computed } from "vue";
 import dayjs from "dayjs";
 
+import AddEventModal from "@/components/modal/AddEventModal.vue";
 import CalendarWidget from "@/components/widget/CalendarWidget.vue";
 import ScheduleCard from "@/components/card/ScheduleCard.vue";
 import BaseCard from "@/components/card/BaseCard.vue";
@@ -187,6 +189,7 @@ const selectedMonth = ref(dayjs().format("YYYY-MM"));
 function onMonthChange(newYm) {
   selectedMonth.value = newYm;
 }
+const modalVisible = ref(false);
 
 const filteredEvents = computed(() =>
   events.value
@@ -194,8 +197,19 @@ const filteredEvents = computed(() =>
     .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix())
 );
 
-function addEvent() {
-  alert("일정 추가 모달을 구현해주세요.");
+// 일정 추가 버튼 클릭 시 모달 열기
+function openModal() {
+  modalVisible.value = true;
+}
+
+// 일정 실제 등록 처리
+function handleAddEvent({ title, date, description }) {
+  events.value.push({
+    id: Date.now(),
+    title,
+    date,
+    description,
+  });
 }
 
 function handleUpdate({ oldDate, newDate, newTitle, newDescription }) {
