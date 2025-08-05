@@ -41,6 +41,8 @@ dependencies {
 
     implementation platform("software.amazon.awssdk:bom:2.25.4")
     implementation "software.amazon.awssdk:s3"
+
+    implementation 'net.sourceforge.tess4j:tess4j:5.4.0' // 또는 최신 버전
 }
 
 dependencyManagement {
