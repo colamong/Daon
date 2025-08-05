@@ -22,7 +22,7 @@ public class Pet {
 	private Long id;
 
 	@Column(name = "max_stage")
-	private int maxStage = 6;
+	private int maxStage = 7;
 
 	@Column(name = "image_base_url")
 	private String imageBaseUrl;

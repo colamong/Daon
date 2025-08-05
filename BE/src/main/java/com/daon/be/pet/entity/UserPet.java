@@ -38,7 +38,7 @@ public class UserPet {
 	private Pet pet;
 
 	@Column(nullable = false)
-	private String name = "다온이";
+	private String name = "펭수";
 
 	@Column(name = "current_stage")
 	private int currentStage = 1;
