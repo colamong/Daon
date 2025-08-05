@@ -2,25 +2,22 @@
 <template>
   <router-link
     :to="link"
-    class="relative w-72 h-44 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow group"
+    class="block w-72 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow bg-white"
   >
-    <!-- 배경 이미지 -->
-    <img
-      :src="resolvedImage"
-      alt="카드 배경 이미지"
-      class="absolute inset-0 w-full h-full object-cover"
-    />
+    <!-- 이미지 영역 -->
+    <div class="h-40 overflow-hidden">
+      <img
+        :src="resolvedImage"
+        alt="카드 배경 이미지"
+        class="w-full h-full object-cover"
+      />
+    </div>
 
-    <!-- 흐림 효과 있는 텍스트 박스 -->
-    <div class="absolute bottom-4 left-4 right-4">
-      <div class="bg-white/50 backdrop-blur-sm px-4 py-3 rounded-md text-center text-black">
-        <h3 class="text-lg font-paperBold mb-1">
-          {{ title }}
-        </h3>
-        <p class="text-sm font-paper leading-snug line-clamp-2">
-          {{ description }}
-        </p>
-      </div>
+    <!-- 제목 영역 -->
+    <div class="px-4 py-4 text-center">
+      <h3 class="text-xl font-paperBold text-black">
+        {{ title }}
+      </h3>
     </div>
   </router-link>
 </template>
