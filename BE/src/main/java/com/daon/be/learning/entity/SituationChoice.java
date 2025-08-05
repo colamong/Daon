@@ -33,4 +33,7 @@ public class SituationChoice {
 
 	@Column(name = "is_correct")
 	private boolean isCorrect = false;
+
+	@Column(name = "audio_url")
+	private String audioUrl;
 }
