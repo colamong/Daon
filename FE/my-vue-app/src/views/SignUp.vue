@@ -196,9 +196,11 @@
 import { ref, computed } from "vue";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "vue-router";
+import { useNotification } from '@/composables/useNotification.js';
 
 const auth = useAuthStore();
 const router = useRouter();
+const { showSuccess, showError, showWarning } = useNotification();
 
 const nickname = ref("");
 const emailLocal = ref("");
@@ -236,9 +238,37 @@ const email = computed(() =>
 );
 
 async function handleSignUp() {
-  if (password.value !== confirmPassword.value) {
-    return alert("비밀번호가 일치하지 않습니다.");
+  // 입력 값 검증
+  if (!nickname.value.trim()) {
+    showError("닉네임을 입력해주세요.", "입력 오류");
+    return;
   }
+  
+  if (!emailLocal.value.trim()) {
+    showError("이메일을 입력해주세요.", "입력 오류");
+    return;
+  }
+  
+  if (domainOption.value === "직접 입력" && !customDomain.value.trim()) {
+    showError("도메인을 입력해주세요.", "입력 오류");
+    return;
+  }
+  
+  if (password.value.length < 6) {
+    showWarning("비밀번호는 6자 이상이어야 합니다.", "비밀번호 오류");
+    return;
+  }
+  
+  if (password.value !== confirmPassword.value) {
+    showError("비밀번호가 일치하지 않습니다.", "비밀번호 확인");
+    return;
+  }
+  
+  if (!country.value) {
+    showError("국가를 선택해주세요.", "입력 오류");
+    return;
+  }
+  
   try {
     await auth.signup({
       nickname: nickname.value,
@@ -246,9 +276,10 @@ async function handleSignUp() {
       password: password.value,
       country: country.value,
     });
+    showSuccess("회원가입이 완료되었습니다!", "환영합니다");
     router.push({ name: "Dashboard" });
-  } catch {
-    alert("회원가입에 실패했습니다.");
+  } catch (error) {
+    showError("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.", "회원가입 실패");
   }
 }
 </script>

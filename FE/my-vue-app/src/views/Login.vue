@@ -114,10 +114,11 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
-import SignUp from "./SignUp.vue";
+import { useNotification } from '@/composables/useNotification.js';
 
 const router = useRouter();
 const auth = useAuthStore();
+const { showSuccess, showError, showInfo } = useNotification();
 
 const email = ref("");
 const password = ref("");
@@ -132,7 +133,7 @@ const error = ref("");
  */
 async function handleLogin() {
   if (!email.value || !password.value) {
-    error.value = "이메일과 비밀번호를 모두 입력해주세요.";
+    showError("이메일과 비밀번호를 모두 입력해주세요.", "입력 오류");
     return;
   }
   error.value = "";
@@ -152,14 +153,15 @@ async function handleLogin() {
       auth.token = mockToken;
     }
 
+    showSuccess("로그인되었습니다!", "환영합니다");
     router.push({ name: "Dashboard" });
   } catch {
-    error.value = "로그인에 실패했습니다.";
+    showError("이메일 또는 비밀번호가 올바르지 않습니다.", "로그인 실패");
   }
 }
 
 /** 구글 로그인은 아직 미지원 알림 */
 function handleGoogleLogin() {
-  alert("구글 로그인은 아직 지원되지 않습니다.");
+  showInfo("구글 로그인은 아직 지원되지 않습니다.", "서비스 준비중");
 }
 </script>
