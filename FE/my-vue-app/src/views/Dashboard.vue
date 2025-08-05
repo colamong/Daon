@@ -95,9 +95,12 @@
     >
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-2xl font-semibold">오늘의 활동</h3>
-        <router-link to="/child" class="text-sm text-gray-600 hover:underline"
-          >자세히 보기 →</router-link
+        <button 
+          @click="openTodayReport" 
+          class="text-sm text-gray-600 hover:underline"
         >
+          자세히 보기 →
+        </button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         <div class="md:col-span-2">
@@ -106,13 +109,15 @@
           >
             <template v-if="hasActivity">
               <img
-                :src="todayDrawing.imgUrl"
+                :src="todayActivity.diaryImage"
                 alt="오늘의 그림일기"
-                class="w-full rounded-lg shadow"
+                class="w-full h-full object-cover rounded-lg shadow"
               />
             </template>
             <template v-else>
-              <p class="text-white mb-4">아직 활동하지 않았습니다.</p>
+              <p class="text-white mb-4">
+                {{ hasChild && selectedChild.name ? getSubjectSentence(selectedChild.name) : '아직 활동하지 않았습니다.' }}
+              </p>
               <button
                 @click="goToActivity"
                 class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-paper"
@@ -192,6 +197,17 @@
         </div>
       </div>
     </section>
+
+    <!-- 감정 리포트 모달 -->
+    <EmotionReportModal
+      v-if="hasActivity"
+      v-model="showEmotionReportModal"
+      :child-name="selectedChild.name"
+      :report-date="dayjs().format('YYYY-MM-DD')"
+      :report-data="todayActivity"
+      :show-navigation="false"
+    />
+
   </div>
 </template>
 
@@ -204,12 +220,16 @@ import AddEventModal from "@/components/modal/AddEventModal.vue";
 import CalendarWidget from "@/components/widget/CalendarWidget.vue";
 import ScheduleCard from "@/components/card/ScheduleCard.vue";
 import BaseCard from "@/components/card/BaseCard.vue";
+import EmotionReportModal from '@/components/modal/EmotionReportModal.vue';
 import { useAuthStore } from "@/store/auth";
 import { dummyEvents } from "@/data/dummyData.js";
+import { emotionReportsByChild } from '@/data/emotionReports.js';
+import { useNotification } from '@/composables/useNotification.js';
+import { ensureAllChildrenHaveColors } from '@/utils/colorManager.js';
 
 const router = useRouter();
-
 const auth = useAuthStore();
+const { showWarning } = useNotification();
 const events = ref(dummyEvents);
 const selectedMonth = ref(dayjs().format("YYYY-MM"));
 
@@ -268,7 +288,7 @@ const selectedChildIndex = ref(0);
 
 // 아이 정보 로드
 function loadChildren() {
-  const children = JSON.parse(localStorage.getItem('children') || '[]');
+  const children = ensureAllChildrenHaveColors(); // 기존 아이들에게도 색상 할당
   childrenList.value = children;
 }
 
@@ -278,8 +298,76 @@ onMounted(() => {
 });
 
 const hasChild = computed(() => childrenList.value.length > 0);
-const hasActivity = computed(() => !!todayDrawing.value.imgUrl);
 const selectedChild = computed(() => childrenList.value[selectedChildIndex.value] || {});
+
+// 선택된 아이의 오늘 활동 체크
+const todayActivity = computed(() => {
+  if (!selectedChild.value.name) return null;
+  
+  const today = dayjs().format('YYYY-MM-DD');
+  const childData = emotionReportsByChild[selectedChild.value.name];
+  
+  if (!childData) return null;
+  
+  return childData.reports.find(report => report.date === today);
+});
+
+const hasActivity = computed(() => !!todayActivity.value);
+
+// 감정 리포트 모달 관련
+const showEmotionReportModal = ref(false);
+
+// 오늘의 리포트 모달 열기
+function openTodayReport() {
+  if (hasActivity.value) {
+    showEmotionReportModal.value = true;
+  } else {
+    showWarning(
+      getObjectSentence(selectedChild.value.name),
+      '아직 활동하지 않았습니다!'
+    );
+  }
+}
+
+// 날짜 포맷팅 함수
+function formatDate(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
+// 한국어 조사 선택 함수
+function getParticle(name, particles) {
+  if (!name) return particles[0]
+  
+  const lastChar = name[name.length - 1]
+  const lastCharCode = lastChar.charCodeAt(0)
+  
+  // 한글인지 확인
+  if (lastCharCode < 0xAC00 || lastCharCode > 0xD7A3) {
+    return particles[0] // 한글이 아니면 첫 번째 조사 사용
+  }
+  
+  // 받침 여부 확인 (종성이 있으면 받침 있음)
+  const hasJongseong = (lastCharCode - 0xAC00) % 28 !== 0
+  
+  return hasJongseong ? particles[0] : particles[1] // 받침있으면 첫번째, 없으면 두번째
+}
+
+// 조사가 포함된 문장 생성 함수들
+function getSubjectSentence(name) {
+  const particle = getParticle(name, ['은', '는'])
+  return `${name}${particle} 아직 활동하지 않았습니다.`
+}
+
+function getObjectSentence(name) {
+  const particle = getParticle(name, ['이', '가'])
+  return `${name}${particle} 활동하게 해주세요.`
+}
 
 // 아이 등록/수정 페이지로 이동
 function goToChildRegister() {
@@ -316,5 +404,13 @@ function calculateAge(birthDate) {
 </script>
 
 <style scoped>
-/* 필요 시 추가 스타일을 여기에 작성하세요 */
+/* 모달 전환 효과 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>
