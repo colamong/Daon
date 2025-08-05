@@ -151,10 +151,15 @@ function logout() {
 
 const goDashboard = () => router.push({ name: "Dashboard" });
 const goChildMain = () => router.push({ name: "ChildMain" });
-const goChildProfile = () =>
+const goChildProfile = () => {
+  // localStorage에서 아이 정보 확인
+  const children = JSON.parse(localStorage.getItem('children') || '[]');
+  const hasChildren = children.length > 0;
+  
   router.push({
-    name: auth.user?.children?.length ? "EditChild" : "RegisterChild",
+    name: hasChildren ? "ChildProfile" : "RegisterChild",
   });
+};
 const goOCRTool = () => router.push({ name: "OCRTool" });
 const goCommunityChat = () => router.push({ name: "Community" });
 const goLearningHelper = () => router.push({ name: "LearningHelper" });

@@ -23,6 +23,7 @@ import CommunityChat from "@/views/CommunityChat.vue";
 import LearningHelper from "@/views/LearningHelper.vue";
 import RegisterChild from "@/views/RegisterChild.vue";
 import EditChild from "@/views/EditChild.vue";
+import ChildProfile from "@/views/ChildProfile.vue";
 
 // 프로필
 import ProfileEdit from "@/views/ProfileEdit.vue";
@@ -82,6 +83,7 @@ const routes = [
         name: "RegisterChild",
         component: RegisterChild,
       },
+      { path: "child/profile", name: "ChildProfile", component: ChildProfile },
       { path: "child/edit", name: "EditChild", component: EditChild },
       { path: "profile/edit", name: "ProfileEdit", component: ProfileEdit },
     ],

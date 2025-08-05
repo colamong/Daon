@@ -107,9 +107,11 @@
 import { ref, reactive, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
+import { useNotification } from '@/composables/useNotification.js';
 
 const router = useRouter();
 const auth = useAuthStore();
+const { showSuccess, showError, showWarning } = useNotification();
 
 const loading = ref(false);
 const fileInput = ref(null);
@@ -200,13 +202,13 @@ function handleImageChange(event) {
   if (file) {
     // 파일 크기 체크 (5MB 제한)
     if (file.size > 5 * 1024 * 1024) {
-      alert("파일 크기는 5MB 이하로 선택해주세요.");
+      showWarning("파일 크기는 5MB 이하로 선택해주세요.", "파일 크기 초과");
       return;
     }
 
     // 이미지 파일인지 확인
     if (!file.type.startsWith("image/")) {
-      alert("이미지 파일만 선택할 수 있습니다.");
+      showError("이미지 파일만 선택할 수 있습니다.", "파일 형식 오류");
       return;
     }
 
@@ -221,17 +223,17 @@ function handleImageChange(event) {
 async function handleUpdateProfile() {
   // 입력 검증
   if (!formData.nickname.trim()) {
-    alert("닉네임을 입력해주세요.");
+    showError("닉네임을 입력해주세요.", "입력 오류");
     return;
   }
 
   if (formData.nickname.length > 10) {
-    alert("닉네임은 10글자 이하로 입력해주세요.");
+    showWarning("닉네임은 10글자 이하로 입력해주세요.", "글자 수 초과");
     return;
   }
 
   if (!formData.country) {
-    alert("국가를 선택해주세요.");
+    showError("국가를 선택해주세요.", "입력 오류");
     return;
   }
 
@@ -256,13 +258,13 @@ async function handleUpdateProfile() {
       localStorage.setItem("auth_user", JSON.stringify(auth.user));
     }
 
-    alert("프로필이 성공적으로 업데이트되었습니다! 🎉");
+    showSuccess("프로필이 성공적으로 업데이트되었습니다!", "수정 완료");
 
     // 대시보드로 이동
     router.push({ name: "Dashboard" });
   } catch (error) {
     console.error("프로필 업데이트 실패:", error);
-    alert("프로필 업데이트에 실패했습니다. 다시 시도해주세요. 😥");
+    showError("프로필 업데이트에 실패했습니다. 다시 시도해주세요.", "업데이트 실패");
   } finally {
     loading.value = false;
   }
