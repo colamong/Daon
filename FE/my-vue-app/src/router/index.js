@@ -21,6 +21,8 @@ import CommunityChat from "@/views/CommunityChat.vue";
 
 // 상황별 학습
 import ThemeSelect from "@/views/ThemeSelect.vue";
+import ChapterSelect from "@/views/ChapterSelect.vue";
+import LearningPage from "@/views/LearningPage.vue";
 import RegisterChild from "@/views/RegisterChild.vue";
 import EditChild from "@/views/EditChild.vue";
 import ChildProfile from "@/views/ChildProfile.vue";
@@ -78,6 +80,9 @@ const routes = [
         props: true,
       },
       { path: "learning", name: "LearningHelper", component: ThemeSelect },
+      { path: "learning/theme/:id", name: "ChapterSelect", component: ChapterSelect, props: true },
+      { path: "learning/theme/:themeId/chapter/:chapterId", name: "LearningPage", component: LearningPage, props: true },
+      { path: "learning/theme/:themeId/chapter/:chapterId/question/:questionId", name: "LearningQuestion", component: LearningPage, props: true },
       {
         path: "child/register",
         name: "RegisterChild",
