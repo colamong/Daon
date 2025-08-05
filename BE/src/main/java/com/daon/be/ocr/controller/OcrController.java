@@ -25,7 +25,7 @@ public class OcrController {
         File tempFile = File.createTempFile("upload", image.getOriginalFilename());
         image.transferTo(tempFile);
 
-        // 💡 실제로는 로그인 유저 정보에서 가져와야 함
+        // 실제로는 로그인 유저 정보에서 가져와야 함
         String userNativeLanguage = "Vietnamese";  // ← 더미 데이터 (나중에 연동)
 
         //Tess4J로 이미지에서 텍스트 추출
