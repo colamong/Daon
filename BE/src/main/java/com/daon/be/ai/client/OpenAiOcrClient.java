@@ -78,7 +78,7 @@ public class OpenAiOcrClient {
             String responseBody = response.getBody();
             log.info("GMS OCR 응답 결과: {}", responseBody);
 
-            // ✅ content만 파싱해서 반환
+            // content만 파싱해서 반환
             JsonNode root = objectMapper.readTree(responseBody);
             String content = root.path("choices").get(0).path("message").path("content").asText();
 
