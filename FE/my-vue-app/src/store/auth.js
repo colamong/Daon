@@ -45,5 +45,12 @@ export const useAuthStore = defineStore("auth", {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("auth_user");
     },
+
+    updateUserProfile(profileData) {
+      if (this.user) {
+        this.user = { ...this.user, ...profileData };
+        localStorage.setItem("auth_user", JSON.stringify(this.user));
+      }
+    },
   },
 });
