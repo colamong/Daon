@@ -32,7 +32,10 @@
 
 
 <script setup>
+import { useRouter } from 'vue-router'
 import BaseButton from '@/components/button/BaseButton.vue';
+
+const router = useRouter()
 
 const props = defineProps({
   name: String,
@@ -43,4 +46,8 @@ const props = defineProps({
     default: new URL('@/assets/icons/image-placeholder.svg', import.meta.url).href,
   },
 })
+
+function goToEdit() {
+  router.push({ name: 'ProfileEdit' })
+}
 </script>
