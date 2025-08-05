@@ -12,5 +12,9 @@ public class ChildAnswerRequestDto {
 	private int step;              // 몇 번째 질문인지
 	private String question;       // 질문 내용 (예: "오늘 기분이 어땠어요?")
 	private String answer;         // 아이의 음성/텍스트 답변 결과
+
+	public void setStep(int step) {
+		this.step = step;
+	}
 }
 
