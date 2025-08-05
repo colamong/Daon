@@ -93,14 +93,19 @@
     <!-- 커뮤니티 카드 그리드 + 페이징 -->
     <section>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        <CommunityCard
+        <div
           v-for="post in pagedCommunities"
           :key="post.id"
-          :location="post.location"
-          :date="post.date"
-          :image="post.image"
-          :link="post.link"
-        />
+          class="cursor-pointer"
+          @click="goChat(post.id)"
+        >
+          <CommunityCard
+            :location="post.location"
+            :date="post.date"
+            :image="post.image"
+            :favorites="post.favorites"
+          />
+        </div>
       </div>
 
       <div
@@ -136,167 +141,22 @@ import {
   onBeforeUnmount,
   nextTick,
 } from "vue";
+import { useRouter } from "vue-router";
 import { createPopper } from "@popperjs/core";
 
 import SearchBar from "@/components/widget/SearchBar.vue";
 import SuggestionList from "@/components/widget/SuggestionList.vue";
 import CommunityCard from "@/components/card/CommunityCard.vue";
 import communityHero from "@/assets/images/community-hero.png";
+import { communities } from "@/data/communities.js";
 
+const router = useRouter();
 const searchQuery = ref("");
 const showDropdown = ref(false);
 const wrapper = ref(null);
 const searchInput = ref(null);
 const popperEl = ref(null);
 let popperInstance = null;
-
-// 더미 커뮤니티 포스트 18개
-const communities = [
-  {
-    id: 1,
-    location: "서울특별시 종로구",
-    date: "2024-01-24",
-    image: "",
-    link: "/community/1",
-    favorites: 12,
-  },
-  {
-    id: 2,
-    location: "서울특별시 중구",
-    date: "2024-01-22",
-    image: "",
-    link: "/community/2",
-    favorites: 8,
-  },
-  {
-    id: 3,
-    location: "서울특별시 용산구",
-    date: "2024-01-20",
-    image: "",
-    link: "/community/3",
-    favorites: 5,
-  },
-  {
-    id: 4,
-    location: "서울특별시 성동구",
-    date: "2024-01-18",
-    image: "",
-    link: "/community/4",
-    favorites: 15,
-  },
-  {
-    id: 5,
-    location: "서울특별시 광진구",
-    date: "2024-01-16",
-    image: "",
-    link: "/community/5",
-    favorites: 3,
-  },
-  {
-    id: 6,
-    location: "서울특별시 성북구",
-    date: "2024-01-14",
-    image: "",
-    link: "/community/6",
-    favorites: 7,
-  },
-  {
-    id: 7,
-    location: "서울특별시 강남구",
-    date: "2024-01-12",
-    image: "",
-    link: "/community/7",
-    favorites: 25,
-  },
-  {
-    id: 8,
-    location: "서울특별시 서초구",
-    date: "2024-01-10",
-    image: "",
-    link: "/community/8",
-    favorites: 10,
-  },
-  {
-    id: 9,
-    location: "서울특별시 송파구",
-    date: "2024-01-08",
-    image: "",
-    link: "/community/9",
-    favorites: 2,
-  },
-  {
-    id: 10,
-    location: "서울특별시 강동구",
-    date: "2024-01-06",
-    image: "",
-    link: "/community/10",
-    favorites: 6,
-  },
-  {
-    id: 11,
-    location: "인천광역시 미추홀구",
-    date: "2024-01-04",
-    image: "",
-    link: "/community/11",
-    favorites: 9,
-  },
-  {
-    id: 12,
-    location: "인천광역시 연수구",
-    date: "2024-01-02",
-    image: "",
-    link: "/community/12",
-    favorites: 4,
-  },
-  {
-    id: 13,
-    location: "부산광역시 해운대구",
-    date: "2023-12-30",
-    image: "",
-    link: "/community/13",
-    favorites: 20,
-  },
-  {
-    id: 14,
-    location: "부산광역시 수영구",
-    date: "2023-12-28",
-    image: "",
-    link: "/community/14",
-    favorites: 1,
-  },
-  {
-    id: 15,
-    location: "대구광역시 중구",
-    date: "2023-12-26",
-    image: "",
-    link: "/community/15",
-    favorites: 11,
-  },
-  {
-    id: 16,
-    location: "대구광역시 수성구",
-    date: "2023-12-24",
-    image: "",
-    link: "/community/16",
-    favorites: 13,
-  },
-  {
-    id: 17,
-    location: "광주광역시 동구",
-    date: "2023-12-22",
-    image: "",
-    link: "/community/17",
-    favorites: 0,
-  },
-  {
-    id: 18,
-    location: "전라남도 순천시",
-    date: "2023-12-20",
-    image: "",
-    link: "/community/18",
-    favorites: 14,
-  },
-];
 
 // 검색 제안용
 const filteredSuggestions = computed(() =>
@@ -414,6 +274,12 @@ function handleSelect(item) {
   showDropdown.value = false;
   // 선택된 지역으로 필터
   selectedRegion.value = item.title.split(" ")[0];
+}
+function goChat(id) {
+  router.push({
+    name: "CommunityChat",
+    params: { id },
+  });
 }
 </script>
 

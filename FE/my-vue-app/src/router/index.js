@@ -60,9 +60,11 @@ const routes = [
       { path: "ocr/result", name: "OCRResult", component: OCRResult },
       { path: "community", name: "Community", component: CommunityList },
       {
-        path: "community/chat",
+        // id를 동적 세그먼트로 바꿔주고 props: true
+        path: "community/:id",
         name: "CommunityChat",
         component: CommunityChat,
+        props: true,
       },
       { path: "learning", name: "LearningHelper", component: LearningHelper },
       {
