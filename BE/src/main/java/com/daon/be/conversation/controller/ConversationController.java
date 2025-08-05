@@ -7,6 +7,7 @@ import com.daon.be.child.repository.ChildProfileRepository;
 import com.daon.be.conversation.dto.ChildAnswerRequestDto;
 import com.daon.be.conversation.dto.ConversationTopicRequestDto;
 import com.daon.be.conversation.dto.ConversationTopicResponseDto;
+import com.daon.be.conversation.dto.GptAudioResponse;
 import com.daon.be.conversation.entity.ChildAnswer;
 import com.daon.be.conversation.entity.ConversationPrompt;
 import com.daon.be.conversation.entity.ConversationTopic;
@@ -40,17 +41,17 @@ public class ConversationController {
 	/**
 	 * 각 스텝의 질문/답변을 Redis에 저장
 	 */
-	@PostMapping("/answer")
-	public ResponseEntity<Void> saveAnswerToRedis(@RequestBody ChildAnswerRequestDto dto) {
-		childAnswerService.saveAnsweredStepsToRedis(
-			dto.getChildId(),
-			dto.getTopicId(),
-			Map.of(dto.getStep(), dto.getQuestion()),
-			Map.of(dto.getStep(), dto.getAnswer()),
-			List.of(dto.getStep())
-		);
-		return ResponseEntity.ok().build();
-	}
+	// @PostMapping("/answer")
+	// public ResponseEntity<Void> saveAnswerToRedis(@RequestBody ChildAnswerRequestDto dto) {
+	// 	childAnswerService.saveAnsweredStepsToRedis(
+	// 		dto.getChildId(),
+	// 		dto.getTopicId(),
+	// 		Map.of(dto.getStep(), dto.getQuestion()),
+	// 		Map.of(dto.getStep(), dto.getAnswer()),
+	// 		List.of(dto.getStep())
+	// 	);
+	// 	return ResponseEntity.ok().build();
+	// }
 
 	/**
 	 * 대화 종료 시 Redis → DB로 flush
@@ -81,10 +82,10 @@ public class ConversationController {
 	/**
 	 * 디버깅용: Redis에서 문답 내용 조회
 	 */
-	@GetMapping("/answers")
-	public List<Object> getRedisAnswers(@RequestParam Long childId, @RequestParam Long topicId) {
-		String redisKey = String.format("child:%d:topic:%d:answers", childId, topicId);
-		return childAnswerService.getAnswersInRedis(redisKey);
+	@PostMapping("/answer")
+	public ResponseEntity<GptAudioResponse> handleAnswer(@RequestBody ChildAnswerRequestDto dto) {
+		GptAudioResponse response = childAnswerService.saveAnswerAndGetNextQuestionAudio(dto);
+		return ResponseEntity.ok(response);
 	}
 	//관리자 새로운 대화주제 추가용
 	@PostMapping("/topic")
