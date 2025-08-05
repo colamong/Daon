@@ -20,7 +20,7 @@ import CommunityList from "@/views/CommunityList.vue";
 import CommunityChat from "@/views/CommunityChat.vue";
 
 // 상황별 학습
-import LearningHelper from "@/views/LearningHelper.vue";
+import ThemeSelect from "@/views/ThemeSelect.vue";
 import RegisterChild from "@/views/RegisterChild.vue";
 import EditChild from "@/views/EditChild.vue";
 import ChildProfile from "@/views/ChildProfile.vue";
@@ -77,7 +77,7 @@ const routes = [
         component: CommunityChat,
         props: true,
       },
-      { path: "learning", name: "LearningHelper", component: LearningHelper },
+      { path: "learning", name: "LearningHelper", component: ThemeSelect },
       {
         path: "child/register",
         name: "RegisterChild",
