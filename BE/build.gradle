@@ -46,8 +46,7 @@ dependencies {
     implementation 'com.auth0:java-jwt:4.4.0'
     implementation 'org.springframework.security:spring-security-crypto:6.1.2'
 
-
-
+    implementation 'net.sourceforge.tess4j:tess4j:5.4.0' // 또는 최신 버전
 }
 
 dependencyManagement {
