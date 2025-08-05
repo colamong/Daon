@@ -25,12 +25,9 @@ public class ChildExpressionController {
 	@PostMapping("/{childId}/expressions")
 	public ResponseEntity<ChildExpressionResponseDto> analyzeExpression(
 		@PathVariable Long childId,
-		@RequestParam Long topicId,
-		@RequestBody ChildExpressionRequestDto dto
+		@RequestParam Long topicId
 	) {
-		ChildExpressionResponseDto response =
-			childExpressionService.analyzeAndSave(childId, topicId, dto.getSttText());
-
+		ChildExpressionResponseDto response = childExpressionService.analyzeAndSave(childId, topicId);
 		return ResponseEntity.ok(response);
 	}
 }
