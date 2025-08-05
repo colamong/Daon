@@ -1,14 +1,10 @@
 package com.daon.be.conversation.controller;
 
-import java.util.List;
-import java.util.Map;
-
 import com.daon.be.child.repository.ChildProfileRepository;
 import com.daon.be.conversation.dto.ChildAnswerRequestDto;
 import com.daon.be.conversation.dto.ConversationTopicRequestDto;
 import com.daon.be.conversation.dto.ConversationTopicResponseDto;
-import com.daon.be.conversation.dto.GptAudioResponse;
-import com.daon.be.conversation.entity.ChildAnswer;
+import com.daon.be.conversation.dto.GptAudioResponseDto;
 import com.daon.be.conversation.entity.ConversationPrompt;
 import com.daon.be.conversation.entity.ConversationTopic;
 import com.daon.be.conversation.repository.ConversationTopicRepository;
@@ -83,8 +79,8 @@ public class ConversationController {
 	 * 디버깅용: Redis에서 문답 내용 조회
 	 */
 	@PostMapping("/answer")
-	public ResponseEntity<GptAudioResponse> handleAnswer(@RequestBody ChildAnswerRequestDto dto) {
-		GptAudioResponse response = childAnswerService.saveAnswerAndGetNextQuestionAudio(dto);
+	public ResponseEntity<GptAudioResponseDto> handleAnswer(@RequestBody ChildAnswerRequestDto dto) {
+		GptAudioResponseDto response = childAnswerService.saveAnswerAndGetNextQuestionAudio(dto);
 		return ResponseEntity.ok(response);
 	}
 	//관리자 새로운 대화주제 추가용

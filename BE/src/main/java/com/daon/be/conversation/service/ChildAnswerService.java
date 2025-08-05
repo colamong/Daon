@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +19,7 @@ import com.daon.be.child.repository.ChildProfileRepository;
 import com.daon.be.conversation.dto.ChildAnswerRedisDto;
 import com.daon.be.conversation.dto.ChildAnswerRequestDto;
 import com.daon.be.conversation.dto.ConversationTopicRequestDto;
-import com.daon.be.conversation.dto.GptAudioResponse;
+import com.daon.be.conversation.dto.GptAudioResponseDto;
 import com.daon.be.conversation.entity.ChildAnswer;
 import com.daon.be.conversation.entity.ConversationResult;
 import com.daon.be.conversation.entity.ConversationTopic;
@@ -84,7 +83,7 @@ public class ChildAnswerService {
 	}*/
 
 	@Transactional
-	public GptAudioResponse saveAnswerAndGetNextQuestionAudio(ChildAnswerRequestDto dto) {
+	public GptAudioResponseDto saveAnswerAndGetNextQuestionAudio(ChildAnswerRequestDto dto) {
 		Long childId = dto.getChildId();
 		Long topicId = dto.getTopicId();
 		int step = dto.getStep();
@@ -111,7 +110,7 @@ public class ChildAnswerService {
 			// 아직 미구현
 			// String mp3Url = gmsOpenAiClient.tts(endMessage);
 
-			return new GptAudioResponse(endMessage, null, true);
+			return new GptAudioResponseDto(endMessage, null, true);
 		}
 
 		// 4. 다음 질문 생성
@@ -121,7 +120,7 @@ public class ChildAnswerService {
 		// 아직 미구현
 		// String mp3Url = gmsOpenAiClient.tts(nextQuestion);
 
-		return new GptAudioResponse(nextQuestion, null, false);
+		return new GptAudioResponseDto(nextQuestion, null, false);
 	}
 
 
