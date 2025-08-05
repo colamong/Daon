@@ -24,6 +24,9 @@ import LearningHelper from "@/views/LearningHelper.vue";
 import RegisterChild from "@/views/RegisterChild.vue";
 import EditChild from "@/views/EditChild.vue";
 
+// 프로필
+import ProfileEdit from "@/views/ProfileEdit.vue";
+
 // 아이 활동 페이지
 import ChildMain from "@/views/ChildMain.vue";
 import ChildPet from "@/views/ChildPet.vue";
@@ -55,6 +58,13 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: "", name: "Dashboard", component: Dashboard },
+      // 프로필 수정 (직접 접근용)
+      {
+        path: "/profile/edit",
+        name: "ProfileEditDirect",
+        component: ProfileEdit,
+        meta: { requiresAuth: true },
+      },
       { path: "home", name: "Home", component: Home },
       { path: "ocr", name: "OCRTool", component: OCRTool },
       { path: "ocr/result", name: "OCRResult", component: OCRResult },
@@ -73,6 +83,7 @@ const routes = [
         component: RegisterChild,
       },
       { path: "child/edit", name: "EditChild", component: EditChild },
+      { path: "profile/edit", name: "ProfileEdit", component: ProfileEdit },
     ],
   },
 

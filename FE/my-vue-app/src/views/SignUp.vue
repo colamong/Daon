@@ -155,7 +155,13 @@
           class="flex-1 py-2 pl-1 pr-3 text-sm focus:outline-none font-paper"
         >
           <option disabled value="">자신의 국가를 선택하세요</option>
-          <option v-for="c in countryOptions" :key="c">{{ c }}</option>
+          <option
+            v-for="option in countryOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </option>
         </select>
       </div>
     </div>
@@ -201,7 +207,26 @@ const domainOption = ref(domainOptions[0]);
 const customDomain = ref("");
 const password = ref("");
 const confirmPassword = ref("");
-const countryOptions = ["대한민국", "미국", "베트남", "중국", "일본"];
+const countryOptions = [
+  { value: "대한민국", label: "🇰🇷 대한민국" },
+  { value: "베트남", label: "🇻🇳 베트남" },
+  { value: "필리핀", label: "🇵🇭 필리핀" },
+  { value: "태국", label: "🇹🇭 태국" },
+  { value: "캄보디아", label: "🇰🇭 캄보디아" },
+  { value: "몽골", label: "🇲🇳 몽골" },
+  { value: "우즈베키스탄", label: "🇺🇿 우즈베키스탄" },
+  { value: "미국", label: "🇺🇸 미국" },
+  { value: "일본", label: "🇯🇵 일본" },
+  { value: "중국", label: "🇨🇳 중국" },
+  { value: "영국", label: "🇬🇧 영국" },
+  { value: "프랑스", label: "🇫🇷 프랑스" },
+  { value: "독일", label: "🇩🇪 독일" },
+  { value: "캐나다", label: "🇨🇦 캐나다" },
+  { value: "호주", label: "🇦🇺 호주" },
+  { value: "스페인", label: "🇪🇸 스페인" },
+  { value: "이탈리아", label: "🇮🇹 이탈리아" },
+  { value: "브라질", label: "🇧🇷 브라질" },
+];
 const country = ref("");
 
 const email = computed(() =>
