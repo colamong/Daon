@@ -71,19 +71,9 @@ public class ConversationResult {
 		return result;
 	}
 
-	public static ConversationResult createFromAi(
-		ChildProfile child, ConversationTopic topic,
-		GptChildConversationResponseDto gptResponse, String sttText) {
-
-		ConversationResult result = new ConversationResult();
-		result.child = child;
-		result.topic = topic;
-		result.emotionReport = gptResponse.getEmotion();
-		result.analysisResult = gptResponse.getSummary();
-		result.sttText = sttText;
-		result.createdAt = LocalDateTime.now();
-
-		return result;
+	public void applyGptAnalysis(GptChildConversationResponseDto gptResponse) {
+		this.analysisResult = gptResponse.getSummary();
+		this.emotionReport = gptResponse.getEmotion();
 	}
 
 	public ChildExpressionResponseDto toResponseDto() {
