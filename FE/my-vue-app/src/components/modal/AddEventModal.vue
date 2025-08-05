@@ -38,12 +38,14 @@
 <script setup>
 import { ref, watch } from "vue";
 import BaseModal from "@/components/modal/BaseModal.vue";
+import { useNotification } from '@/composables/useNotification.js';
 
 const props = defineProps({
   modelValue: Boolean,
 });
 
 const emit = defineEmits(["update:modelValue", "add-event"]);
+const { showError } = useNotification();
 
 const visible = ref(false);
 const title = ref("");
@@ -59,7 +61,7 @@ watch(visible, (newVal) => emit("update:modelValue", newVal));
 
 function submitEvent() {
   if (!title.value || !date.value) {
-    alert("제목과 날짜는 필수 입력사항입니다.");
+    showError("제목과 날짜는 필수 입력사항입니다.", "입력 오류");
     return;
   }
 

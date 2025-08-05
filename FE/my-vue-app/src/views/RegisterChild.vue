@@ -139,13 +139,16 @@
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
 import { useRouter } from "vue-router";
+import { useNotification } from '@/composables/useNotification.js';
 import { useAuthStore } from "@/store/auth";
+import { assignColorToChild } from '@/utils/colorManager.js';
 import BaseImageUpload from "@/components/form/BaseImageUpload.vue";
 import BaseRadioGroup from "@/components/form/BaseRadioGroup.vue";
 import BaseCheckboxGroup from "@/components/form/BaseCheckboxGroup.vue";
 
 const router = useRouter();
 const auth = useAuthStore();
+const { showSuccess, showError, showWarning } = useNotification();
 
 const loading = ref(false);
 const selectedYear = ref("");
@@ -236,7 +239,7 @@ function handleImageUpload(file) {
 // 새로운 관심사 추가
 function addNewInterest() {
   if (!newInterest.value.trim()) {
-    alert("관심사를 입력해주세요.");
+    showWarning("관심사를 입력해주세요.", "입력 오류");
     return;
   }
 
@@ -247,7 +250,7 @@ function addNewInterest() {
   );
 
   if (exists) {
-    alert("이미 존재하는 관심사입니다.");
+    showWarning("이미 존재하는 관심사입니다.", "중복된 관심사");
     newInterest.value = "";
     return;
   }
@@ -272,17 +275,17 @@ function addNewInterest() {
 async function handleRegisterChild() {
   // 필수 필드 검증
   if (!childData.name.trim()) {
-    alert("아이의 이름을 입력해주세요.");
+    showError("아이의 이름을 입력해주세요.", "입력 오류");
     return;
   }
 
   if (!childData.birthDate) {
-    alert("생년월일을 선택해주세요.");
+    showError("생년월일을 선택해주세요.", "입력 오류");
     return;
   }
 
   if (!childData.gender) {
-    alert("성별을 선택해주세요.");
+    showError("성별을 선택해주세요.", "입력 오류");
     return;
   }
 
@@ -293,9 +296,11 @@ async function handleRegisterChild() {
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // 아이 정보를 localStorage에 저장 (임시)
+    const childId = Date.now();
     const childInfo = {
-      id: Date.now(),
+      id: childId,
       ...childData,
+      color: assignColorToChild(childId), // 자동으로 색상 할당
       registeredAt: new Date().toISOString(),
     };
 
@@ -312,13 +317,13 @@ async function handleRegisterChild() {
       localStorage.setItem("auth_user", JSON.stringify(auth.user));
     }
 
-    alert(`${childData.name}의 정보가 성공적으로 등록되었습니다! 🎉`);
+    showSuccess(`${childData.name}의 정보가 성공적으로 등록되었습니다!`, "등록 완료");
 
     // 대시보드로 이동
     router.push({ name: "Dashboard" });
   } catch (error) {
     console.error("아이 등록 실패:", error);
-    alert("아이 등록에 실패했습니다. 다시 시도해주세요. 😥");
+    showError("아이 등록에 실패했습니다. 다시 시도해주세요.", "등록 실패");
   } finally {
     loading.value = false;
   }
