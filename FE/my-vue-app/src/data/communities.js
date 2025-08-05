@@ -7,6 +7,7 @@ export const communities = [
     image: "",
     favorites: 12,
     userFavorited: true,
+    userJoined: true,
   },
   {
     id: 2,
@@ -15,6 +16,7 @@ export const communities = [
     image: "",
     favorites: 8,
     userFavorited: true,
+    userJoined: false,
   },
   {
     id: 3,
@@ -23,6 +25,7 @@ export const communities = [
     image: "",
     favorites: 5,
     userFavorited: true,
+    userJoined: true,
   },
   {
     id: 4,
@@ -31,6 +34,7 @@ export const communities = [
     image: "",
     favorites: 15,
     userFavorited: true,
+    userJoined: true,
   },
   {
     id: 5,
@@ -39,6 +43,7 @@ export const communities = [
     image: "",
     favorites: 3,
     userFavorited: true,
+    userJoined: false,
   },
   {
     id: 6,
@@ -47,6 +52,7 @@ export const communities = [
     image: "",
     favorites: 7,
     userFavorited: true,
+    userJoined: false,
   },
   {
     id: 7,
@@ -55,6 +61,7 @@ export const communities = [
     image: "",
     favorites: 25,
     userFavorited: true,
+    userJoined: true,
   },
   {
     id: 8,
@@ -63,6 +70,7 @@ export const communities = [
     image: "",
     favorites: 10,
     userFavorited: false,
+    userJoined: false,
   },
   {
     id: 9,
@@ -71,6 +79,7 @@ export const communities = [
     image: "",
     favorites: 2,
     userFavorited: false,
+    userJoined: false,
   },
   {
     id: 10,
@@ -79,6 +88,7 @@ export const communities = [
     image: "",
     favorites: 6,
     userFavorited: false,
+    userJoined: false,
   },
   {
     id: 11,
@@ -87,6 +97,7 @@ export const communities = [
     image: "",
     favorites: 9,
     userFavorited: false,
+    userJoined: false,
   },
   {
     id: 12,
@@ -95,6 +106,7 @@ export const communities = [
     image: "",
     favorites: 4,
     userFavorited: false,
+    userJoined: false,
   },
   {
     id: 13,
@@ -103,6 +115,7 @@ export const communities = [
     image: "",
     favorites: 20,
     userFavorited: false,
+    userJoined: false,
   },
   {
     id: 14,
@@ -111,6 +124,7 @@ export const communities = [
     image: "",
     favorites: 1,
     userFavorited: false,
+    userJoined: false,
   },
   {
     id: 15,
@@ -119,6 +133,7 @@ export const communities = [
     image: "",
     favorites: 11,
     userFavorited: false,
+    userJoined: false,
   },
   {
     id: 16,
@@ -127,6 +142,7 @@ export const communities = [
     image: "",
     favorites: 13,
     userFavorited: false,
+    userJoined: false,
   },
   {
     id: 17,
@@ -135,6 +151,7 @@ export const communities = [
     image: "",
     favorites: 0,
     userFavorited: false,
+    userJoined: false,
   },
   {
     id: 18,
@@ -143,5 +160,6 @@ export const communities = [
     image: "",
     favorites: 14,
     userFavorited: false,
+    userJoined: false,
   },
 ];
