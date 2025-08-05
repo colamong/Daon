@@ -113,57 +113,81 @@
             </template>
             <template v-else>
               <p class="text-white mb-4">아직 활동하지 않았습니다.</p>
-              <router-link
-                to="/child"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              <button
+                @click="goToActivity"
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-paper"
               >
-                활동하러 가기
-              </router-link>
+                {{ hasChild ? '활동하러 가기' : '아이 등록하러 가기' }}
+              </button>
             </template>
           </div>
         </div>
         <div>
-          <div
-            v-if="hasChild"
-            class="h-[400px] bg-yellow-100 rounded-lg p-6 flex flex-col"
-          >
-            <div class="flex items-center mb-4 space-x-4">
-              <img
-                :src="child.children[0].profile || 'https://placehold.co/64x64'"
-                alt="아이 프로필"
-                class="w-16 h-16 rounded-full shadow"
-              />
-              <div>
-                <h4 class="text-lg font-semibold">
-                  {{ child.children[0].name }}
-                </h4>
-                <button
-                  @click="$router.push('/child/edit')"
-                  class="text-xs text-gray-700 border border-gray-300 px-2 py-1 rounded"
+          <div v-if="hasChild" class="h-[400px] flex flex-col">
+            <!-- 상단 탭 영역 -->
+            <div class="flex items-start relative z-10">
+              <!-- 아이들 탭 -->
+              <div
+                v-for="(child, index) in childrenList"
+                :key="child.id"
+                @click="selectedChildIndex = index"
+                class="relative"
+              >
+                <!-- 탭 내용 -->
+                <div
+                  class="px-4 py-2 rounded-t-lg cursor-pointer transition-colors mr-1"
+                  :class="{
+                    'bg-yellow-200 text-black font-bold': selectedChildIndex === index,
+                    'bg-yellow-200 text-gray-700': selectedChildIndex !== index
+                  }"
+                  style="background-color: #fef08a !important; margin-bottom: -1px;"
                 >
-                  프로필 수정
-                </button>
+                  {{ child.name }}
+                </div>
+              </div>
+              
+              <!-- 아이 추가 버튼 탭 -->
+              <div
+                @click="goToChildRegister"
+                class="px-3 py-2 bg-gray-600 text-white rounded-t-lg cursor-pointer hover:bg-gray-700 transition-colors flex items-center gap-1"
+              >
+                <span class="text-sm">아이추가 +</span>
               </div>
             </div>
-            <p class="text-sm text-gray-700 mb-1">
-              <span class="font-medium">나이:</span> {{ child.children[0].age }}
-            </p>
-            <p class="text-sm text-gray-700">
-              <span class="font-medium">관심사:</span>
-              {{ child.children[0].interests }}
-            </p>
+
+            <!-- 선택된 아이의 프로필 카드 -->
+            <div class="bg-yellow-200 rounded-lg flex-1 p-6 flex flex-col items-center relative" style="background-color: #fef08a !important; border-top-left-radius: 0; border-top-right-radius: 0.5rem;">
+              <!-- 중앙 프로필 이미지 -->
+              <div class="flex-1 flex items-center justify-center">
+                <img
+                  :src="selectedChild.profileImage || 'https://placehold.co/200x200'"
+                  alt="아이 프로필"
+                  class="w-48 h-48 rounded-full object-cover border-4 border-white shadow-lg"
+                />
+              </div>
+
+              <!-- 하단 정보 -->
+              <div class="w-full text-center space-y-2">
+                <p class="text-lg font-bold text-black">
+                  나이 : {{ calculateAge(selectedChild.birthDate) }}세(만 {{ calculateAge(selectedChild.birthDate) - 1 }}세)
+                </p>
+                <p class="text-lg font-bold text-black">
+                  관심사 : {{ selectedChild.interests ? selectedChild.interests.slice(0, 2).join(', ') : '없음' }}{{ selectedChild.interests && selectedChild.interests.length > 2 ? ' ...' : '' }}
+                </p>
+              </div>
+            </div>
           </div>
           <div
             v-else
             class="bg-yellow-100 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
           >
             <p class="text-black-700 mb-4">아직 등록된 아이가 없습니다.</p>
-            <router-link
-              to="/child/register"
-              class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+            <button
+              @click="goToChildRegister"
+              class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 font-paper"
             >
               아이 등록하러 가기
-            </router-link>
+            </button>
           </div>
         </div>
       </div>
@@ -172,17 +196,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from 'vue-router';
 import dayjs from "dayjs";
 
 import AddEventModal from "@/components/modal/AddEventModal.vue";
 import CalendarWidget from "@/components/widget/CalendarWidget.vue";
 import ScheduleCard from "@/components/card/ScheduleCard.vue";
 import BaseCard from "@/components/card/BaseCard.vue";
-import { useChildStore } from "@/store/child";
+import { useAuthStore } from "@/store/auth";
 import { dummyEvents } from "@/data/dummyData.js";
 
-const child = useChildStore();
+const router = useRouter();
+
+const auth = useAuthStore();
 const events = ref(dummyEvents);
 const selectedMonth = ref(dayjs().format("YYYY-MM"));
 
@@ -235,8 +262,57 @@ const todayDrawing = ref({
   age: "",
   interests: "",
 });
-const hasChild = computed(() => child.children.length > 0);
+// 아이 정보 관련
+const childrenList = ref([]);
+const selectedChildIndex = ref(0);
+
+// 아이 정보 로드
+function loadChildren() {
+  const children = JSON.parse(localStorage.getItem('children') || '[]');
+  childrenList.value = children;
+}
+
+// 컴포넌트 마운트 시 아이 정보 로드
+onMounted(() => {
+  loadChildren();
+});
+
+const hasChild = computed(() => childrenList.value.length > 0);
 const hasActivity = computed(() => !!todayDrawing.value.imgUrl);
+const selectedChild = computed(() => childrenList.value[selectedChildIndex.value] || {});
+
+// 아이 등록/수정 페이지로 이동
+function goToChildRegister() {
+  router.push({ name: 'RegisterChild' });
+}
+
+function goToChildEdit() {
+  router.push({ name: 'EditChild' });
+}
+
+// 활동하러 가기 버튼 클릭
+function goToActivity() {
+  if (hasChild.value) {
+    router.push({ name: 'ChildMain' });
+  } else {
+    router.push({ name: 'RegisterChild' });
+  }
+}
+
+// 나이 계산 함수
+function calculateAge(birthDate) {
+  if (!birthDate) return 0;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age + 1; // 한국 나이로 표시 (만 나이 + 1)
+}
 </script>
 
 <style scoped>
