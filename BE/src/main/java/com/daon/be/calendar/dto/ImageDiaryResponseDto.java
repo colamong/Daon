@@ -12,16 +12,18 @@ import java.time.LocalDateTime;
 public class ImageDiaryResponseDto {
 
     private Long id;
+    private Long childId;
     private String imageUrl;
     private String diaryText;
     private LocalDateTime createdAt;
 
     public static ImageDiaryResponseDto from(com.daon.be.calendar.entity.ImageDiary entity) {
         return new ImageDiaryResponseDto(
-                entity.getId(),
-                entity.getImageUrl(),
-                entity.getDiaryText(),
-                entity.getCreatedAt()
+            entity.getId(),
+            entity.getCalendar().getChild().getId(),
+            entity.getImageUrl(),
+            entity.getDiaryText(),
+            entity.getCreatedAt()
         );
     }
 }
