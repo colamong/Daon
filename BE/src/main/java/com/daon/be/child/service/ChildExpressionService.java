@@ -4,5 +4,5 @@ import com.daon.be.child.dto.ChildExpressionResponseDto;
 
 public interface ChildExpressionService {
 
-	public ChildExpressionResponseDto analyzeAndSave(Long childId, Long topicId);
+	public ChildExpressionResponseDto analyzeAndSave(Long childId, Long conversationResultId);
 }
