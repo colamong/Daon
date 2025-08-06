@@ -8,7 +8,9 @@
     />
 
     <!-- header -->
-    <header class="fixed top-4 left-4 z-20">
+    <header
+      class="fixed top-4 left-4 right-4 z-20 flex items-center justify-between"
+    >
       <button
         @click="goBack"
         class="w-20 h-20 bg-white rounded-lg shadow flex items-center justify-center"
@@ -19,6 +21,23 @@
           class="w-full h-full object-contain"
         />
       </button>
+
+      <!-- 선택된 아이 이름 표시 -->
+      <div
+        v-if="selectedChild && selectedChild.name"
+        class="bg-white/70 backdrop-blur-sm rounded-2xl px-6 py-3 shadow-lg"
+      >
+        <div class="flex items-center gap-3">
+          <img
+            :src="selectedChild.profileImage || 'https://placehold.co/40x40'"
+            :alt="`${selectedChild.name} 프로필`"
+            class="w-12 h-12 rounded-full object-cover border-2 border-white"
+          />
+          <p class="text-4xl text-gray-800 font-shark">
+            {{ selectedChild.name }}
+          </p>
+        </div>
+      </div>
     </header>
 
     <!-- main (펭귄 + 아래에 붙는 게이지) -->
@@ -48,8 +67,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useChildStore } from "@/store/child";
 
 // 이미지
 import HomeIcon from "../assets/images/Home.png";
@@ -63,9 +83,19 @@ import lvl6 from "../assets/images/lv_6.png";
 import lvl7 from "../assets/images/lv_7.png";
 
 const router = useRouter();
+const childStore = useChildStore();
+
+// 선택된 아이 정보
+const selectedChild = computed(() => childStore.selectedChild);
+
 function goBack() {
   router.back();
 }
+
+// 컴포넌트 마운트 시 childStore 초기화
+onMounted(() => {
+  childStore.initialize();
+});
 
 // -- 예시 API 데이터 --
 const userDinosaur = { current_stage: 5 }; // 현재 단계
