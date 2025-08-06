@@ -67,9 +67,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useChildStore } from "@/store/child";
+import { getChildPenguinData, incrementConversation } from "@/data/penguinData.js";
 
 // 이미지
 import HomeIcon from "../assets/images/Home.png";
@@ -88,28 +89,54 @@ const childStore = useChildStore();
 // 선택된 아이 정보
 const selectedChild = computed(() => childStore.selectedChild);
 
+// 펭귄 데이터 상태
+const currentStage = ref(1);
+const conversationCnt = ref(0);
+const dinosaur = { max_stage: 7 }; // 최대 단계
+
+// 선택된 아이의 펭귄 데이터 로드
+function loadPenguinData() {
+  if (selectedChild.value && selectedChild.value.name) {
+    const penguinData = getChildPenguinData(selectedChild.value.name);
+    currentStage.value = penguinData.currentStage;
+    conversationCnt.value = penguinData.conversationCount;
+  }
+}
+
+// 선택된 아이가 변경될 때마다 펭귄 데이터 다시 로드
+watch(selectedChild, (newChild) => {
+  if (newChild && newChild.name) {
+    loadPenguinData();
+  }
+}, { immediate: true });
+
 function goBack() {
   router.back();
 }
 
-// 컴포넌트 마운트 시 childStore 초기화
+// 컴포넌트 마운트 시 초기화
 onMounted(() => {
   childStore.initialize();
+  loadPenguinData();
 });
 
-// -- 예시 API 데이터 --
-const userDinosaur = { current_stage: 5 }; // 현재 단계
-const conversationReward = { conversation_count: 5 }; // 대화 횟수
-const dinosaur = { max_stage: 7 }; // 최대 단계
+// 2) 각 레벨별 다음 단계까지 필요한 대화 횟수 매핑
+const levelRequirements = {
+  1: 2,   // 1→2레벨: 2번 대화
+  2: 4,   // 2→3레벨: 4번 대화  
+  3: 6,   // 3→4레벨: 6번 대화
+  4: 8,   // 4→5레벨: 8번 대화
+  5: 10,  // 5→6레벨: 10번 대화
+  6: 12,  // 6→7레벨: 12번 대화
+  7: 0    // 7레벨은 최대 레벨
+};
 
-// 1) reactive state
-const currentStage = ref(userDinosaur.current_stage);
-const conversationCnt = ref(conversationReward.conversation_count);
+// 3) 현재 레벨에서 다음 단계까지 필요한 대화 횟수
+const thresholdConvs = computed(() => {
+  return levelRequirements[currentStage.value] || 0;
+});
 
-// 2) 다음 단계까지 필요한 대화 횟수
-const thresholdConvs = computed(() => currentStage.value * 2);
-
-// 3) 단계별 펭귄 이미지
+// 4) 단계별 펭귄 이미지
 const penguinImgs = {
   1: lvl1,
   2: lvl2,
@@ -124,10 +151,26 @@ const penguinSrc = computed(() => {
   return penguinImgs[stage] || lvl1;
 });
 
-// 4) 경험치(대화) 비율 0~100%
+// 5) 경험치(대화) 비율 0~100%
 const expRatio = computed(() => {
-  if (currentStage.value >= dinosaur.max_stage) return 100;
-  return Math.min(100, (conversationCnt.value / thresholdConvs.value) * 100);
+  // 7레벨(최대 레벨) 달성 시 항상 100%
+  if (currentStage.value >= dinosaur.max_stage) {
+    return 100;
+  }
+  
+  // 현재 레벨에서 다음 레벨까지 필요한 대화 횟수
+  const requiredConversations = thresholdConvs.value;
+  
+  // 필요 대화 횟수가 0이면 100% (에러 방지)
+  if (requiredConversations === 0) {
+    return 100;
+  }
+  
+  // 경험치 비율 계산: (현재 대화 횟수 / 필요 대화 횟수) * 100
+  const ratio = (conversationCnt.value / requiredConversations) * 100;
+  
+  // 100%를 넘지 않도록 제한
+  return Math.min(100, Math.max(0, ratio));
 });
 </script>
 
