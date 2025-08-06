@@ -97,7 +97,7 @@ const routes = [
   // 4) 아이 전용 (헤더·푸터 없이)
   { path: "/child/:childId?", name: "ChildMain", component: ChildMain, props: true },
   { path: "/child/pet", name: "ChildPet", component: ChildPet },
-  { path: "/child/drawing", name: "ChildDrawing", component: ChildDrawing },
+  { path: "/child/drawing/:childId?", name: "ChildDrawing", component: ChildDrawing, props: true },
 
   // 모달창 test
   {
