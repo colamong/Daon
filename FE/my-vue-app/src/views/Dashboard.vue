@@ -116,7 +116,7 @@
             </template>
             <template v-else>
               <p class="text-white mb-4">
-                {{ hasChild && selectedChild.name ? getSubjectSentence(selectedChild.name) : '아직 활동하지 않았습니다.' }}
+                {{ hasChild && selectedChild && selectedChild.name ? getSubjectSentence(selectedChild.name) : '아직 활동하지 않았습니다.' }}
               </p>
               <button
                 @click="goToActivity"
@@ -165,7 +165,7 @@
               <!-- 중앙 프로필 이미지 -->
               <div class="flex-1 flex items-center justify-center">
                 <img
-                  :src="selectedChild.profileImage || 'https://placehold.co/200x200'"
+                  :src="selectedChild?.profileImage || 'https://placehold.co/200x200'"
                   alt="아이 프로필"
                   class="w-48 h-48 rounded-full object-cover border-4 border-white shadow-lg"
                 />
@@ -174,10 +174,10 @@
               <!-- 하단 정보 -->
               <div class="w-full text-center space-y-2">
                 <p class="text-lg font-bold text-black">
-                  나이 : {{ calculateAge(selectedChild.birthDate) }}세(만 {{ calculateAge(selectedChild.birthDate) - 1 }}세)
+                  나이 : {{ selectedChild ? calculateAge(selectedChild.birthDate) : 0 }}세(만 {{ selectedChild ? calculateAge(selectedChild.birthDate) - 1 : 0 }}세)
                 </p>
                 <p class="text-lg font-bold text-black">
-                  관심사 : {{ selectedChild.interests ? selectedChild.interests.slice(0, 2).join(', ') : '없음' }}{{ selectedChild.interests && selectedChild.interests.length > 2 ? ' ...' : '' }}
+                  관심사 : {{ selectedChild?.interests ? selectedChild.interests.slice(0, 2).join(', ') : '없음' }}{{ selectedChild?.interests && selectedChild.interests.length > 2 ? ' ...' : '' }}
                 </p>
               </div>
             </div>
@@ -202,11 +202,12 @@
     <EmotionReportModal
       v-if="hasActivity"
       v-model="showEmotionReportModal"
-      :child-name="selectedChild.name"
+      :child-name="selectedChild && selectedChild.name ? selectedChild.name : ''"
       :report-date="dayjs().format('YYYY-MM-DD')"
       :report-data="todayActivity"
       :show-navigation="false"
     />
+    
 
   </div>
 </template>
@@ -222,6 +223,7 @@ import ScheduleCard from "@/components/card/ScheduleCard.vue";
 import BaseCard from "@/components/card/BaseCard.vue";
 import EmotionReportModal from '@/components/modal/EmotionReportModal.vue';
 import { useAuthStore } from "@/store/auth";
+import { useChildStore } from "@/store/child";
 import { dummyEvents } from "@/data/dummyData.js";
 import { emotionReportsByChild } from '@/data/emotionReports.js';
 import { useNotification } from '@/composables/useNotification.js';
@@ -229,6 +231,7 @@ import { ensureAllChildrenHaveColors } from '@/utils/colorManager.js';
 
 const router = useRouter();
 const auth = useAuthStore();
+const childStore = useChildStore();
 const { showWarning } = useNotification();
 const events = ref(dummyEvents);
 const selectedMonth = ref(dayjs().format("YYYY-MM"));
@@ -282,27 +285,28 @@ const todayDrawing = ref({
   age: "",
   interests: "",
 });
-// 아이 정보 관련
-const childrenList = ref([]);
-const selectedChildIndex = ref(0);
-
-// 아이 정보 로드
-function loadChildren() {
-  const children = ensureAllChildrenHaveColors(); // 기존 아이들에게도 색상 할당
-  childrenList.value = children;
-}
 
 // 컴포넌트 마운트 시 아이 정보 로드
 onMounted(() => {
-  loadChildren();
+  childStore.initialize();
 });
 
-const hasChild = computed(() => childrenList.value.length > 0);
-const selectedChild = computed(() => childrenList.value[selectedChildIndex.value] || {});
+// childStore의 computed 속성 사용
+const hasChild = computed(() => childStore.hasChildren);
+const selectedChild = computed(() => childStore.selectedChild);
+const childrenList = computed(() => childStore.children);
+const selectedChildIndex = computed({
+  get: () => childStore.selectedChildIndex,
+  set: (index) => {
+    if (childrenList.value[index]) {
+      childStore.selectChild(childrenList.value[index].id);
+    }
+  }
+});
 
 // 선택된 아이의 오늘 활동 체크
 const todayActivity = computed(() => {
-  if (!selectedChild.value.name) return null;
+  if (!selectedChild.value || !selectedChild.value.name) return null;
   
   const today = dayjs().format('YYYY-MM-DD');
   const childData = emotionReportsByChild[selectedChild.value.name];
@@ -317,13 +321,16 @@ const hasActivity = computed(() => !!todayActivity.value);
 // 감정 리포트 모달 관련
 const showEmotionReportModal = ref(false);
 
+
 // 오늘의 리포트 모달 열기
 function openTodayReport() {
   if (hasActivity.value) {
     showEmotionReportModal.value = true;
   } else {
     showWarning(
-      getObjectSentence(selectedChild.value.name),
+      selectedChild.value && selectedChild.value.name ? 
+        getObjectSentence(selectedChild.value.name) : 
+        '아직 활동하지 않았습니다!',
       '아직 활동하지 않았습니다!'
     );
   }
@@ -380,12 +387,17 @@ function goToChildEdit() {
 
 // 활동하러 가기 버튼 클릭
 function goToActivity() {
-  if (hasChild.value) {
-    router.push({ name: 'ChildMain' });
+  if (hasChild.value && selectedChild.value) {
+    // 선택된 아이 정보와 함께 ChildMain으로 이동
+    router.push({ 
+      name: 'ChildMain',
+      params: { childId: selectedChild.value.id }
+    });
   } else {
     router.push({ name: 'RegisterChild' });
   }
 }
+
 
 // 나이 계산 함수
 function calculateAge(birthDate) {
