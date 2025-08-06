@@ -124,6 +124,22 @@
         </BaseButton>
       </div>
     </div>
+
+    <!-- 펭구랑 놀자 - 아이 선택 모달 -->
+    <ChildSelectModal 
+      v-model="showPenguinChildSelectModal"
+      :children="childStore.children"
+      action-text="펭귄과 놀"
+      @select="onPenguinChildSelected"
+      @register="goToChildRegister"
+    />
+    
+    <!-- 아이 등록 확인 모달 -->
+    <ConfirmChildRegistrationModal 
+      v-model="showChildRegistrationModal"
+      @confirm="handleChildRegistrationConfirm"
+      @cancel="handleChildRegistrationCancel"
+    />
   </header>
 </template>
 
@@ -131,14 +147,20 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
+import { useChildStore } from "@/store/child";
 import BaseButton from "@/components/button/BaseButton.vue";
+import ChildSelectModal from "@/components/modal/ChildSelectModal.vue";
+import ConfirmChildRegistrationModal from "@/components/modal/ConfirmChildRegistrationModal.vue";
 
 const router = useRouter();
 const auth = useAuthStore();
+const childStore = useChildStore();
 
 const showProfile = ref(false);
 const profileCard = ref(null);
 const wrapper = ref(null);
+const showPenguinChildSelectModal = ref(false);
+const showChildRegistrationModal = ref(false);
 
 function toggleProfile() {
   showProfile.value = !showProfile.value;
@@ -150,19 +172,65 @@ function logout() {
 }
 
 const goDashboard = () => router.push({ name: "Dashboard" });
-const goChildMain = () => router.push({ name: "ChildMain" });
+
+const goChildMain = () => {
+  // 아이 정보 확인
+  childStore.initialize();
+  
+  if (!childStore.hasChildren) {
+    // 아이가 없으면 등록 확인 모달 표시
+    showChildRegistrationModal.value = true;
+    return;
+  }
+  
+  // 아이가 1명이면 바로 선택하고 이동
+  if (childStore.children.length === 1) {
+    childStore.selectChild(childStore.children[0].id);
+    router.push({ 
+      name: 'ChildMain',
+      params: { childId: childStore.children[0].id }
+    });
+    return;
+  }
+  
+  // 여러 명이면 선택 모달 표시
+  showPenguinChildSelectModal.value = true;
+};
+
 const goChildProfile = () => {
-  // localStorage에서 아이 정보 확인
-  const children = JSON.parse(localStorage.getItem('children') || '[]');
-  const hasChildren = children.length > 0;
+  // 아이 정보 확인
+  childStore.initialize();
   
   router.push({
-    name: hasChildren ? "ChildProfile" : "RegisterChild",
+    name: childStore.hasChildren ? "ChildProfile" : "RegisterChild",
   });
 };
 const goOCRTool = () => router.push({ name: "OCRTool" });
 const goCommunityChat = () => router.push({ name: "Community" });
 const goLearningHelper = () => router.push({ name: "LearningHelper" });
+
+// 펭구랑 놀자에서 아이 선택됐을 때
+function onPenguinChildSelected(child) {
+  childStore.selectChild(child.id);
+  router.push({ 
+    name: 'ChildMain',
+    params: { childId: child.id }
+  });
+}
+
+// 아이 등록하러 가기
+function goToChildRegister() {
+  router.push({ name: 'RegisterChild' });
+}
+
+// 아이 등록 모달 핸들러
+function handleChildRegistrationConfirm() {
+  router.push({ name: 'RegisterChild' });
+}
+
+function handleChildRegistrationCancel() {
+  // 취소 시 아무것도 하지 않음
+}
 
 function handleClickOutside(e) {
   if (

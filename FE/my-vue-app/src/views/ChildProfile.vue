@@ -220,11 +220,21 @@ import {
   getChildColor,
   ensureAllChildrenHaveColors,
 } from "@/utils/colorManager.js";
+import { useChildStore } from "@/store/child";
 
 const router = useRouter();
+const childStore = useChildStore();
 
-const childrenList = ref([]);
-const selectedChildIndex = ref(0);
+// childStore에서 데이터 가져오기
+const childrenList = computed(() => childStore.children);
+const selectedChildIndex = computed({
+  get: () => childStore.selectedChildIndex,
+  set: (index) => {
+    if (childrenList.value[index]) {
+      childStore.selectChild(childrenList.value[index].id);
+    }
+  }
+});
 
 // 감정 리포트 모달 관련
 const showEmotionReportModal = ref(false);
@@ -346,11 +356,9 @@ const calendarOptions = computed(() => ({
   aspectRatio: 1.8,
 }));
 
-// 아이 정보 로드
-function loadChildren() {
-  const children = ensureAllChildrenHaveColors(); // 기존 아이들에게도 색상 할당
-  childrenList.value = children;
-}
+// childStore의 computed 속성들 사용
+const hasChild = computed(() => childStore.hasChildren);
+const selectedChild = computed(() => childStore.selectedChild);
 
 // 감정 리포트 관련 함수
 function handleEventClick(info) {
@@ -397,7 +405,7 @@ function goToNextReport() {
 
 // 컴포넌트 마운트 시 아이 정보 로드
 onMounted(() => {
-  loadChildren();
+  childStore.initialize();
   // 전역 함수로 등록 (달력의 HTML 버튼에서 호출하기 위해)
   window.openEmotionReport = openEmotionReport;
 
@@ -408,11 +416,6 @@ onMounted(() => {
     );
   }, 100);
 });
-
-const hasChild = computed(() => childrenList.value.length > 0);
-const selectedChild = computed(
-  () => childrenList.value[selectedChildIndex.value] || {}
-);
 
 // 나이 계산 함수
 function calculateAge(birthDate) {
@@ -450,7 +453,15 @@ function goToEdit() {
 }
 
 function goToActivity() {
-  router.push({ name: "ChildMain" });
+  if (selectedChild.value) {
+    // 선택된 아이 정보와 함께 ChildMain으로 이동
+    router.push({ 
+      name: 'ChildMain',
+      params: { childId: selectedChild.value.id }
+    });
+  } else {
+    router.push({ name: "RegisterChild" });
+  }
 }
 </script>
 
