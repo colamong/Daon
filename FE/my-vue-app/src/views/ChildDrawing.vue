@@ -8,8 +8,10 @@
       class="absolute inset-0 w-full h-full object-cover -z-10"
     />
 
-    <!-- 뒤로가기 버튼 -->
-    <header class="fixed top-4 left-4 z-30">
+    <!-- 헤더 -->
+    <header
+      class="fixed top-4 left-4 right-4 z-30 flex items-center justify-between"
+    >
       <button
         @click="goBack"
         class="w-20 h-20 bg-white rounded-lg shadow flex items-center justify-center"
@@ -74,8 +76,9 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from "vue";
+import { ref, computed, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useChildStore } from "@/store/child";
 
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -89,13 +92,36 @@ import bgImage from "@/assets/images/child_calender.png";
 import HomeIcon from "@/assets/images/Home.png";
 import cloudImg from "@/assets/images/cloud.png";
 import playPenImg from "@/assets/images/play_pen.png";
+import { emotionReportsByChild } from "@/data/emotionReports.js";
 
-import diary1 from "@/assets/images/07_28_2025.png";
-import diary2 from "@/assets/images/08_04_2025.png";
-import diary3 from "@/assets/images/08_15_2025.png";
+// props 정의
+const props = defineProps({
+  childId: {
+    type: [String, Number],
+    default: null,
+  },
+});
+
+const router = useRouter();
+const childStore = useChildStore();
+
+// 선택된 아이 정보
+const selectedChild = computed(() => childStore.selectedChild);
+
+// 컴포넌트 마운트 시 실행
+onMounted(() => {
+  childStore.initialize();
+
+  // URL에서 childId가 전달된 경우 해당 아이를 선택
+  if (props.childId) {
+    const childId = parseInt(props.childId);
+    if (childStore.children.find((child) => child.id === childId)) {
+      childStore.selectChild(childId);
+    }
+  }
+});
 
 // 뒤로가기
-const router = useRouter();
 function goBack() {
   router.back();
 }
@@ -104,20 +130,27 @@ function goBack() {
 const showModal = ref(false);
 const selectedDiary = ref({ date: "", imageUrl: "", text: "" });
 
-// 더미 데이터 (정렬된 배열)
-const diaries = ref([
-  { date: "2025-07-28", imageUrl: diary1, text: "오늘은 연을 날렸다." },
-  {
-    date: "2025-08-04",
-    imageUrl: diary2,
-    text: "퍼레이드 봤다. 나팔 부는 사람이 지나갔다.",
-  },
-  {
-    date: "2025-08-15",
-    imageUrl: diary3,
-    text: "동물원에 갔다. 코끼리 구경을 했다.",
-  },
-]);
+// 선택된 아이의 그림일기 데이터
+const diaries = computed(() => {
+  if (!selectedChild.value || !selectedChild.value.name) {
+    return [];
+  }
+
+  const childData = emotionReportsByChild[selectedChild.value.name];
+  if (!childData || !childData.reports) {
+    return [];
+  }
+
+  // emotionReports 데이터를 diaries 형태로 변환
+  return childData.reports
+    .filter((report) => report.diaryImage && report.diaryText) // 그림일기가 있는 것만
+    .map((report) => ({
+      date: report.date,
+      imageUrl: report.diaryImage,
+      text: report.diaryText,
+    }))
+    .sort((a, b) => new Date(a.date) - new Date(b.date)); // 날짜순 정렬
+});
 
 // 날짜 문자열 → diary 객체 매핑
 const diariesMap = computed(() =>
@@ -160,8 +193,8 @@ const calendarOptions = reactive({
   locale: koLocale,
   headerToolbar: { left: "", center: "title", right: "today prev next" },
   titleFormat: { year: "numeric", month: "long" },
-  height: 520,
-  contentHeight: 500,
+  height: 580,
+  contentHeight: 530,
   initialDate: today,
 
   // 날짜 클릭 시 모달 열기
@@ -200,11 +233,11 @@ const calendarOptions = reactive({
     const wrap = document.createElement("div");
     Object.assign(wrap.style, {
       position: "absolute",
-      top: "0.7rem",
+      top: "0.5rem",
       left: "50%",
       transform: "translateX(-50%)",
-      width: "100px",
-      height: "50px",
+      width: "140px",
+      height: "65px",
       overflow: "hidden",
       borderRadius: "0.25rem",
       cursor: "pointer",
@@ -254,7 +287,7 @@ const calendarOptions = reactive({
   font-size: 1.75rem !important;
 }
 :deep(.fc .fc-daygrid-day) {
-  height: 70px !important;
+  height: 80px !important;
   min-width: 100px !important;
 }
 </style>

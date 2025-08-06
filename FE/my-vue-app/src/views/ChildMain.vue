@@ -54,9 +54,9 @@
           </div>
         </div>
 
-        <router-link
-          to="/child/drawing"
-          class="block bg-blue-400 rounded-2xl overflow-hidden shadow hover:shadow-lg transition"
+        <div
+          @click="goToDrawing"
+          class="block bg-blue-400 rounded-2xl overflow-hidden shadow hover:shadow-lg transition cursor-pointer"
         >
           <div class="p-4">
             <h2 class="text-4xl font-shark mb-2 text-center text-outline-white">
@@ -68,7 +68,7 @@
               class="w-full h-full object-contain py-5"
             />
           </div>
-        </router-link>
+        </div>
       </div>
     </main>
   </div>
@@ -117,6 +117,17 @@ function goToPenguin() {
   // 현재 선택된 아이가 있으면 바로 펭귄 페이지로
   if (currentChild.value) {
     router.push({ name: "ChildPet" });
+  }
+}
+
+// 그림일기 클릭 시 바로 이동 (이미 선택된 아이 정보가 있음)
+function goToDrawing() {
+  // 현재 선택된 아이가 있으면 바로 그림일기 페이지로
+  if (currentChild.value) {
+    router.push({ 
+      name: "ChildDrawing", 
+      params: { childId: currentChild.value.id }
+    });
   }
 }
 </script>
