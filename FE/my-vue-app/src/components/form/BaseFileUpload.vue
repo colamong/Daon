@@ -13,7 +13,7 @@
     >
       <p class="text-black text-sm mb-4">
         파일을 드래그하거나 클릭하여 업로드<br />
-        <span class="font-semibold">PDF, JPG, PNG, GIF</span> 파일을 지원합니다.
+        <span class="font-semibold">JPG, PNG</span> 파일을 지원합니다.
       </p>
       <label
         for="fileInput"
@@ -25,8 +25,9 @@
       <input
         id="fileInput"
         type="file"
-        accept=".pdf,.jpg,.jpeg,.png,.gif,image/*"
+        accept=".jpg,.jpeg,.png"
         class="hidden"
+        :disabled="props.disabled"
         @change="onChange"
       />
     </div>
@@ -57,11 +58,15 @@
     <!-- 번역하기 버튼 (아래 중앙) -->
     <BaseButton
       v-if="hasPreview"
-      class="absolute font-paperBold px-4 mt-16 py-2 bg-blue-200 h-10"
+      :class="[
+        'absolute font-paperBold px-4 mt-16 py-2 h-10',
+        props.disabled ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-200 hover:bg-blue-300'
+      ]"
       style="bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 10"
+      :disabled="props.disabled"
       @click="onTranslate"
     >
-      번역하기
+      {{ props.disabled ? '처리 중...' : '번역하기' }}
     </BaseButton>
   </div>
 </template>
@@ -71,6 +76,13 @@ import { ref, computed } from "vue";
 import IconButton from "@/components/button/IconButton.vue";
 import BaseButton from "@/components/button/BaseButton.vue";
 import folderIcon from "@/assets/icons/Folder.svg";
+
+const props = defineProps({
+  disabled: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const emit = defineEmits(["upload:file", "translate"]);
 const imagePreview = ref(null);
@@ -106,6 +118,7 @@ function clear() {
 }
 
 function onTranslate() {
+  if (props.disabled) return;
   emit("translate", { image: imagePreview.value, file: fileName.value });
 }
 </script>
