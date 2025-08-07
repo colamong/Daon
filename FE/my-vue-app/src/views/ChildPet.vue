@@ -13,9 +13,15 @@
     >
       <button
         @click="goBack"
-        class="w-20 h-20 bg-white rounded-lg shadow flex items-center justify-center"
+        :disabled="isLoading"
+        :class="[
+          'w-20 h-20 bg-white rounded-lg shadow flex items-center justify-center',
+          isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'
+        ]"
       >
+        <div v-if="isLoading" class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         <img
+          v-else
           :src="HomeIcon"
           alt="뒤로가기"
           class="w-full h-full object-contain"
@@ -62,15 +68,61 @@
           :style="{ width: expRatio + '%' }"
         ></div>
       </div>
+
+      <!-- 대화 상태 표시 -->
+      <div 
+        v-if="conversationState.isActive" 
+        class="mt-6 bg-white/90 backdrop-blur-sm rounded-2xl p-6 max-w-md w-full shadow-lg"
+      >
+        <div class="text-center">
+          <!-- 진행 상태 -->
+          <div class="mb-4">
+            <span class="text-sm text-gray-600">
+              {{ conversationState.currentStep }} / {{ conversationState.totalSteps }}
+            </span>
+            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div 
+                class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                :style="{ width: (conversationState.currentStep / conversationState.totalSteps * 100) + '%' }"
+              ></div>
+            </div>
+          </div>
+
+          <!-- 현재 질문 -->
+          <div v-if="conversationState.currentQuestion" class="mb-4">
+            <p class="text-lg text-gray-800 font-medium">
+              {{ conversationState.currentQuestion }}
+            </p>
+          </div>
+
+          <!-- 상태 메시지 -->
+          <div class="text-sm text-gray-600">
+            <div v-if="conversationState.isSpeaking" class="flex items-center justify-center gap-2">
+              <div class="animate-pulse w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span>펭구가 말하고 있어요...</span>
+            </div>
+            <div v-else-if="conversationState.isListening" class="flex items-center justify-center gap-2">
+              <div class="animate-ping w-2 h-2 bg-red-500 rounded-full"></div>
+              <span>듣고 있어요... 말해주세요!</span>
+            </div>
+            <div v-else class="flex items-center justify-center gap-2">
+              <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+              <span>스페이스바를 눌러 대답하세요</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useChildStore } from "@/store/child";
 import { getChildPenguinData, incrementConversation } from "@/data/penguinData.js";
+import { childService } from "@/services/childService.js";
+import { speechService } from "@/services/speechService.js";
 
 // 이미지
 import HomeIcon from "../assets/images/Home.png";
@@ -93,6 +145,20 @@ const selectedChild = computed(() => childStore.selectedChild);
 const currentStage = ref(1);
 const conversationCnt = ref(0);
 const dinosaur = { max_stage: 7 }; // 최대 단계
+const isLoading = ref(false); // 로딩 상태
+
+// 대화 상태 관리
+const conversationState = ref({
+  isActive: false,
+  currentStep: 0,
+  totalSteps: 5,
+  topicId: null,
+  conversationResultId: null,
+  currentQuestion: '',
+  isListening: false,
+  isSpeaking: false,
+  answers: []
+});
 
 // 선택된 아이의 펭귄 데이터 로드
 function loadPenguinData() {
@@ -110,14 +176,261 @@ watch(selectedChild, (newChild) => {
   }
 }, { immediate: true });
 
-function goBack() {
-  router.back();
+async function goBack() {
+  if (isLoading.value) return; // 이미 로딩 중이면 중복 실행 방지
+  
+  try {
+    isLoading.value = true;
+    
+    const childId = 2;
+    const { conversationResultId } = conversationState.value;
+    
+    // conversationResultId가 있을 때만 API 호출
+    if (conversationResultId) {
+      // 1. 아이 표정 기록 API 호출
+      const expressionResult = await childService.recordExpression(childId, conversationResultId);
+      console.log('표정 기록 결과:', expressionResult);
+      
+      // 2. 다이어리 생성 API 호출
+      const diaryResult = await childService.createDiary(conversationResultId);
+      console.log('다이어리 생성 결과:', diaryResult);
+    } else {
+      console.warn('conversationResultId가 없어서 API 호출을 건너뜁니다.');
+    }
+    
+    // 3. 모든 API 호출이 완료되면 이전 페이지로 이동
+    router.back();
+    
+  } catch (error) {
+    console.error('홈으로 가기 중 오류:', error);
+    // 에러가 발생해도 페이지는 이동
+    alert(error.message || '처리 중 오류가 발생했지만 홈으로 이동합니다.');
+    router.back();
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+// 대화 시작 함수
+async function startConversation() {
+  try {
+    const childId = 2; // 임시 childId
+    
+    // 1. 대화 시작 API 호출하여 주제 받기
+    const conversationStart = await childService.startConversation(childId);
+    console.log('대화 시작 API 응답:', conversationStart);
+    
+    // 대화 상태 초기화
+    conversationState.value = {
+      isActive: true,
+      currentStep: 1,
+      totalSteps: 5,
+      topicId: conversationStart.id || conversationStart.topicId || 1, // id 필드 우선 확인
+      currentQuestion: '',
+      isListening: false,
+      isSpeaking: false,
+      answers: []
+    };
+    
+    console.log('사용할 topicId:', conversationState.value.topicId);
+    
+    // 첫 번째 질문 받기
+    await getFirstQuestion();
+    
+  } catch (error) {
+    console.error('대화 시작 오류:', error);
+    alert('대화를 시작할 수 없습니다: ' + error.message);
+  }
+}
+
+// 첫 번째 질문 받기
+async function getFirstQuestion() {
+  try {
+    const childId = 2;
+    const { topicId } = conversationState.value;
+    
+    // 첫 번째 질문은 answer를 빈 문자열로 보내기
+    const response = await childService.sendConversationAnswer(childId, topicId, 1, "");
+    console.log('첫 번째 질문 API 응답:', response);
+    
+    // 응답에서 질문 추출
+    conversationState.value.currentQuestion = response.question || response.text || response.prompt || '질문을 받지 못했습니다.';
+    
+    // TTS로 질문 읽기
+    await speakQuestion(conversationState.value.currentQuestion);
+    
+  } catch (error) {
+    console.error('첫 번째 질문 받기 오류:', error);
+    alert('첫 번째 질문을 받을 수 없습니다: ' + error.message);
+  }
+}
+
+// 다음 질문 받기 (답변 제출 후)
+async function getNextQuestion(previousAnswer) {
+  try {
+    const childId = 2;
+    const { topicId, currentStep } = conversationState.value;
+    
+    console.log(`Step ${currentStep} 답변 제출:`, { childId, topicId, currentStep, previousAnswer });
+    
+    const response = await childService.sendConversationAnswer(
+      childId, 
+      topicId, 
+      currentStep, // 현재 단계의 답변 제출
+      previousAnswer,
+      conversationState.value.currentQuestion
+    );
+    console.log(`Step ${currentStep} API 응답:`, response);
+    
+    // 응답에서 다음 질문 추출
+    conversationState.value.currentQuestion = response.question || response.text || response.prompt || '질문을 받지 못했습니다.';
+    
+    // TTS로 질문 읽기
+    await speakQuestion(conversationState.value.currentQuestion);
+    
+  } catch (error) {
+    console.error('다음 질문 받기 오류:', error);
+    alert('다음 질문을 받을 수 없습니다: ' + error.message);
+  }
+}
+
+// 질문을 음성으로 출력
+async function speakQuestion(question) {
+  try {
+    conversationState.value.isSpeaking = true;
+    
+    // 아이를 위한 친근한 음성 설정
+    const voiceOptions = {
+      rate: 0.7,        // 천천히
+      pitch: 1.2,       // 조금 높게 (아이 친화적)
+      volume: 0.9,      // 적당한 볼륨
+      // voiceName: 'Google 한국의'  // 특정 음성 지정 (선택사항)
+    };
+    
+    await speechService.speak(question, voiceOptions);
+    conversationState.value.isSpeaking = false;
+    
+    // 질문이 끝나면 사용자 입력 대기 상태로 변경
+    console.log('스페이스바를 눌러 대답하세요.');
+    
+  } catch (error) {
+    console.error('TTS 오류:', error);
+    conversationState.value.isSpeaking = false;
+  }
+}
+
+// 사용자 답변 듣기
+async function listenForAnswer() {
+  try {
+    conversationState.value.isListening = true;
+    const answer = await speechService.listen({
+      continuous: false,
+      interimResults: false
+    });
+    
+    console.log('사용자 답변:', answer);
+    conversationState.value.isListening = false;
+    
+    // 답변 저장
+    conversationState.value.answers[conversationState.value.currentStep - 1] = answer;
+    
+    // 다음 단계로 진행
+    await processAnswer();
+    
+  } catch (error) {
+    console.error('음성 인식 오류:', error);
+    conversationState.value.isListening = false;
+    alert('음성 인식에 실패했습니다. 다시 시도해주세요.');
+  }
+}
+
+// 답변 처리 및 다음 단계 진행
+async function processAnswer() {
+  const { currentStep, totalSteps, answers } = conversationState.value;
+  const currentAnswer = answers[currentStep - 1]; // 현재 단계의 답변
+  
+  console.log(`Step ${currentStep} 답변 처리:`, currentAnswer);
+  
+  if (currentStep < totalSteps) {
+    // 현재 답변을 제출하고 다음 질문을 받은 후 단계 증가
+    await getNextQuestion(currentAnswer);
+    conversationState.value.currentStep++;
+  } else {
+    // 마지막 답변 제출 및 마무리
+    await finishConversation(currentAnswer);
+  }
+}
+
+// 대화 마무리
+async function finishConversation(finalAnswer) {
+  try {
+    const childId = 2;
+    const { topicId } = conversationState.value;
+    
+    // 마지막 답변 제출
+    const response = await childService.sendConversationAnswer(
+      childId, 
+      topicId, 
+      5, 
+      finalAnswer,
+      conversationState.value.currentQuestion
+    );
+    console.log('최종 API 응답:', response);
+    
+    // conversationResultId 저장
+    if (response.conversationResultId) {
+      conversationState.value.conversationResultId = response.conversationResultId;
+    }
+    
+    // 마무리 멘트 TTS로 출력
+    const closingMessage = response.closingMessage || response.text || response.prompt || '대화가 완료되었습니다. 수고했어요!';
+    await speechService.speak(closingMessage);
+    
+    // Redis에서 DB로 flush (선택사항)
+    try {
+      await childService.flushConversation(childId, topicId);
+    } catch (error) {
+      console.warn('대화 flush 오류:', error);
+    }
+    
+    // 대화 상태 초기화
+    conversationState.value.isActive = false;
+    console.log('대화 완료!');
+    
+  } catch (error) {
+    console.error('대화 마무리 오류:', error);
+    conversationState.value.isActive = false;
+  }
+}
+
+// 키보드 이벤트 핸들러
+function handleKeyPress(event) {
+  // 스페이스바 (코드 32)
+  if (event.code === 'Space' && conversationState.value.isActive && !conversationState.value.isListening && !conversationState.value.isSpeaking) {
+    event.preventDefault();
+    listenForAnswer();
+  }
 }
 
 // 컴포넌트 마운트 시 초기화
-onMounted(() => {
+onMounted(async () => {
   childStore.initialize();
   loadPenguinData();
+  
+  // 키보드 이벤트 리스너 등록
+  window.addEventListener('keydown', handleKeyPress);
+  
+  // 페이지 진입 시 대화 시작
+  await startConversation();
+});
+
+// 컴포넌트 언마운트 시 정리
+onUnmounted(() => {
+  // 키보드 이벤트 리스너 제거
+  window.removeEventListener('keydown', handleKeyPress);
+  
+  // 스피치 서비스 정리
+  speechService.cleanup();
 });
 
 // 2) 각 레벨별 다음 단계까지 필요한 대화 횟수 매핑
