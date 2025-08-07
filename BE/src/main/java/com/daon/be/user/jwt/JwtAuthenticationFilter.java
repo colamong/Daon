@@ -10,6 +10,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -41,11 +42,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	private String extractToken(HttpServletRequest request) {
+		// Authorization 헤더 먼저 확인
 		String bearer = request.getHeader("Authorization");
 		if (bearer != null && bearer.startsWith("Bearer ")) {
 			return bearer.substring(7);
 		}
-		// 또는 쿠키에서 꺼내고 싶으면 여기에 쿠키 로직 추가
+
+		// accessToken 쿠키에서 추출
+		if (request.getCookies() != null) {
+			for (Cookie cookie : request.getCookies()) {
+				if ("accessToken".equals(cookie.getName())) {
+					return cookie.getValue();
+				}
+			}
+		}
 		return null;
 	}
+
 }

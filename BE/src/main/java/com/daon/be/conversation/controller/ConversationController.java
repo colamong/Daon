@@ -25,14 +25,6 @@ public class ConversationController {
 	private final ConversationTopicRepository topicRepository;
 	private final ConversationPromptService conversationPromptService;
 
-	/**
-	 * step1 질문 조회
-	 */
-	@GetMapping("/prompt")
-	public ResponseEntity<String> getPromptForStep1(@RequestParam Long topicId) {
-		ConversationPrompt prompt = conversationPromptService.getPromptByTopicAndStep(topicId, 1);
-		return ResponseEntity.ok(prompt.getPrompt());
-	}
 
 	/**
 	 * 각 스텝의 질문/답변을 Redis에 저장
@@ -58,26 +50,6 @@ public class ConversationController {
 		return ResponseEntity.ok(resultId);  // 바로 응답 반환
 	}
 
-	/**
-	 * GPT를 통해 다음 질문 생성 (step2 이상부터)
-	 */
-	@PostMapping("/next-question")
-	public ResponseEntity<String> getNextQuestion(@RequestBody ChildAnswerRequestDto dto) {
-		if (dto.getStep() == 1) {
-			// step1은 DB에 저장된 ConversationPrompt 사용
-			ConversationPrompt prompt = conversationPromptService.getPromptByTopicAndStep(dto.getTopicId(), 1);
-			return ResponseEntity.ok(prompt.getPrompt());
-		} else {
-			// step2 이상은 LLM 호출
-			String nextPrompt = childAnswerService.generateNextPrompt(dto);
-			return ResponseEntity.ok(nextPrompt);
-		}
-	}
-
-
-	/**
-	 * 디버깅용: Redis에서 문답 내용 조회
-	 */
 	@PostMapping("/answer")
 	public ResponseEntity<GptAudioResponseDto> handleAnswer(@RequestBody ChildAnswerRequestDto dto) {
 		GptAudioResponseDto response = childAnswerService.saveAnswerAndGetNextQuestionAudio(dto);

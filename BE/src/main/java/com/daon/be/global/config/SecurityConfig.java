@@ -24,8 +24,17 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
 			.csrf(csrf -> csrf.disable())
+			.cors(cors -> {}) // CORS 설정은 WebConfig에서 함
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/oauth2/**", "/login/**", "/api/user/**").permitAll()
+					//.anyRequest().permitAll()
+				.requestMatchers(
+					"/api/user/signup",
+					"/api/user/signin",
+					"/api/user/nations",
+					"/api/user/nation/**",
+					"/oauth2/**",
+					"/login/**"
+				).permitAll()
 				.anyRequest().authenticated()
 			)
 			.exceptionHandling(ex -> ex
