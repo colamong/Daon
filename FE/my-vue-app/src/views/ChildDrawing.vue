@@ -48,7 +48,6 @@
             alt="Diary Detail"
             class="mx-auto rounded max-h-[400px]"
           />
-          <p class="text-2xl font-shark">{{ selectedDiary.text }}</p>
         </div>
       </div>
     </BaseModal>
@@ -76,9 +75,10 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from "vue";
+import { ref, computed, reactive, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useChildStore } from "@/store/child";
+import { childService } from "@/services/childService.js";
 
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -92,7 +92,6 @@ import bgImage from "@/assets/images/child_calender.png";
 import HomeIcon from "@/assets/images/Home.png";
 import cloudImg from "@/assets/images/cloud.png";
 import playPenImg from "@/assets/images/play_pen.png";
-import { emotionReportsByChild } from "@/data/emotionReports.js";
 
 // props 정의
 const props = defineProps({
@@ -119,6 +118,18 @@ onMounted(() => {
       childStore.selectChild(childId);
     }
   }
+  
+  // 초기 다이어리 조회
+  fetchMonthlyDiaries();
+  
+  // diaries 데이터 변경 시 FullCalendar 리렌더링 (datesSet에서 처리하므로 제거)
+  // watch(diaries, () => {
+  //   if (calendarRef.value) {
+  //     setTimeout(() => {
+  //       calendarRef.value.getApi().render();
+  //     }, 500);
+  //   }
+  // }, { deep: true });
 });
 
 // 뒤로가기
@@ -129,36 +140,57 @@ function goBack() {
 // 모달 상태 & 선택된 일기
 const showModal = ref(false);
 const selectedDiary = ref({ date: "", imageUrl: "", text: "" });
+const calendarRef = ref(null);
 
-// 선택된 아이의 그림일기 데이터
-const diaries = computed(() => {
-  if (!selectedChild.value || !selectedChild.value.name) {
-    return [];
+// 다이어리 데이터 상태
+const diaries = ref([]);
+const childId = 3; // 고정 childId
+const currentDate = ref(new Date());
+
+// 월별 다이어리 조회
+async function fetchMonthlyDiaries() {
+  try {
+    const year = currentDate.value.getFullYear();
+    const month = currentDate.value.getMonth() + 1;
+    
+    console.log('요청 파라미터:', { childId, year, month });
+    const response = await childService.getMonthlyDiaries(childId, year, month);
+    console.log('응답 결과:', response);
+    console.log('response 타입:', typeof response, 'isArray:', Array.isArray(response));
+    
+    // API 응답을 diaries 형태로 변환
+    // response가 배열이 아니라 단일 객체일 수도 있으므로 처리
+    const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
+    console.log('responseArray:', responseArray);
+    
+    diaries.value = responseArray
+      .map(diary => {
+        console.log('변환 중인 diary:', diary);
+        return {
+          date: diary.createdAt ? diary.createdAt.split('T')[0] : diary.date, // YYYY-MM-DD 형식으로 변환
+          imageUrl: diary.imageUrl,
+          text: diary.diaryText || diary.text || diary.content || ''
+        };
+      })
+      .sort((a, b) => new Date(a.date) - new Date(b.date)); // 날짜순 정렬
+      
+    console.log('최종 변환된 diaries:', diaries.value);
+      
+  } catch (error) {
+    console.error('다이어리 조회 오류:', error);
+    diaries.value = [];
   }
-
-  const childData = emotionReportsByChild[selectedChild.value.name];
-  if (!childData || !childData.reports) {
-    return [];
-  }
-
-  // emotionReports 데이터를 diaries 형태로 변환
-  return childData.reports
-    .filter((report) => report.diaryImage && report.diaryText) // 그림일기가 있는 것만
-    .map((report) => ({
-      date: report.date,
-      imageUrl: report.diaryImage,
-      text: report.diaryText,
-    }))
-    .sort((a, b) => new Date(a.date) - new Date(b.date)); // 날짜순 정렬
-});
+}
 
 // 날짜 문자열 → diary 객체 매핑
-const diariesMap = computed(() =>
-  diaries.value.reduce((map, d) => {
-    map[d.date] = d;
-    return map;
-  }, {})
-);
+const diariesMap = computed(() => {
+  const map = diaries.value.reduce((acc, d) => {
+    acc[d.date] = d;
+    return acc;
+  }, {});
+  console.log('diariesMap 계산됨:', map);
+  return map;
+});
 
 // 현재 선택된 일기의 배열 내 인덱스
 const currentIndex = computed(() =>
@@ -197,6 +229,25 @@ const calendarOptions = reactive({
   contentHeight: 530,
   initialDate: today,
 
+  // 월 변경 시 다이어리 재조회
+  datesSet: async (info) => {
+    // info.start는 달력 첫 주의 시작일(보통 이전달)이므로
+    // 실제 달력의 중간 날짜를 사용해서 정확한 월을 가져옴
+    const viewStart = new Date(info.start);
+    const viewEnd = new Date(info.end);
+    const middleDate = new Date((viewStart.getTime() + viewEnd.getTime()) / 2);
+    
+    currentDate.value = middleDate;
+    await fetchMonthlyDiaries();
+    
+    // 데이터 로드 후 강제로 다시 렌더링
+    setTimeout(() => {
+      if (calendarRef.value) {
+        calendarRef.value.getApi().render();
+      }
+    }, 600);
+  },
+
   // 날짜 클릭 시 모달 열기
   dateClick: (info) => {
     const d = diariesMap.value[info.dateStr];
@@ -226,39 +277,62 @@ const calendarOptions = reactive({
   // 썸네일 + 클릭 리스너
   dayCellDidMount: (info) => {
     info.el.style.position = "relative";
-    const key = info.date.toISOString().slice(0, 10);
-    const d = diariesMap.value[key];
-    if (!d) return;
+    
+    // 시간대 문제 해결: 로컬 날짜로 변환
+    const year = info.date.getFullYear();
+    const month = String(info.date.getMonth() + 1).padStart(2, '0');
+    const day = String(info.date.getDate()).padStart(2, '0');
+    const key = `${year}-${month}-${day}`;
+    
+    // 더 긴 딜레이와 반복 체크로 확실히 데이터 로드 대기
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    const checkAndRender = () => {
+      attempts++;
+      const d = diaries.value.find(diary => diary.date === key);
+      
+      if (d && d.imageUrl) {
+        // 데이터를 찾았으면 이미지 렌더링
+        const wrap = document.createElement("div");
+        Object.assign(wrap.style, {
+          position: "absolute",
+          top: "0.5rem",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "140px",
+          height: "65px",
+          overflow: "hidden",
+          borderRadius: "0.25rem",
+          cursor: "pointer",
+        });
 
-    const wrap = document.createElement("div");
-    Object.assign(wrap.style, {
-      position: "absolute",
-      top: "0.5rem",
-      left: "50%",
-      transform: "translateX(-50%)",
-      width: "140px",
-      height: "65px",
-      overflow: "hidden",
-      borderRadius: "0.25rem",
-      cursor: "pointer",
-    });
+        const img = document.createElement("img");
+        img.src = d.imageUrl;
+        img.alt = "Diary";
+        Object.assign(img.style, {
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        });
 
-    const img = document.createElement("img");
-    img.src = d.imageUrl;
-    img.alt = "Diary";
-    Object.assign(img.style, {
-      width: "100%",
-      height: "100%",
-      objectFit: "cover",
-    });
-
-    wrap.appendChild(img);
-    wrap.addEventListener("click", (e) => {
-      e.stopPropagation();
-      selectedDiary.value = d;
-      showModal.value = true;
-    });
-    info.el.appendChild(wrap);
+        wrap.appendChild(img);
+        wrap.addEventListener("click", (e) => {
+          e.stopPropagation();
+          selectedDiary.value = d;
+          showModal.value = true;
+        });
+        info.el.appendChild(wrap);
+        
+        console.log(`${key} 이미지 렌더링 완료 (${attempts}번째 시도)`);
+      } else if (attempts < maxAttempts) {
+        // 데이터가 없으면 100ms 후 다시 시도
+        setTimeout(checkAndRender, 100);
+      }
+    };
+    
+    // 첫 시도는 700ms 후
+    setTimeout(checkAndRender, 700);
   },
 });
 </script>
