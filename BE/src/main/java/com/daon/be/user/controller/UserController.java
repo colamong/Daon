@@ -1,13 +1,20 @@
 package com.daon.be.user.controller;
 
 import java.time.Duration;
+import java.util.List;
 
 import com.daon.be.user.auth.SigninUser;
 import com.daon.be.user.dto.JwtSigninRequestDto;
+import com.daon.be.user.dto.NationDto;
+import com.daon.be.user.dto.UserProfileUpdateRequestDto;
 import com.daon.be.user.dto.UserResponseDto;
 import com.daon.be.user.dto.UserSignupRequestDto;
 import com.daon.be.user.dto.JwrSigninResponseDto;
+import com.daon.be.user.dto.UserSummaryResponseDto;
+import com.daon.be.user.dto.UserWithdrawRequestDto;
+import com.daon.be.user.entity.Nation;
 import com.daon.be.user.entity.User;
+import com.daon.be.user.repository.NationRepository;
 import com.daon.be.user.repository.UserRepository;
 import com.daon.be.user.service.UserService;
 
@@ -25,11 +32,22 @@ public class UserController {
 
 	private final UserService userService;
 	private final UserRepository userRepository;
+	private final NationRepository nationRepository;
 
 	@PostMapping("/signup")
-	public ResponseEntity<Void> signup(@RequestBody UserSignupRequestDto request) {
-		userService.signup(request);
+	public ResponseEntity<Void> signup(@RequestBody UserSignupRequestDto dto) {
+		userService.signup(dto);
 		return ResponseEntity.ok().build();
+	}
+
+	@GetMapping("/nation")
+	public ResponseEntity<List<NationDto>> getAllNations() {
+		List<NationDto> result = nationRepository.findAll()
+			.stream()
+			.map(NationDto::from)
+			.toList();
+
+		return ResponseEntity.ok(result);
 	}
 
 	@PostMapping("/signin")
@@ -66,6 +84,36 @@ public class UserController {
 
 		response.addHeader("Set-Cookie", expiredCookie.toString());
 		return ResponseEntity.ok().build();
+	}
+
+	@PutMapping("/profile")
+	public ResponseEntity<Void> updateProfile(
+		@SigninUser User user,
+		@RequestBody UserProfileUpdateRequestDto dto
+	) {
+		userService.updateProfile(user.getId(), dto);
+		return ResponseEntity.ok().build();
+	}
+
+	@GetMapping("/summary")
+	public ResponseEntity<UserSummaryResponseDto> getUserSummary(@SigninUser User user) {
+		return ResponseEntity.ok(UserSummaryResponseDto.from(user));
+	}
+
+	@DeleteMapping("/withdraw")
+	public ResponseEntity<Void> withdraw(@SigninUser User user, @RequestBody UserWithdrawRequestDto dto) {
+		userService.withdraw(user.getId(), dto);
+
+		// accessToken 쿠키 삭제
+		ResponseCookie deleteCookie = ResponseCookie.from("accessToken", "")
+			.path("/")
+			.httpOnly(true)
+			.maxAge(0)
+			.build();
+
+		return ResponseEntity.noContent()
+			.header("Set-Cookie", deleteCookie.toString())
+			.build();
 	}
 
 

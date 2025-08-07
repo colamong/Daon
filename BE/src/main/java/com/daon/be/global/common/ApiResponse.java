@@ -1,4 +1,4 @@
-package com.daon.be.common;
+package com.daon.be.global.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
