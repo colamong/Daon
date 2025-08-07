@@ -57,17 +57,6 @@
         <div class="flex-1 overflow-y-auto pr-2">
           <template v-if="filteredEvents.length">
             <div class="space-y-4">
-              <!-- <ScheduleCard
-                v-for="ev in filteredEvents"
-                :key="ev.id"
-                :id="ev.id"
-                :date="ev.eventDate || ev.date"
-                :title="ev.title"
-                :description="ev.description"
-                :all-events="filteredEvents"
-                @update="handleUpdate"
-                @delete="handleDelete"
-              /> -->
               <ScheduleCard
                 v-for="ev in filteredEvents"
                 :key="ev.id"
