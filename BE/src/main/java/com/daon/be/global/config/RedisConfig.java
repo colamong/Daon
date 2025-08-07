@@ -1,4 +1,4 @@
-package com.daon.be.config;
+package com.daon.be.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -7,7 +7,7 @@ import com.daon.be.child.dto.ChildRequestDTO;
 import com.daon.be.child.dto.ChildResponseDTO;
 import com.daon.be.child.dto.ChildUpdateRequestDTO;
 import com.daon.be.child.service.ChildService;
-import com.daon.be.common.ApiResponse;
+import com.daon.be.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
