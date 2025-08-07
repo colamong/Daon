@@ -41,6 +41,13 @@ dependencies {
 
     implementation platform("software.amazon.awssdk:bom:2.25.4")
     implementation "software.amazon.awssdk:s3"
+
+    //회원가입 관련
+    implementation 'com.auth0:java-jwt:4.4.0'
+    implementation 'org.springframework.security:spring-security-crypto:6.1.2'
+
+
+
 }
 
 dependencyManagement {

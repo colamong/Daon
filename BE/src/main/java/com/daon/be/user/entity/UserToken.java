@@ -41,4 +41,14 @@ public class UserToken {
 
 	@Column(name = "issued_at")
 	private LocalDateTime issuedAt = LocalDateTime.now();
+
+	public static UserToken of(User user, String accessToken, LocalDateTime expiresAt) {
+		UserToken token = new UserToken();
+		token.setUser(user);
+		token.setAccessToken(accessToken);
+		token.setExpiresAt(expiresAt);
+		token.setIssuedAt(LocalDateTime.now());
+		return token;
+	}
+
 }
