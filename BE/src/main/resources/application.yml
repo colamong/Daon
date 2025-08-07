@@ -59,3 +59,9 @@ cloud:
     credentials:
       accessKey: ${AWS_ACCESS_KEY_ID}
       secretKey: ${AWS_SECRET_ACCESS_KEY}
+
+frontend:
+  origin: http://localhost:5173
+
+tesseract:
+  path: "C:/Program Files/Tesseract-OCR/tessdata"
