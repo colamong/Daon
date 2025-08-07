@@ -157,10 +157,10 @@
           <option disabled value="">자신의 국가를 선택하세요</option>
           <option
             v-for="option in countryOptions"
-            :key="option.value"
-            :value="option.value"
+            :key="option.code"
+            :value="option.code"
           >
-            {{ option.label }}
+            {{ option.nameKo }}
           </option>
         </select>
       </div>
@@ -193,10 +193,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "vue-router";
 import { useNotification } from '@/composables/useNotification.js';
+import { nationService } from '@/services/nationService.js';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -209,33 +210,34 @@ const domainOption = ref(domainOptions[0]);
 const customDomain = ref("");
 const password = ref("");
 const confirmPassword = ref("");
-const countryOptions = [
-  { value: "대한민국", label: "🇰🇷 대한민국" },
-  { value: "베트남", label: "🇻🇳 베트남" },
-  { value: "필리핀", label: "🇵🇭 필리핀" },
-  { value: "태국", label: "🇹🇭 태국" },
-  { value: "캄보디아", label: "🇰🇭 캄보디아" },
-  { value: "몽골", label: "🇲🇳 몽골" },
-  { value: "우즈베키스탄", label: "🇺🇿 우즈베키스탄" },
-  { value: "미국", label: "🇺🇸 미국" },
-  { value: "일본", label: "🇯🇵 일본" },
-  { value: "중국", label: "🇨🇳 중국" },
-  { value: "영국", label: "🇬🇧 영국" },
-  { value: "프랑스", label: "🇫🇷 프랑스" },
-  { value: "독일", label: "🇩🇪 독일" },
-  { value: "캐나다", label: "🇨🇦 캐나다" },
-  { value: "호주", label: "🇦🇺 호주" },
-  { value: "스페인", label: "🇪🇸 스페인" },
-  { value: "이탈리아", label: "🇮🇹 이탈리아" },
-  { value: "브라질", label: "🇧🇷 브라질" },
-];
-const country = ref("");
+const countryOptions = ref([]);
+const country = ref("KR"); // 기본값으로 한국 설정
 
 const email = computed(() =>
   domainOption.value === "직접 입력"
     ? `${emailLocal.value}@${customDomain.value}`
     : `${emailLocal.value}@${domainOption.value}`
 );
+
+// 국가 목록 로드
+async function loadCountries() {
+  try {
+    const nations = await nationService.getNations();
+    countryOptions.value = nations;
+    console.log('국가 목록 로드 완료:', nations);
+  } catch (error) {
+    console.error('국가 목록 로드 실패:', error);
+    showError(error.message, "국가 목록 로드 실패");
+    // 국가 목록 로드 실패 시 기본 옵션 제공
+    countryOptions.value = [
+      { code: "KR", nameKo: "대한민국", nameEn: "South Korea" }
+    ];
+  }
+}
+
+onMounted(() => {
+  loadCountries();
+});
 
 async function handleSignUp() {
   // 입력 값 검증
@@ -264,22 +266,51 @@ async function handleSignUp() {
     return;
   }
   
-  if (!country.value) {
+  if (!country.value || country.value.trim() === "") {
     showError("국가를 선택해주세요.", "입력 오류");
     return;
   }
   
   try {
-    await auth.signup({
+    const signupData = {
       nickname: nickname.value,
       email: email.value,
       password: password.value,
-      country: country.value,
+      nationCode: country.value || "KR", // camelCase로 수정
+    };
+    console.log('회원가입 요청 데이터:', signupData);
+    console.log('선택된 국가 값:', country.value);
+    console.log('국가 옵션 목록:', countryOptions.value);
+    await auth.signup(signupData);
+    
+    // 회원가입 성공 후 자동 로그인
+    await auth.login({
+      email: email.value,
+      password: password.value
     });
+    
+    // 로그인 후 사용자 정보 가져오기
+    await auth.getCurrentUser();
+    
     showSuccess("회원가입이 완료되었습니다!", "환영합니다");
     router.push({ name: "Dashboard" });
   } catch (error) {
-    showError("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.", "회원가입 실패");
+    console.error('회원가입 오류:', error);
+    
+    let errorMessage = "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.";
+    
+    // 백엔드에서 오는 구체적인 오류 메시지 사용
+    if (error.message) {
+      errorMessage = error.message;
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.status === 409) {
+      errorMessage = "이미 사용 중인 이메일입니다.";
+    } else if (error.response?.status === 400) {
+      errorMessage = "입력 정보를 다시 확인해주세요.";
+    }
+    
+    showError(errorMessage, "회원가입 실패");
   }
 }
 </script>
