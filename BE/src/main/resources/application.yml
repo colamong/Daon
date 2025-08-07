@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: BE
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: ${GOOGLE_REDIRECT_URI}
+            scope:
+              - email
+              - profile
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+gms:
+  api:
+    key: ${GMS_API_KEY}
+    url: ${GMS_API_URL}
+    model: gpt-4.1
+  image:
+    api:
+      url: ${GMS_IMAGE_API_URL}
+
+cloud:
+  aws:
+    region: ap-northeast-2
+    stack:
+      auto: false
+    s3:
+      bucket: daon-image
+    credentials:
+      accessKey: ${AWS_ACCESS_KEY_ID}
+      secretKey: ${AWS_SECRET_ACCESS_KEY}
+
+frontend:
+  origin: http://localhost:5173
+
+tesseract:
+  path: "C:/Program Files/Tesseract-OCR/tessdata"

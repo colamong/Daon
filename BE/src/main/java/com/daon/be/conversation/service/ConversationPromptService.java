@@ -16,10 +16,6 @@ public class ConversationPromptService {
 	private final ConversationPromptRepository promptRepository;
 	private final ConversationTopicRepository conversationTopicRepository;
 
-	public ConversationPrompt getPromptByTopicAndStep(Long topicId, int step) {
-		return promptRepository.findByTopic_IdAndStep(topicId, step)
-			.orElseThrow(() -> new IllegalArgumentException("해당 topicId, step에 대한 프롬프트가 없습니다."));
-	}
 
 	public ConversationTopic createTopic(ConversationTopicRequestDto dto) {
 		ConversationTopic topic = new ConversationTopic();

@@ -5,7 +5,9 @@ import com.daon.be.user.auth.SigninUser;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -22,9 +24,13 @@ public class SigninUserArgumentResolver implements HandlerMethodArgumentResolver
 
 	@Override
 	public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-		NativeWebRequest webRequest, org.springframework.web.bind.support.WebDataBinderFactory binderFactory) {
+		NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
 
-		HttpServletRequest request = ((ServletWebRequest) webRequest).getRequest();
-		return request.getAttribute("userId");
+		var authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || authentication.getPrincipal() == null) {
+			return null;
+		}
+		return authentication.getPrincipal(); // 여기서 Long userId 반환됨
 	}
+
 }

@@ -61,28 +61,6 @@ public class ChildAnswerService {
 		return conversationTopicRepository.save(topic);
 	}
 
-	/*public void saveAnsweredStepsToRedis(
-		Long childId,
-		Long topicId,
-		Map<Integer, String> questions,
-		Map<Integer, String> answers,
-		List<Integer> answeredSteps
-	) {
-		String questionKey = String.format("child:%d:topic:%d:questions", childId, topicId);
-		String answerKey = String.format("child:%d:topic:%d:answers", childId, topicId);
-
-		for (Integer step : answeredSteps) {
-			String q = questions.get(step);
-			String a = answers.get(step);
-			if (q != null && a != null) {
-				redisTemplate.opsForList().rightPush(questionKey, q);
-				ChildAnswerRedisDto dto = ChildAnswerRedisDto.of(step, q, a);
-				redisTemplate.opsForList().rightPush(answerKey, dto);
-			}
-		}
-
-	}*/
-
 	@Transactional
 	public GptAudioResponseDto saveAnswerAndGetNextQuestionAudio(ChildAnswerRequestDto dto) {
 		Long childId = dto.getChildId();
@@ -91,8 +69,9 @@ public class ChildAnswerService {
 
 		String redisKey = String.format("child:%d:topic:%d:answers", childId, topicId);
 
-		// 1. 프롬프트에서 질문 가져오기
-		String question = "";
+		// 1. 이전 질문 저장된 Redis에서 가져오기
+		List<Object> questionList = redisTemplate.opsForList().range(redisKey, step - 1, step - 1);
+		String question = (questionList != null && !questionList.isEmpty()) ? questionList.get(0).toString() : "질문 없음";
 
 		// 2. Redis에 저장
 		ChildAnswerRedisDto redisDto = ChildAnswerRedisDto.of(step, question, dto.getAnswer());
@@ -105,8 +84,6 @@ public class ChildAnswerService {
 			//대화 저장
 			flushAnswersFromRedis(childId, topicId);
 
-			// 아직 미구현
-			// String mp3Url = gmsOpenAiClient.tts(endMessage);
 
 			return new GptAudioResponseDto(endMessage, null, true);
 		}
@@ -218,6 +195,9 @@ public class ChildAnswerService {
 			"- 질문은 반드시 한 번에 하나만.",
 			"- 절대 요약, 칭찬, 설명하지 말고 질문만 해.",
 			"- 질문은 꼭 친구처럼, 부드럽고 편안하게 말해줘. 너무 똑똑하거나 어른스럽게 들리면 안 돼.",
+			"- 질문은 반드시 5~7세가 바로 이해할 수 있는 말이어야 해.",
+			"- 너무 어려운 개념(예: 색으로 감정 표현, 감정과 표정 연결)은 쓰지 마.",
+			"- 질문은 일상 속 경험이나 행동을 묻는 식으로 구체적으로 해줘.",
 			"- 총 5번 질문할 수 있어.",
 			"이번 대화에서 도와줄 목표는: " + topicObjective,
 			"지금은 " + questionNumber + "번째 질문이야.",
