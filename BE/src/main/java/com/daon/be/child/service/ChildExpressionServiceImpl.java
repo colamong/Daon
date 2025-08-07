@@ -30,25 +30,28 @@ public class ChildExpressionServiceImpl implements ChildExpressionService {
 
 	@Override
 	@Transactional
-	public ChildExpressionResponseDto analyzeAndSave(Long childId, Long topicId) {
+	public ChildExpressionResponseDto analyzeAndSave(Long childId, Long conversationResultId) {
 
-		// 기존 ConversationResult 조회
-		ConversationResult result = resultRepo.findByChildIdAndTopicId(childId, topicId)
-			.orElseThrow(() -> new IllegalArgumentException("먼저 STT 결과가 저장되어야 합니다."));
+		// conversationResultId로 ConversationResult 조회
+		ConversationResult result = resultRepo.findById(conversationResultId)
+			.orElseThrow(() -> new IllegalArgumentException("해당 발화 결과가 존재하지 않습니다."));
 
-		// sttText 가져오기
-		String sttText = result.getSttText();
-		if (sttText == null || sttText.isBlank()) {
-			throw new IllegalStateException("저장된 STT 결과가 비어 있습니다.");
+		// childId 일치 여부 검증
+		if (!result.getChild().getId().equals(childId)) {
+			throw new IllegalStateException("해당 아동의 발화 결과가 아닙니다.");
 		}
 
-		// 감정 분석 및 요약
+		// STT 텍스트 추출
+		String sttText = result.getSttText();
+		if (sttText == null || sttText.isBlank()) {
+			throw new IllegalStateException("STT 결과가 비어 있습니다.");
+		}
+
+		// GPT 분석 수행
 		GptChildConversationResponseDto gptResponse = gptService.analyzeText(sttText);
 
-		// 결과 업데이트
+		// 분석 결과 적용
 		result.applyGptAnalysis(gptResponse);
-
-		// 응답 반환
 		return ChildExpressionResponseDto.fromEntity(result);
 	}
 

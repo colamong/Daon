@@ -21,13 +21,13 @@ public class ChildExpressionController {
 
 	private final ChildExpressionService childExpressionService;
 
-	// 아이 발화 분석
-	@PostMapping("/{childId}/expressions")
+	// 아이 발화 분석 (이미 저장된 ConversationResult 기반)
+	@PostMapping("/{childId}/expressions/{conversationResultId}")
 	public ResponseEntity<ChildExpressionResponseDto> analyzeExpression(
 		@PathVariable Long childId,
-		@RequestParam Long topicId
+		@PathVariable Long conversationResultId
 	) {
-		ChildExpressionResponseDto response = childExpressionService.analyzeAndSave(childId, topicId);
+		ChildExpressionResponseDto response = childExpressionService.analyzeAndSave(childId, conversationResultId);
 		return ResponseEntity.ok(response);
 	}
 }

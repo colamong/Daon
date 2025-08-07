@@ -1,6 +1,6 @@
 <template>
-  <section class="px-6 py-8 max-w-6xl mx-auto mb-10">
-    <div class="flex justify-between items-center font-paperBold">
+  <section class="px-6 py-4 max-w-6xl mx-auto min-h-[calc(100vh-200px)]">
+    <div class="flex justify-between items-center font-paperBold mb-4">
       <h1 class="text-2xl">분석 결과</h1>
       <button
         @click="goBack"
@@ -9,17 +9,19 @@
         뒤로 가기
       </button>
     </div>
-    <!-- 전체 높이 고정 -->
-    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 h-[600px]">
-      <!-- LEFT: 이미지/파일 영역 (변경 없음) -->
+    <!-- 전체 높이를 뷰포트에 맞춤 -->
+    <div
+      class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-250px)] mb-10"
+    >
+      <!-- LEFT: 이미지/파일 영역 -->
       <div
-        class="col-span-1 md:col-span-2 bg-white rounded-xl shadow p-4 flex items-center justify-center"
+        class="col-span-1 md:col-span-2 bg-white rounded-xl shadow p-4 flex items-center justify-center h-full"
       >
         <img
           v-if="image"
           :src="image"
           alt="OCR Preview"
-          class="max-w-full max-h-full object-contain"
+          class="max-w-full max-h-[calc(100vh-300px)] object-contain"
         />
         <div
           v-else-if="file"
@@ -32,23 +34,27 @@
       </div>
 
       <!-- RIGHT: 요약/번역 카드 -->
-      <!-- ⚠️ 여기서 min-h-0을 꼭 추가합니다. -->
-      <div class="col-span-1 flex flex-col gap-6 h-full min-h-0">
-        <!-- ⚠️ 각 카드에 flex-1, overflow-y-auto, min-h-0 -->
+      <div class="col-span-1 flex flex-col gap-4 h-full max-h-full">
+        <!-- 요약 결과 카드 -->
         <div
-          class="bg-white rounded-xl shadow p-6 flex-1 overflow-y-auto min-h-0"
+          class="bg-white rounded-xl shadow p-4 flex-1 overflow-y-auto max-h-[calc(50vh-150px)]"
         >
-          <h2 class="font-semibold mb-2">요약 결과</h2>
-          <div class="text-gray-600 whitespace-pre-wrap">
+          <h2 class="font-semibold mb-2 text-sm">요약 결과</h2>
+          <div
+            class="text-gray-600 whitespace-pre-wrap text-sm leading-relaxed"
+          >
             {{ summary || "요약 결과가 없습니다." }}
           </div>
         </div>
 
+        <!-- 번역 결과 카드 -->
         <div
-          class="bg-white rounded-xl shadow p-6 flex-1 overflow-y-auto min-h-0"
+          class="bg-white rounded-xl shadow p-4 flex-1 overflow-y-auto max-h-[calc(50vh-150px)]"
         >
-          <h2 class="font-semibold mb-2">번역 결과</h2>
-          <div class="text-gray-600 whitespace-pre-wrap">
+          <h2 class="font-semibold mb-2 text-sm">번역 결과</h2>
+          <div
+            class="text-gray-600 whitespace-pre-wrap text-sm leading-relaxed"
+          >
             {{ translation || "번역 결과가 없습니다." }}
           </div>
         </div>
@@ -58,21 +64,55 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import folderIcon from "@/assets/icons/Folder.svg";
 
 const route = useRoute();
 const router = useRouter();
 
-// 테스트용 긴 문자열 생성 함수
-function makeLongText(label) {
-  return Array(50).fill(`${label} 테스트용 긴 텍스트입니다.`).join("\n\n");
-}
+const image = ref(route.query.image || "");
+const file = ref(route.query.file || "");
+const summary = ref("");
+const translation = ref("");
 
-const image = route.query.image || "";
-const file = route.query.file || "";
-const summary = route.query.summary || "";
-const translation = route.query.text || makeLongText("번역");
+onMounted(() => {
+  // API 응답 결과가 있다면 파싱하여 표시
+  if (route.query.result) {
+    try {
+      const apiResponse = JSON.parse(route.query.result);
+
+      // 응답 구조 확인
+      let ocrData = null;
+
+      if (apiResponse.statusCode === 200 && apiResponse.data) {
+        ocrData = apiResponse.data;
+      } else if (apiResponse.data) {
+        ocrData = apiResponse.data;
+      } else if (
+        apiResponse.summary ||
+        apiResponse.translated ||
+        apiResponse.ocrText
+      ) {
+        ocrData = apiResponse;
+      }
+
+      if (ocrData) {
+        summary.value = ocrData.summary || "요약 결과가 없습니다.";
+        translation.value = ocrData.translated || "번역 결과가 없습니다.";
+      } else {
+        summary.value = "데이터 구조를 인식할 수 없습니다.";
+        translation.value = "데이터 구조를 인식할 수 없습니다.";
+      }
+    } catch (error) {
+      summary.value = "결과를 불러오는 중 오류가 발생했습니다.";
+      translation.value = "결과를 불러오는 중 오류가 발생했습니다.";
+    }
+  } else {
+    summary.value = route.query.summary || "요약 결과가 없습니다.";
+    translation.value = route.query.text || "번역 결과가 없습니다.";
+  }
+});
 
 function goBack() {
   router.back();
