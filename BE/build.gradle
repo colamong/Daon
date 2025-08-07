@@ -42,6 +42,16 @@ dependencies {
     implementation platform("software.amazon.awssdk:bom:2.25.4")
     implementation "software.amazon.awssdk:s3"
 
+    //회원가입 관련
+    implementation 'com.auth0:java-jwt:4.4.0'
+    implementation 'org.springframework.security:spring-security-crypto:6.1.2'
+
+    //oauth2
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+
+
+
     implementation 'net.sourceforge.tess4j:tess4j:5.4.0' // 또는 최신 버전
 }
 
