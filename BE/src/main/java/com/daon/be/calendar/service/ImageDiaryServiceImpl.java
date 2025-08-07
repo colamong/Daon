@@ -61,18 +61,24 @@ public class ImageDiaryServiceImpl implements ImageDiaryService {
 
     @Override
     public ImageDiaryResponseDto getDiary(Long diaryId) {
-        ImageDiary diary = imageDiaryRepository.findById(diaryId)
+
+        // 연관된 calendar 및 child까지 함께 조회하여 LazyInitializationException 방지
+        ImageDiary diary = imageDiaryRepository.findWithCalendarAndChildById(diaryId)
             .orElseThrow(() -> new EntityNotFoundException("해당 그림일기를 찾을 수 없습니다."));
-        return ImageDiaryResponseDto.from(diary); // Dto 변환 메소드 필요
+        return ImageDiaryResponseDto.from(diary);
     }
 
     @Override
     public List<ImageDiaryResponseDto> getMonthlyDiaries(Long childId, int year, int month) {
+
         LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime end = start.withDayOfMonth(start.toLocalDate().lengthOfMonth()).plusDays(1);
-        return imageDiaryRepository
-            .findAllByCalendar_Child_IdAndCreatedAtBetweenOrderByCreatedAtDesc(childId, start, end)
-            .stream()
+
+        // calendar와 child까지 fetch join으로 한 번에 조회
+        List<ImageDiary> diaries = imageDiaryRepository
+            .findWithCalendarAndChildByChildIdAndCreatedAtBetweenOrderByCreatedAtDesc(childId, start, end);
+
+        return diaries.stream()
             .map(ImageDiaryResponseDto::from)
             .toList();
     }

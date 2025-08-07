@@ -20,9 +20,7 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "ConversationResult", uniqueConstraints = {
-	@UniqueConstraint(columnNames = {"child_id", "topic_id"})
-})
+@Table(name = "ConversationResult")
 public class ConversationResult {
 
 	@Id
