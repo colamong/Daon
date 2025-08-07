@@ -33,7 +33,13 @@
     >
       <!-- 달력 -->
       <div class="lg:col-span-2 bg-white rounded-xl shadow p-6 h-[530px]">
-        <CalendarWidget :events="events" @update-month="onMonthChange" />
+        <CalendarWidget
+          :events="events.map(ev => ({
+            ...ev,
+            date: ev.eventDate || ev.date // date 필드가 항상 있음
+          }))"
+          @update-month="onMonthChange"
+        />
       </div>
 
       <!-- 일정 목록 -->
@@ -51,6 +57,17 @@
         <div class="flex-1 overflow-y-auto pr-2">
           <template v-if="filteredEvents.length">
             <div class="space-y-4">
+              <!-- <ScheduleCard
+                v-for="ev in filteredEvents"
+                :key="ev.id"
+                :id="ev.id"
+                :date="ev.eventDate || ev.date"
+                :title="ev.title"
+                :description="ev.description"
+                :all-events="filteredEvents"
+                @update="handleUpdate"
+                @delete="handleDelete"
+              /> -->
               <ScheduleCard
                 v-for="ev in filteredEvents"
                 :key="ev.id"
@@ -62,6 +79,7 @@
                 @update="handleUpdate"
                 @delete="handleDelete"
               />
+
             </div>
           </template>
           <template v-else>
@@ -224,57 +242,102 @@ import BaseCard from "@/components/card/BaseCard.vue";
 import EmotionReportModal from '@/components/modal/EmotionReportModal.vue';
 import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
-import { dummyEvents } from "@/data/dummyData.js";
 import { emotionReportsByChild } from '@/data/emotionReports.js';
 import { useNotification } from '@/composables/useNotification.js';
-import { ensureAllChildrenHaveColors } from '@/utils/colorManager.js';
+import { fetchMonthlyEvents, createEvent, updateEvent, deleteEvent } from "@/store/calendar";
 
 const router = useRouter();
 const auth = useAuthStore();
 const childStore = useChildStore();
 const { showWarning } = useNotification();
-const events = ref(dummyEvents);
+
+// 일정 상태
+const events = ref([]);
+
+// 현재 선택된 월
 const selectedMonth = ref(dayjs().format("YYYY-MM"));
 
-function onMonthChange(newYm) {
-  selectedMonth.value = newYm;
+async function loadEvents(year, month) {
+  try {
+    events.value = await fetchMonthlyEvents(year, month);
+  } catch (e) {
+    console.error("일정 불러오기 실패:", e);
+  }
 }
-const modalVisible = ref(false);
 
+// 일정 데이터 서버에서 받아오는 함수
 const filteredEvents = computed(() =>
   events.value
-    .filter((ev) => dayjs(ev.date).format("YYYY-MM") === selectedMonth.value)
+    .map(ev => ({
+      ...ev,
+      id: ev.id || ev.calendarId,   // ← calendarId를 id로 통일!
+      date: ev.eventDate || ev.date // ← 날짜도 통일
+    }))
+    .filter(ev => dayjs(ev.date).format("YYYY-MM") === selectedMonth.value)
     .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix())
 );
 
-// 일정 추가 버튼 클릭 시 모달 열기
+
+// 마운트 시 바로 일정 불러오기
+onMounted(() => {
+  const [year, month] = selectedMonth.value.split("-").map(Number);
+  loadEvents(year, month);
+  childStore.initialize();
+});
+
+// 달 변경 시 서버에서 다시 불러오기
+function onMonthChange(newYm) {
+  selectedMonth.value = newYm;
+  const [year, month] = newYm.split("-").map(Number);
+  loadEvents(year, month);
+}
+
+
+// 일정 추가 모달
+const modalVisible = ref(false);
 function openModal() {
   modalVisible.value = true;
 }
 
-// 일정 실제 등록 처리
-function handleAddEvent({ title, date, description }) {
-  events.value.push({
-    id: Date.now(),
-    title,
-    date,
-    description,
-  });
-}
-
-function handleUpdate({ oldDate, newDate, newTitle, newDescription }) {
-  const idx = events.value.findIndex(
-    (ev) => ev.date === oldDate && ev.title === newTitle
-  );
-  if (idx !== -1) {
-    events.value[idx].date = newDate;
-    events.value[idx].title = newTitle;
-    events.value[idx].description = newDescription;
+// 일정 추가, 수정, 삭제는 모두 서버에 요청 후 새로고침!
+async function handleAddEvent({ title, date, description }) {
+  try {
+    await createEvent({
+      title,
+      eventDate: date,
+      description,
+    });
+    // 추가 후 다시 불러오기!
+    const [year, month] = selectedMonth.value.split('-').map(Number);
+    await loadEvents(year, month);
+    modalVisible.value = false;
+  } catch (e) {
+    showWarning("일정 추가 실패", e.message);
   }
 }
 
-function handleDelete(id) {
-  events.value = events.value.filter((ev) => ev.id !== id);
+async function handleUpdate({ id, newDate, newTitle, newDescription }) {
+  try {
+    await updateEvent(id, {
+      eventDate: newDate,
+      title: newTitle,
+      description: newDescription,
+    });
+    const [year, month] = selectedMonth.value.split('-').map(Number);
+    await loadEvents(year, month);
+  } catch (e) {
+    showWarning("일정 수정 실패", e.message);
+  }
+}
+
+async function handleDelete(id) {
+  try {
+    await deleteEvent(id);
+    const [year, month] = selectedMonth.value.split('-').map(Number);
+    await loadEvents(year, month);
+  } catch (e) {
+    showWarning("일정 삭제 실패", e.message);
+  }
 }
 
 // 오늘의 활동 & 아이 정보 (더미)
