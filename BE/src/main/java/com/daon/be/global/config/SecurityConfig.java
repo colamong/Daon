@@ -23,33 +23,25 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.csrf(csrf -> csrf.disable())
-			.cors(cors -> {}) // CORS 설정은 WebConfig에서 함
-			.authorizeHttpRequests(auth -> auth
-					//.anyRequest().permitAll()
-				.requestMatchers(
-					"/api/user/signup",
-					"/api/user/signin",
-					"/api/user/nations",
-					"/api/user/nation/**",
-					"/oauth2/**",
-					"/login/**"
-				).permitAll()
-				.anyRequest().authenticated()
-			)
-			.exceptionHandling(ex -> ex
-				.authenticationEntryPoint((request, response, authException) -> {
-					response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-				})
-			)
-			.oauth2Login(oauth2 -> oauth2
-				.successHandler(oAuth2SuccessHandler)
-			)
-			// JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 추가
-			.addFilterBefore(
-				new JwtAuthenticationFilter(jwtUtil),
-				UsernamePasswordAuthenticationFilter.class
-			);
+				.csrf(csrf -> csrf.disable())
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers("/**").permitAll()
+						// .requestMatchers("/oauth2/**", "/login/**", "/api/user/**").permitAll()
+						.anyRequest().authenticated()
+				)
+				.exceptionHandling(ex -> ex
+						.authenticationEntryPoint((request, response, authException) -> {
+							response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+						})
+				)
+				.oauth2Login(oauth2 -> oauth2
+						.successHandler(oAuth2SuccessHandler)
+				)
+				// JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 추가
+				.addFilterBefore(
+						new JwtAuthenticationFilter(jwtUtil),
+						UsernamePasswordAuthenticationFilter.class
+				);
 
 		return http.build();
 	}
