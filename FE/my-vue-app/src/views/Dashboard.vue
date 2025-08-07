@@ -286,8 +286,8 @@ const todayDrawing = ref({
 });
 
 // 컴포넌트 마운트 시 아이 정보 로드
-onMounted(() => {
-  childStore.initialize();
+onMounted(async () => {
+  await childStore.initialize();
 });
 
 // childStore의 computed 속성 사용

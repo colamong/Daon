@@ -69,14 +69,25 @@ public class ChildServiceImpl implements ChildService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
 
         return childProfileRepository.findByUserId(userId).stream()
-                .map(child -> ChildProfileResponseDTO.builder()
-                        .childId(child.getId())
-                        .name(child.getName())
-                        .birthDate(child.getBirthDate())
-                        .gender(child.getGender())
-                        .profileImg(child.getProfileImg())
-                        .build())
+                .map(child ->  {
+                    // 각 child에 대해 관심사 조회
+                    List<String> interests = childInterestRepository
+                            .findByChildProfileId(child.getId())
+                            .stream()
+                            .map(ChildInterest::getName)
+                            .collect(Collectors.toList());
+
+                    return ChildProfileResponseDTO.builder()
+                            .childId(child.getId())
+                            .name(child.getName())
+                            .birthDate(child.getBirthDate())
+                            .gender(child.getGender())
+                            .profileImg(child.getProfileImg())
+                            .registeredInterests(interests)
+                            .build();
+                })
                 .collect(Collectors.toList());
+
     }
 
     @Override

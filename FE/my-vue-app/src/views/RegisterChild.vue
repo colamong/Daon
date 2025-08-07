@@ -141,6 +141,7 @@ import { ref, reactive, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useNotification } from '@/composables/useNotification.js';
 import { useAuthStore } from "@/store/auth";
+import { useChildStore } from "@/store/child";
 import { assignColorToChild } from '@/utils/colorManager.js';
 import { childService } from "@/services/childService.js";
 import BaseImageUpload from "@/components/form/BaseImageUpload.vue";
@@ -149,6 +150,7 @@ import BaseCheckboxGroup from "@/components/form/BaseCheckboxGroup.vue";
 
 const router = useRouter();
 const auth = useAuthStore();
+const childStore = useChildStore();
 const { showSuccess, showError, showWarning } = useNotification();
 
 const loading = ref(false);
@@ -312,6 +314,9 @@ async function handleRegisterChild() {
     console.log('자녀 등록 응답:', response);
 
     showSuccess(`${childData.name}의 정보가 성공적으로 등록되었습니다!`, "등록 완료");
+
+    // childStore 새로고침
+    await childStore.loadChildren();
 
     // 대시보드로 이동
     router.push({ name: "Dashboard" });
