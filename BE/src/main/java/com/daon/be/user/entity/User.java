@@ -48,5 +48,15 @@ public class User {
 	public enum Provider {
 		LOCAL, GOOGLE
 	}
+
+	public static User of(String email, String encodedPassword, String nickname, String nationCode) {
+		User user = new User();
+		user.setEmail(email);
+		user.setPassword(encodedPassword);
+		user.setNickname(nickname);
+		user.setNationCode(nationCode);
+		return user;
+	}
+
 }
 

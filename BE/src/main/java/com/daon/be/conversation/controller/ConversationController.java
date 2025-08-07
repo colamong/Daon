@@ -53,9 +53,9 @@ public class ConversationController {
 	 * 대화 종료 시 Redis → DB로 flush
 	 */
 	@PostMapping("/flush")
-	public ResponseEntity<Void> flushAnswersAsync(@RequestParam Long childId, @RequestParam Long topicId) {
-		childAnswerService.flushAnswersFromRedis(childId, topicId); // 비동기 호출
-		return ResponseEntity.accepted().build(); // 바로 응답 반환
+	public ResponseEntity<Long> flushAnswersAsync(@RequestParam Long childId, @RequestParam Long topicId) {
+		Long resultId = childAnswerService.flushAnswersFromRedis(childId, topicId);
+		return ResponseEntity.ok(resultId);  // 바로 응답 반환
 	}
 
 	/**

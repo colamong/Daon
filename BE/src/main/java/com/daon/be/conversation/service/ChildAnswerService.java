@@ -1,6 +1,7 @@
 package com.daon.be.conversation.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -129,16 +130,19 @@ public class ChildAnswerService {
 		return redisTemplate.opsForList().range(redisKey, 0, -1);
 	}
 
-	@Async
 	@Transactional
-	public void flushAnswersFromRedis(Long childId, Long topicId) {
+	public Long flushAnswersFromRedis(Long childId, Long topicId) {
 		String redisKey = String.format("child:%d:topic:%d:answers", childId, topicId);
 		List<Object> rawList = redisTemplate.opsForList().range(redisKey, 0, -1);
-		if (rawList == null || rawList.isEmpty()) return;
+		if (rawList == null || rawList.isEmpty()) return (long)-1;
 
 		List<ChildAnswerRedisDto> list = rawList.stream()
 			.map(o -> (ChildAnswerRedisDto) o)
 			.toList();
+
+		String sttText = list.stream()
+			.map(ChildAnswerRedisDto::answer)
+			.collect(Collectors.joining(" "));
 
 		ChildProfile child = childRepository.findById(childId)
 			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 자녀 ID: " + childId));
@@ -156,22 +160,25 @@ public class ChildAnswerService {
 
 
 		// 중복 확인 후 ConversationResult 저장
-		boolean exists = conversationResultRepository.existsByChildIdAndTopicId(childId, topicId);
-		if (!exists) {
-			String sttText = list.stream()
-				.map(dto -> dto.answer())
-				.collect(Collectors.joining(" "));
+		LocalDateTime startOfToday = LocalDate.now().atStartOfDay();     // 오늘 00:00:00
+		LocalDateTime startOfTomorrow = startOfToday.plusDays(1);        // 내일 00:00:00
 
+		boolean exists = conversationResultRepository
+			.countTodayByChildId(childId, startOfToday, startOfTomorrow) > 0;
+		if (!exists) {
 			ConversationResult result = new ConversationResult();
 			result.setChild(child);
 			result.setTopic(topic);
 			result.setSttText(sttText);
 			result.setCalendar(calendar);
-
 			conversationResultRepository.save(result);
+			redisTemplate.delete(redisKey);
+			return result.getId();
 		}
 
 		redisTemplate.delete(redisKey);
+		return conversationResultRepository.findByChildIdAndTopicId(childId, topicId).get().getId();
+
 	}
 	public String generateNextPrompt(ChildAnswerRequestDto dto) {
 		Long childId = dto.getChildId();
