@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-// 강화된 프록시 설정을 통해 요청
-const API_BASE_URL = '';
+import apiClient from '@/utils/axios.js';
 
 export const ocrService = {
   async uploadAndOcr(file) {
@@ -9,11 +6,12 @@ export const ocrService = {
     formData.append('image', file);
     
     try {      
-      const response = await axios.post(`${API_BASE_URL}/api/ocr/extract`, formData, {
+      const response = await apiClient.post(`/api/ocr/extract`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
-        timeout: 30000 // 30초 타임아웃
+        timeout: 30000, // 30초 타임아웃
+        withCredentials: true // 쿠키 포함
       });
       
       return response.data;
