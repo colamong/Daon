@@ -40,7 +40,7 @@ public class UserController {
 		return ResponseEntity.ok().build();
 	}
 
-	@GetMapping("/nation")
+	@GetMapping("/nations")
 	public ResponseEntity<List<NationDto>> getAllNations() {
 		List<NationDto> result = nationRepository.findAll()
 			.stream()
@@ -48,6 +48,12 @@ public class UserController {
 			.toList();
 
 		return ResponseEntity.ok(result);
+	}
+
+	@GetMapping("/nation/{code}")
+	public ResponseEntity<NationDto> getNation(@PathVariable String code) {
+		NationDto nation = userService.getNationByCode(code);
+		return ResponseEntity.ok(nation);
 	}
 
 	@PostMapping("/signin")

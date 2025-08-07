@@ -30,7 +30,9 @@
 				.addPathPatterns("/api/**")
 				.excludePathPatterns(
 					"/api/user/signup",
-					"/api/user/signin"
+					"/api/user/signin",
+					"/api/user/nations",
+					"/api/user/nation/**"
 				);
 		}
 

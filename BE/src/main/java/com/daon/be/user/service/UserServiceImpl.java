@@ -8,10 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.daon.be.user.dto.JwtSigninRequestDto;
 import com.daon.be.user.dto.JwrSigninResponseDto;
+import com.daon.be.user.dto.NationDto;
 import com.daon.be.user.dto.UserProfileUpdateRequestDto;
 import com.daon.be.user.dto.UserSignupRequestDto;
 import com.daon.be.user.dto.UserWithdrawRequestDto;
+import com.daon.be.user.entity.Nation;
 import com.daon.be.user.entity.User;
+import com.daon.be.user.repository.NationRepository;
 import com.daon.be.user.repository.UserRepository;
 import com.daon.be.user.jwt.JwtUtil;
 
@@ -23,6 +26,7 @@ public class UserServiceImpl implements UserService {
 
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final NationRepository nationRepository;
 	private final JwtUtil jwtUtil;
 
 	@Override
@@ -80,6 +84,11 @@ public class UserServiceImpl implements UserService {
 		userRepository.delete(user);
 	}
 
+	public NationDto getNationByCode(String code) {
+		Nation nation = nationRepository.findById(code)
+			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 국가 코드입니다: " + code));
+		return NationDto.from(nation);
+	}
 
 
 }
