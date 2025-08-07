@@ -131,20 +131,51 @@ public class ChildServiceImpl implements ChildService {
     }
 
     @Override
-    public void addChildInterests(Long userId, Long childId, ChildInterestCreateRequestDTO dto) {
+    public void addChildInterests(Long userId, Long childId,
+                                  ChildInterestCreateRequestDTO dto) {
+        System.out.println("=== addChildInterests 호출 ===");
+        System.out.println("userId: " + userId + ", childId: " + childId);
+        System.out.println("요청된 관심사: " + dto.getInterests());
+
         ChildProfile child = childProfileRepository.findById(childId)
                 .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
         if (!child.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("권한이 없습니다.");
         }
-        List<ChildInterest> interests = dto.getInterests().stream()
+
+        // 기존 관심사 조회
+        List<String> existingInterests = childInterestRepository
+                .findByChildProfileId(childId)
+                .stream()
+                .map(ChildInterest::getName)
+                .collect(Collectors.toList());
+
+        System.out.println("기존 관심사: " + existingInterests);
+
+        // 중복 제거 후 새로운 관심사만 추가
+        List<ChildInterest> newInterests = dto.getInterests().stream()
+                .filter(name -> !existingInterests.contains(name))
                 .map(name -> ChildInterest.builder()
                         .childProfile(child)
                         .name(name)
                         .build())
                 .collect(Collectors.toList());
-        childInterestRepository.saveAll(interests);
+
+        System.out.println("추가할 새로운 관심사: " + newInterests.size() +
+                "개");
+        newInterests.forEach(interest -> System.out.println("- " +
+                interest.getName()));
+
+        if (!newInterests.isEmpty()) {
+            childInterestRepository.saveAll(newInterests);
+            System.out.println("DB 저장 완료");
+        } else {
+            System.out.println("추가할 새로운 관심사 없음 (모두 중복)");
+        }
+
+        System.out.println("=== addChildInterests 완료 ===");
     }
+
 
     @Override
     public void deleteChildInterests(Long userId, Long childId, ChildInterestDeleteRequestDTO dto) {

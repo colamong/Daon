@@ -211,5 +211,38 @@ export const childService = {
       
       throw new Error(error.response?.data?.message || '자녀 삭제 중 오류가 발생했습니다.');
     }
+  },
+
+  // 자녀 관심사 추가 API
+  async addChildInterests(userId, childId, data) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/users/${userId}/children/${childId}/interest`, data, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '관심사 추가 중 오류가 발생했습니다.');
+    }
+  },
+
+  // 자녀 관심사 삭제 API
+  async deleteChildInterests(userId, childId, data) {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/api/users/${userId}/children/${childId}/interest`, {
+        data: data,
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '관심사 삭제 중 오류가 발생했습니다.');
+    }
   }
 };
