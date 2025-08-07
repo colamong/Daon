@@ -88,7 +88,7 @@
                   <span class="text-purple-500 font-paperBold">⚧</span>
                   <div>
                     <p class="text-sm text-gray-500">성별</p>
-                    <p class="text-lg font-paper">{{ selectedChild.gender }}</p>
+                    <p class="text-lg font-paper">{{ genderDisplay }}</p>
                   </div>
                 </div>
                 <div class="flex items-center space-x-3">
@@ -330,6 +330,12 @@ const calendarOptions = computed(() => ({
 // childStore의 computed 속성들 사용
 const hasChild = computed(() => childStore.hasChildren);
 const selectedChild = computed(() => childStore.selectedChild);
+
+// 성별 한글 표시
+const genderDisplay = computed(() => {
+  if (!selectedChild.value?.gender) return '';
+  return selectedChild.value.gender === 'MALE' ? '남자' : '여자';
+});
 
 // 감정 리포트 관련 함수
 function handleEventClick(info) {
