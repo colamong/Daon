@@ -188,6 +188,7 @@ function switchToEdit() {
 }
 function saveEdit() {
   emit("update", {
+    id: props.id, 
     oldDate: props.date,
     newDate: editDate.value,
     newTitle: editTitle.value,
