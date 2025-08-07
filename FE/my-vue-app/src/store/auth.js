@@ -1,14 +1,34 @@
 import { defineStore } from "pinia";
 import apiClient from '@/utils/axios.js';
+import { userService } from '@/services/userService.js';
+import { nationService } from '@/services/nationService.js';
 
 export const useAuthStore = defineStore("auth", {
-  state: () => ({
-    // 새로고침 시 localStorage에서 가져오기
-    token: localStorage.getItem("auth_token") || "",
-    user: JSON.parse(localStorage.getItem("auth_user") || "null"),
-  }),
+  state: () => {
+    let user = null;
+    try {
+      const userData = localStorage.getItem("auth_user");
+      if (userData && userData !== "null") {
+        user = JSON.parse(userData);
+      }
+    } catch (e) {
+      console.error('localStorage user 파싱 오류:', e);
+    }
+    
+    return {
+      // 새로고침 시 localStorage에서 가져오기
+      token: localStorage.getItem("auth_token") || "",
+      user: user,
+      nations: [], // 국가 목록 저장
+    };
+  },
   getters: {
-    isAuthenticated: (s) => !!s.token || !!s.user,
+    isAuthenticated: (s) => !!s.token && !!s.user,
+    userNationName: (s) => {
+      if (!s.user?.nationCode) return '국가 정보 없음';
+      const nation = s.nations.find(n => n.code === s.user.nationCode);
+      return nation?.nameKo || s.user.nationCode;
+    },
   },
   actions: {
     async signup({ nickname, email, password, nationCode }) {
@@ -82,18 +102,33 @@ export const useAuthStore = defineStore("auth", {
 
     async getCurrentUser() {
       try {
-        const response = await apiClient.get(`/api/user/me`);
+        const userData = await userService.getCurrentUser();
         
-        this.user = response.data;
-        localStorage.setItem("auth_user", JSON.stringify(response.data));
+        this.user = userData;
+        localStorage.setItem("auth_user", JSON.stringify(userData));
         
-        return response.data;
+        return userData;
       } catch (error) {
-        if (error.response?.status === 401) {
+        if (error.message.includes('인증이 만료')) {
           this.logout();
-          throw new Error('인증이 만료되었습니다. 다시 로그인해주세요.');
         }
-        throw new Error('사용자 정보를 가져오는 중 오류가 발생했습니다.');
+        throw error;
+      }
+    },
+
+    async updateProfile(profileData) {
+      try {
+        const result = await userService.updateProfile(profileData);
+        
+        // 프로필 수정 후 최신 사용자 정보 다시 가져오기
+        await this.getCurrentUser();
+        
+        return result;
+      } catch (error) {
+        if (error.message.includes('인증이 만료')) {
+          this.logout();
+        }
+        throw error;
       }
     },
 
@@ -106,12 +141,12 @@ export const useAuthStore = defineStore("auth", {
 
     async checkAuthStatus() {
       try {
-        // 쿠키에 토큰이 있는지 확인하기 위해 /api/user/me 호출
-        const response = await apiClient.get(`/api/user/me`);
+        // 쿠키에 토큰이 있는지 확인하기 위해 사용자 정보 조회
+        const userData = await userService.getCurrentUser();
         
-        this.user = response.data;
+        this.user = userData;
         this.token = "cookie-based-auth"; // 쿠키 기반 인증 표시
-        localStorage.setItem("auth_user", JSON.stringify(response.data));
+        localStorage.setItem("auth_user", JSON.stringify(userData));
         localStorage.setItem("auth_token", "cookie-based-auth");
         
         return true;
@@ -119,6 +154,17 @@ export const useAuthStore = defineStore("auth", {
         // 인증되지 않은 상태
         this.logout();
         return false;
+      }
+    },
+
+    async loadNations() {
+      if (this.nations.length > 0) return; // 이미 로드했으면 스킵
+      
+      try {
+        this.nations = await nationService.getNations();
+        console.log('국가 목록 로드 완료:', this.nations.length, '개국');
+      } catch (error) {
+        console.error('국가 목록 로드 실패:', error);
       }
     },
 
