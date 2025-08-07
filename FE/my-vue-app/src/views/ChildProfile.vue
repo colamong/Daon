@@ -215,7 +215,6 @@ import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import EmotionReportModal from "@/components/modal/EmotionReportModal.vue";
-import { emotionReportsByChild } from "@/data/emotionReports.js";
 import {
   getChildColor,
   ensureAllChildrenHaveColors,
@@ -247,20 +246,8 @@ const selectedChildrenForReport = ref([]);
 
 // 선택된 아이들의 모든 감정 리포트 데이터 (달력 표시용)
 const allSelectedReports = computed(() => {
-  const reports = [];
-  selectedChildrenForReport.value.forEach((childName) => {
-    const childData = emotionReportsByChild[childName];
-    if (childData) {
-      childData.reports.forEach((report) => {
-        reports.push({
-          ...report,
-          childName,
-          color: childData.color,
-        });
-      });
-    }
-  });
-  return reports.sort((a, b) => new Date(a.date) - new Date(b.date));
+  // 더미 데이터 제거됨 - API 연동 필요
+  return [];
 });
 
 // 아이별 우선순위 (등록 순서) - 김미래가 먼저 등록됨
@@ -268,24 +255,8 @@ const childPriority = { 김미래: 0, 김과거: 1 };
 
 // 전체 리포트를 날짜와 아이 우선순위로 정렬 (네비게이션용)
 const allReportsForNavigation = computed(() => {
-  const reports = [];
-  Object.keys(emotionReportsByChild).forEach((childName) => {
-    const childData = emotionReportsByChild[childName];
-    childData.reports.forEach((report) => {
-      reports.push({
-        ...report,
-        childName,
-        color: childData.color,
-        priority: childPriority[childName] || 999,
-      });
-    });
-  });
-  // 날짜순 먼저, 같은 날짜면 아이 우선순위순으로 정렬
-  return reports.sort((a, b) => {
-    const dateCompare = new Date(a.date) - new Date(b.date);
-    if (dateCompare !== 0) return dateCompare;
-    return a.priority - b.priority;
-  });
+  // 더미 데이터 제거됨 - API 연동 필요
+  return [];
 });
 
 // 현재 리포트의 전체 인덱스 찾기

@@ -225,7 +225,6 @@ import EmotionReportModal from '@/components/modal/EmotionReportModal.vue';
 import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
 import { dummyEvents } from "@/data/dummyData.js";
-import { emotionReportsByChild } from '@/data/emotionReports.js';
 import { useNotification } from '@/composables/useNotification.js';
 import { ensureAllChildrenHaveColors } from '@/utils/colorManager.js';
 
@@ -306,14 +305,8 @@ const selectedChildIndex = computed({
 
 // 선택된 아이의 오늘 활동 체크
 const todayActivity = computed(() => {
-  if (!selectedChild.value || !selectedChild.value.name) return null;
-  
-  const today = dayjs().format('YYYY-MM-DD');
-  const childData = emotionReportsByChild[selectedChild.value.name];
-  
-  if (!childData) return null;
-  
-  return childData.reports.find(report => report.date === today);
+  // 더미 데이터 제거됨 - API 연동 필요
+  return null;
 });
 
 const hasActivity = computed(() => !!todayActivity.value);

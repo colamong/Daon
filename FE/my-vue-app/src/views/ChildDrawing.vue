@@ -76,9 +76,10 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from "vue";
+import { ref, computed, reactive, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useChildStore } from "@/store/child";
+import { childService } from "@/services/childService.js";
 
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -92,7 +93,6 @@ import bgImage from "@/assets/images/child_calender.png";
 import HomeIcon from "@/assets/images/Home.png";
 import cloudImg from "@/assets/images/cloud.png";
 import playPenImg from "@/assets/images/play_pen.png";
-import { emotionReportsByChild } from "@/data/emotionReports.js";
 
 // props 정의
 const props = defineProps({
@@ -119,6 +119,18 @@ onMounted(() => {
       childStore.selectChild(childId);
     }
   }
+
+  // 현재 달의 그림일기 로드
+  const today = new Date();
+  loadMonthlyDiaries(today.getFullYear(), today.getMonth() + 1);
+});
+
+// 선택된 아이가 바뀌면 그림일기 다시 로드
+watch(selectedChild, (newChild) => {
+  if (newChild?.id) {
+    const today = new Date();
+    loadMonthlyDiaries(today.getFullYear(), today.getMonth() + 1);
+  }
 });
 
 // 뒤로가기
@@ -130,27 +142,31 @@ function goBack() {
 const showModal = ref(false);
 const selectedDiary = ref({ date: "", imageUrl: "", text: "" });
 
-// 선택된 아이의 그림일기 데이터
-const diaries = computed(() => {
-  if (!selectedChild.value || !selectedChild.value.name) {
-    return [];
-  }
+// 그림일기 데이터
+const diaries = ref([]);
+const isLoading = ref(false);
 
-  const childData = emotionReportsByChild[selectedChild.value.name];
-  if (!childData || !childData.reports) {
-    return [];
+// 월별 그림일기 로드 함수
+async function loadMonthlyDiaries(year, month) {
+  if (!selectedChild.value?.id) return;
+  
+  isLoading.value = true;
+  try {
+    const response = await childService.getMonthlyDiaries(selectedChild.value.id, year, month);
+    
+    // API 응답을 컴포넌트에서 사용하는 형태로 변환
+    diaries.value = (response.diaries || []).map(diary => ({
+      date: diary.date,
+      imageUrl: diary.imageUrl,
+      text: diary.text || '' // 아이용이므로 텍스트 없음
+    }));
+  } catch (error) {
+    console.error('월별 그림일기 로드 실패:', error);
+    diaries.value = [];
+  } finally {
+    isLoading.value = false;
   }
-
-  // emotionReports 데이터를 diaries 형태로 변환
-  return childData.reports
-    .filter((report) => report.diaryImage && report.diaryText) // 그림일기가 있는 것만
-    .map((report) => ({
-      date: report.date,
-      imageUrl: report.diaryImage,
-      text: report.diaryText,
-    }))
-    .sort((a, b) => new Date(a.date) - new Date(b.date)); // 날짜순 정렬
-});
+}
 
 // 날짜 문자열 → diary 객체 매핑
 const diariesMap = computed(() =>
@@ -196,6 +212,14 @@ const calendarOptions = reactive({
   height: 580,
   contentHeight: 530,
   initialDate: today,
+
+  // 달력 뷰 변경 시 호출 (이전/다음 버튼 클릭 시)
+  datesSet: (dateInfo) => {
+    const viewDate = new Date(dateInfo.start);
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth() + 1;
+    loadMonthlyDiaries(year, month);
+  },
 
   // 날짜 클릭 시 모달 열기
   dateClick: (info) => {
