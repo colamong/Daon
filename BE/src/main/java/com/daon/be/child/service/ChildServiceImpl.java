@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,6 @@ public class ChildServiceImpl implements ChildService {
     private final ChildProfileRepository childProfileRepository;
     private final ChildInterestRepository childInterestRepository;
 
-    // 1. 자녀 등록
     @Override
     public ChildResponseDTO createChild(Long userId, ChildRequestDTO requestDTO) {
         User user = userRepository.findById(userId)
@@ -40,7 +40,8 @@ public class ChildServiceImpl implements ChildService {
                 .gender(requestDTO.getGender())
                 .profileImg(requestDTO.getProfileImg())
                 .build();
-        ChildProfile savedChild = childProfileRepository.save(child);
+        // 부모를 즉시 DB에 반영
+        ChildProfile savedChild = childProfileRepository.saveAndFlush(child);
 
         List<ChildInterest> interests = requestDTO.getInterests().stream()
                 .map(name -> ChildInterest.builder()
@@ -61,11 +62,12 @@ public class ChildServiceImpl implements ChildService {
                 .build();
     }
 
-    // 2. 자녀 전체 조회
     @Override
     public List<ChildProfileResponseDTO> getAllChildren(Long userId) {
+        // userId 검증
         userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
+
         return childProfileRepository.findByUserId(userId).stream()
                 .map(child -> ChildProfileResponseDTO.builder()
                         .childId(child.getId())
@@ -77,11 +79,14 @@ public class ChildServiceImpl implements ChildService {
                 .collect(Collectors.toList());
     }
 
-    // 3. 자녀 단건 조회
     @Override
-    public ChildProfileResponseDTO getChildProfile(Long childId) {
+    public ChildProfileResponseDTO getChildProfile(Long userId, Long childId) {
         ChildProfile child = childProfileRepository.findById(childId)
                 .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
+        // 소유권 검증
+        if (!child.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("권한이 없습니다.");
+        }
         return ChildProfileResponseDTO.builder()
                 .childId(child.getId())
                 .name(child.getName())
@@ -91,28 +96,36 @@ public class ChildServiceImpl implements ChildService {
                 .build();
     }
 
-    // 4. 자녀 프로필 수정
     @Override
-    public void updateChildProfile(Long childId, String name, String birthDate, String profileImg) {
+    public void updateChildProfile(Long userId, Long childId,
+                                   String name, String birthDate, String profileImg) {
         ChildProfile child = childProfileRepository.findById(childId)
                 .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
+        if (!child.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("권한이 없습니다.");
+        }
         child.setName(name);
-        child.setBirthDate(java.time.LocalDate.parse(birthDate));
+        child.setBirthDate(LocalDate.parse(birthDate));
         child.setProfileImg(profileImg);
     }
 
-    // 5. 자녀 삭제
     @Override
-    public void deleteChild(Long childId) {
-        childInterestRepository.deleteById(childId);
-        childProfileRepository.deleteById(childId);
-    }
-
-    // 6. 관심사 추가
-    @Override
-    public void addChildInterests(Long childId, ChildInterestCreateRequestDTO dto) {
+    public void deleteChild(Long userId, Long childId) {
         ChildProfile child = childProfileRepository.findById(childId)
                 .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
+        if (!child.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("권한이 없습니다.");
+        }
+        childProfileRepository.delete(child);
+    }
+
+    @Override
+    public void addChildInterests(Long userId, Long childId, ChildInterestCreateRequestDTO dto) {
+        ChildProfile child = childProfileRepository.findById(childId)
+                .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
+        if (!child.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("권한이 없습니다.");
+        }
         List<ChildInterest> interests = dto.getInterests().stream()
                 .map(name -> ChildInterest.builder()
                         .childProfile(child)
@@ -122,11 +135,13 @@ public class ChildServiceImpl implements ChildService {
         childInterestRepository.saveAll(interests);
     }
 
-    // 7. 관심사 삭제
     @Override
-    public void deleteChildInterests(Long childId, ChildInterestDeleteRequestDTO dto) {
-        childProfileRepository.findById(childId)
+    public void deleteChildInterests(Long userId, Long childId, ChildInterestDeleteRequestDTO dto) {
+        ChildProfile child = childProfileRepository.findById(childId)
                 .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
+        if (!child.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("권한이 없습니다.");
+        }
         childInterestRepository.deleteByChildProfileIdAndNameIn(childId, dto.getInterests());
     }
 }

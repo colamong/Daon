@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/child")
+@RequestMapping("/api/users/{userId}/children")
 @RequiredArgsConstructor
 public class ChildController {
 
@@ -25,7 +25,7 @@ public class ChildController {
     /** 1. 자녀 프로필 등록 */
     @PostMapping
     public ResponseEntity<ApiResponse<ChildResponseDTO>> createChild(
-            @RequestParam Long userId,
+            @PathVariable Long userId,
             @RequestBody ChildRequestDTO dto
     ) {
         ChildResponseDTO data = childService.createChild(userId, dto);
@@ -38,7 +38,7 @@ public class ChildController {
     /** 2. 자녀 전체 조회 */
     @GetMapping
     public ResponseEntity<ApiResponse<List<ChildProfileResponseDTO>>> getAllChildren(
-            @RequestParam Long userId
+            @PathVariable Long userId
     ) {
         List<ChildProfileResponseDTO> data = childService.getAllChildren(userId);
         return ResponseEntity.ok(
@@ -49,9 +49,10 @@ public class ChildController {
     /** 3. 자녀 단건 조회 */
     @GetMapping("/{childId}")
     public ResponseEntity<ApiResponse<ChildProfileResponseDTO>> getChildProfile(
+            @PathVariable Long userId,
             @PathVariable Long childId
     ) {
-        ChildProfileResponseDTO data = childService.getChildProfile(childId);
+        ChildProfileResponseDTO data = childService.getChildProfile(userId, childId);
         return ResponseEntity.ok(
                 new ApiResponse<>(200, "자녀 프로필 조회 성공", data)
         );
@@ -60,10 +61,12 @@ public class ChildController {
     /** 4. 자녀 프로필 수정 */
     @PutMapping("/{childId}")
     public ResponseEntity<ApiResponse<Void>> updateChild(
+            @PathVariable Long userId,
             @PathVariable Long childId,
             @RequestBody ChildUpdateRequestDTO dto
     ) {
         childService.updateChildProfile(
+                userId,
                 childId,
                 dto.getName(),
                 dto.getBirthDate().toString(),
@@ -77,9 +80,10 @@ public class ChildController {
     /** 5. 자녀 프로필 삭제 */
     @DeleteMapping("/{childId}")
     public ResponseEntity<ApiResponse<Void>> deleteChild(
+            @PathVariable Long userId,
             @PathVariable Long childId
     ) {
-        childService.deleteChild(childId);
+        childService.deleteChild(userId, childId);
         return ResponseEntity.ok(
                 new ApiResponse<>(200, "자녀 프로필 삭제 완료", null)
         );
@@ -88,10 +92,11 @@ public class ChildController {
     /** 6. 자녀 관심사 추가 */
     @PostMapping("/{childId}/interest")
     public ResponseEntity<ApiResponse<Void>> addInterests(
+            @PathVariable Long userId,
             @PathVariable Long childId,
             @RequestBody ChildInterestCreateRequestDTO dto
     ) {
-        childService.addChildInterests(childId, dto);
+        childService.addChildInterests(userId, childId, dto);
         return new ResponseEntity<>(
                 new ApiResponse<>(201, "자녀 관심사 등록 완료", null),
                 HttpStatus.CREATED
@@ -101,10 +106,11 @@ public class ChildController {
     /** 7. 자녀 관심사 삭제 */
     @DeleteMapping("/{childId}/interest")
     public ResponseEntity<ApiResponse<Void>> deleteInterests(
+            @PathVariable Long userId,
             @PathVariable Long childId,
             @RequestBody ChildInterestDeleteRequestDTO dto
     ) {
-        childService.deleteChildInterests(childId, dto);
+        childService.deleteChildInterests(userId, childId, dto);
         return ResponseEntity.ok(
                 new ApiResponse<>(200, "자녀 관심사 삭제 완료", null)
         );
