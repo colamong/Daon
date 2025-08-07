@@ -3,6 +3,14 @@ import axios from 'axios';
 // Vite 프록시를 사용하여 CORS 문제 해결
 const API_BASE_URL = '';
 
+// 임시 인증 토큰 (개발용)
+const TEMP_AUTH_TOKEN = 'Bearer temp-token-for-development';
+
+// axios 기본 헤더 설정
+axios.defaults.headers.common['Authorization'] = TEMP_AUTH_TOKEN;
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+axios.defaults.withCredentials = true; // 쿠키 포함
+
 export const childService = {
   // 아이 표정 기록 API
   async recordExpression(childId, conversationResultId) {

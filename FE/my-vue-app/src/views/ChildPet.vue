@@ -377,18 +377,17 @@ async function finishConversation(finalAnswer) {
     );
     console.log('최종 API 응답:', response);
     
-    // conversationResultId 저장
-    if (response.conversationResultId) {
-      conversationState.value.conversationResultId = response.conversationResultId;
-    }
-    
     // 마무리 멘트 TTS로 출력
     const closingMessage = response.closingMessage || response.text || response.prompt || '대화가 완료되었습니다. 수고했어요!';
     await speechService.speak(closingMessage);
     
-    // Redis에서 DB로 flush (선택사항)
+    // Redis에서 DB로 flush하고 conversationResultId 받기
     try {
-      await childService.flushConversation(childId, topicId);
+      const flushResult = await childService.flushConversation(childId, topicId);
+      if (flushResult) {
+        conversationState.value.conversationResultId = flushResult;
+        console.log('conversationResultId 저장됨:', flushResult);
+      }
     } catch (error) {
       console.warn('대화 flush 오류:', error);
     }
