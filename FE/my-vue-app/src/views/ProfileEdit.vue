@@ -71,16 +71,16 @@
                 </label>
                 <select
                   id="country"
-                  v-model="formData.country"
+                  v-model="formData.nationCode"
                   class="w-4/5 py-4 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 font-paper text-lg bg-white"
                 >
                   <option value="">국가를 선택</option>
                   <option
                     v-for="option in countryOptions"
-                    :key="option.value"
-                    :value="option.value"
+                    :key="option.code"
+                    :value="option.code"
                   >
-                    {{ option.label }}
+                    {{ option.nameKo }}
                   </option>
                 </select>
               </div>
@@ -108,6 +108,7 @@ import { ref, reactive, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { useNotification } from '@/composables/useNotification.js';
+import { nationService } from '@/services/nationService.js';
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -120,76 +121,69 @@ const fileInput = ref(null);
 const currentProfile = reactive({
   nickname: "",
   email: "",
-  country: "",
+  nationCode: "",
   profileImage: "",
 });
 
 // 수정 폼 데이터
 const formData = reactive({
   nickname: "",
-  country: "",
+  nationCode: "",
   profileImage: "",
 });
 
-// 국가 옵션
-const countryOptions = [
-  { value: "대한민국", label: "🇰🇷 대한민국" },
-  { value: "베트남", label: "🇻🇳 베트남" },
-  { value: "필리핀", label: "🇵🇭 필리핀" },
-  { value: "태국", label: "🇹🇭 태국" },
-  { value: "캄보디아", label: "🇰🇭 캄보디아" },
-  { value: "몽골", label: "🇲🇳 몽골" },
-  { value: "우즈베키스탄", label: "🇺🇿 우즈베키스탄" },
-  { value: "미국", label: "🇺🇸 미국" },
-  { value: "일본", label: "🇯🇵 일본" },
-  { value: "중국", label: "🇨🇳 중국" },
-  { value: "영국", label: "🇬🇧 영국" },
-  { value: "프랑스", label: "🇫🇷 프랑스" },
-  { value: "독일", label: "🇩🇪 독일" },
-  { value: "캐나다", label: "🇨🇦 캐나다" },
-  { value: "호주", label: "🇦🇺 호주" },
-  { value: "스페인", label: "🇪🇸 스페인" },
-  { value: "이탈리아", label: "🇮🇹 이탈리아" },
-  { value: "브라질", label: "🇧🇷 브라질" },
-];
+// 국가 옵션 (백엔드에서 로드)
+const countryOptions = ref([]);
 
 // 변경사항이 있는지 확인
 const hasChanges = computed(() => {
   return (
     formData.nickname !== currentProfile.nickname ||
-    formData.country !== currentProfile.country ||
+    formData.nationCode !== currentProfile.nationCode ||
     formData.profileImage !== currentProfile.profileImage
   );
 });
 
-// 컴포넌트 마운트 시 현재 사용자 정보 로드
-onMounted(() => {
-  loadCurrentProfile();
+// 컴포넌트 마운트 시 현재 사용자 정보 및 국가 목록 로드
+onMounted(async () => {
+  await Promise.all([
+    loadCurrentProfile(),
+    loadCountries()
+  ]);
 });
 
-function loadCurrentProfile() {
-  if (auth.user) {
-    // 현재 프로필 정보 설정
-    currentProfile.nickname = auth.user.nickname || "사용자";
-    currentProfile.email = auth.user.email || "user@example.com";
-    currentProfile.country = auth.user.country || "대한민국";
-    currentProfile.profileImage =
-      auth.user.profileImage || "https://placehold.co/150x150";
+async function loadCurrentProfile() {
+  try {
+    // 사용자 정보가 없다면 먼저 가져오기
+    if (!auth.user && auth.token) {
+      await auth.getCurrentUser();
+    }
+    
+    if (auth.user) {
+      // 현재 프로필 정보 설정
+      currentProfile.nickname = auth.user.nickname || "";
+      currentProfile.email = auth.user.email || "";
+      currentProfile.nationCode = auth.user.nationCode || "";
+      currentProfile.profileImage = auth.user.profileImage || "";
 
-    // 폼 데이터도 현재 정보로 초기화
-    formData.nickname = currentProfile.nickname;
-    formData.country = currentProfile.country;
-    formData.profileImage = currentProfile.profileImage;
-  } else {
-    // 임시 데이터 (백엔드 연결 전)
-    currentProfile.nickname = "홍콘밥외";
-    currentProfile.email = "daon@example.com";
-    currentProfile.country = "대한민국";
-    currentProfile.profileImage = "https://placehold.co/150x150";
+      // 폼 데이터도 현재 정보로 초기화
+      formData.nickname = currentProfile.nickname;
+      formData.nationCode = currentProfile.nationCode;
+      formData.profileImage = currentProfile.profileImage;
+    }
+  } catch (error) {
+    console.error('프로필 로드 실패:', error);
+    showError('프로필 정보를 불러오는 중 오류가 발생했습니다.', '로드 실패');
+  }
+}
 
-    formData.nickname = currentProfile.nickname;
-    formData.country = currentProfile.country;
-    formData.profileImage = currentProfile.profileImage;
+async function loadCountries() {
+  try {
+    const nations = await nationService.getNations();
+    countryOptions.value = nations;
+  } catch (error) {
+    console.error('국가 목록 로드 실패:', error);
+    showError('국가 목록을 불러오는 중 오류가 발생했습니다.', '로드 실패');
   }
 }
 
@@ -232,7 +226,7 @@ async function handleUpdateProfile() {
     return;
   }
 
-  if (!formData.country) {
+  if (!formData.nationCode) {
     showError("국가를 선택해주세요.", "입력 오류");
     return;
   }
@@ -240,23 +234,17 @@ async function handleUpdateProfile() {
   loading.value = true;
 
   try {
-    // TODO: 실제 API 호출로 대체
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // 임시 딜레이
+    // 실제 API 호출
+    await auth.updateProfile({
+      nickname: formData.nickname,
+      nationCode: formData.nationCode
+      // profileImage는 나중에 구현 (파일 업로드가 필요)
+    });
 
-    // 현재 프로필 정보 업데이트
+    // auth.updateProfile에서 이미 사용자 정보를 업데이트했으므로
+    // 여기서는 currentProfile만 업데이트
     currentProfile.nickname = formData.nickname;
-    currentProfile.country = formData.country;
-    currentProfile.profileImage = formData.profileImage;
-
-    // auth 스토어 업데이트
-    if (auth.user) {
-      auth.user.nickname = formData.nickname;
-      auth.user.country = formData.country;
-      auth.user.profileImage = formData.profileImage;
-
-      // localStorage에도 저장
-      localStorage.setItem("auth_user", JSON.stringify(auth.user));
-    }
+    currentProfile.nationCode = formData.nationCode;
 
     showSuccess("프로필이 성공적으로 업데이트되었습니다!", "수정 완료");
 
@@ -264,7 +252,7 @@ async function handleUpdateProfile() {
     router.push({ name: "Dashboard" });
   } catch (error) {
     console.error("프로필 업데이트 실패:", error);
-    showError("프로필 업데이트에 실패했습니다. 다시 시도해주세요.", "업데이트 실패");
+    showError(error.message || "프로필 업데이트에 실패했습니다. 다시 시도해주세요.", "업데이트 실패");
   } finally {
     loading.value = false;
   }

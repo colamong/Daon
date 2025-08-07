@@ -9,17 +9,17 @@
 
     <!-- 이름 -->
     <h2 class="text-xl font-paperBold text-purple-800 mb-1">
-      {{ name }}
+      {{ user?.nickname || '사용자' }}
     </h2>
 
     <!-- 이메일 -->
     <p class="text-sm text-gray-500 mb-1 font-paper">
-      {{ email }}
+      {{ user?.email || '' }}
     </p>
 
     <!-- 국적 -->
     <p class="text-sm text-gray-600 font-paper">
-      ≈ {{ nationality }}
+      ≈ {{ userNationName || '국가 정보 없음' }}
     </p>
 
     <!-- 수정 버튼 -->
@@ -32,19 +32,50 @@
 
 
 <script setup>
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/store/auth'
 import BaseButton from '@/components/button/BaseButton.vue';
 
 const router = useRouter()
+const auth = useAuthStore()
 
-const props = defineProps({
-  name: String,
-  email: String,
-  nationality: String,
-  image: {
-    type: String,
-    default: new URL('@/assets/icons/image-placeholder.svg', import.meta.url).href,
-  },
+const user = computed(() => {
+  console.log('ProfileCard - user:', auth.user)
+  return auth.user
+})
+
+const userNationName = computed(() => {
+  console.log('ProfileCard - userNationName:', auth.userNationName)
+  console.log('ProfileCard - nations:', auth.nations?.length)
+  console.log('ProfileCard - nationCode:', auth.user?.nationCode)
+  return auth.userNationName
+})
+
+onMounted(async () => {
+  console.log('ProfileCard mounted - 초기 상태:', {
+    user: auth.user,
+    token: auth.token,
+    nationsCount: auth.nations?.length
+  })
+  
+  // 국가 목록을 먼저 로드
+  await auth.loadNations()
+  
+  // 사용자 정보가 없다면 가져오기
+  if (!auth.user && auth.token) {
+    try {
+      await auth.getCurrentUser()
+    } catch (error) {
+      console.error('사용자 정보 로드 실패:', error)
+    }
+  }
+  
+  console.log('ProfileCard mounted 완료:', {
+    user: auth.user,
+    nationsCount: auth.nations?.length,
+    userNationName: auth.userNationName
+  })
 })
 
 function goToEdit() {

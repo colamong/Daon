@@ -138,25 +138,18 @@ async function handleLogin() {
   }
   error.value = "";
   try {
-    // 더미 API 콜 시뮬레이션
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await auth.login({ 
+      email: email.value, 
+      password: password.value 
+    });
 
-    // mock-token 생성
-    const mockToken = "mock-token";
-    if (auth.login) {
-      // 향후 실제 백엔드 연결 시 auth.login() 사용
-      await auth.login({ email: email.value, password: password.value });
-    } else {
-      // 임시 토큰 저장
-      localStorage.setItem("token", mockToken);
-      // Pinia store에 토큰 반영 (필요하다면 store 내부 구현에 맞게 수정)
-      auth.token = mockToken;
-    }
+    // 로그인 성공 후 사용자 정보 가져오기
+    await auth.getCurrentUser();
 
     showSuccess("로그인되었습니다!", "환영합니다");
     router.push({ name: "Dashboard" });
-  } catch {
-    showError("이메일 또는 비밀번호가 올바르지 않습니다.", "로그인 실패");
+  } catch (error) {
+    showError(error.message || "로그인 중 오류가 발생했습니다.", "로그인 실패");
   }
 }
 
