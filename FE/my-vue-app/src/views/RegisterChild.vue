@@ -142,6 +142,7 @@ import { useRouter } from "vue-router";
 import { useNotification } from '@/composables/useNotification.js';
 import { useAuthStore } from "@/store/auth";
 import { assignColorToChild } from '@/utils/colorManager.js';
+import { childService } from "@/services/childService.js";
 import BaseImageUpload from "@/components/form/BaseImageUpload.vue";
 import BaseRadioGroup from "@/components/form/BaseRadioGroup.vue";
 import BaseCheckboxGroup from "@/components/form/BaseCheckboxGroup.vue";
@@ -186,8 +187,8 @@ watch([selectedYear, selectedMonth, selectedDay], () => {
 
 // 성별 옵션
 const genderOptions = [
-  { label: "남자", value: "남자" },
-  { label: "여자", value: "여자" },
+  { label: "남자", value: "MALE" },
+  { label: "여자", value: "FEMALE" },
 ];
 
 // 관심사 옵션 (아이들이 흔히 좋아하는 것들)
@@ -292,30 +293,23 @@ async function handleRegisterChild() {
   loading.value = true;
 
   try {
-    // TODO: 실제 API 호출로 대체
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // 아이 정보를 localStorage에 저장 (임시)
-    const childId = Date.now();
-    const childInfo = {
-      id: childId,
-      ...childData,
-      color: assignColorToChild(childId), // 자동으로 색상 할당
-      registeredAt: new Date().toISOString(),
+    // 로그인된 사용자 ID 사용
+    const userId = auth.user?.id || 1;
+    
+    // API 요청 데이터 준비
+    const requestData = {
+      name: childData.name.trim(),
+      birthDate: childData.birthDate,
+      gender: childData.gender,
+      profileImg: childData.profileImage || "https://example.com/images/default_child_profile.png",
+      interests: [...childData.interests] // Proxy Array를 일반 배열로 변환
     };
 
-    // 기존 아이 정보가 있다면 배열에 추가, 없다면 새로 생성
-    const existingChildren = JSON.parse(
-      localStorage.getItem("children") || "[]"
-    );
-    existingChildren.push(childInfo);
-    localStorage.setItem("children", JSON.stringify(existingChildren));
-
-    // auth 스토어에도 업데이트
-    if (auth.user) {
-      auth.user.children = existingChildren;
-      localStorage.setItem("auth_user", JSON.stringify(auth.user));
-    }
+    console.log('자녀 등록 요청 데이터:', requestData);
+    
+    // 실제 API 호출
+    const response = await childService.registerChild(userId, requestData);
+    console.log('자녀 등록 응답:', response);
 
     showSuccess(`${childData.name}의 정보가 성공적으로 등록되었습니다!`, "등록 완료");
 
@@ -323,7 +317,7 @@ async function handleRegisterChild() {
     router.push({ name: "Dashboard" });
   } catch (error) {
     console.error("아이 등록 실패:", error);
-    showError("아이 등록에 실패했습니다. 다시 시도해주세요.", "등록 실패");
+    showError(error.message || "아이 등록에 실패했습니다. 다시 시도해주세요.", "등록 실패");
   } finally {
     loading.value = false;
   }
