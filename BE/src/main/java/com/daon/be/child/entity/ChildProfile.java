@@ -2,28 +2,20 @@ package com.daon.be.child.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.daon.be.user.entity.User;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "ChildProfile")
 public class ChildProfile {
 
@@ -50,7 +42,21 @@ public class ChildProfile {
 	@Column(name = "created_at")
 	private LocalDateTime createdAt = LocalDateTime.now();
 
+	// 관심사 연관관계 추가 (1:N)
+	@OneToMany(mappedBy = "childProfile", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<ChildInterest> interests = new ArrayList<>();
+
 	public enum Gender {
 		MALE, FEMALE
+	}
+
+	// 관심사 편의 메서드
+	public void addInterest(ChildInterest interest) {
+		this.interests.add(interest);
+		interest.setChildProfile(this);
+	}
+
+	public void removeInterest(String interestName) {
+		this.interests.removeIf(i -> i.getName().equals(interestName));
 	}
 }
