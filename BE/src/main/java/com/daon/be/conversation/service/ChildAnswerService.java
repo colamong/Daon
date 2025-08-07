@@ -91,10 +91,7 @@ public class ChildAnswerService {
 		String redisKey = String.format("child:%d:topic:%d:answers", childId, topicId);
 
 		// 1. 프롬프트에서 질문 가져오기
-		String question = conversationPromptRepository
-			.findByTopic_IdAndStep(topicId, step)
-			.map(p -> p.getPrompt())
-			.orElseThrow(() -> new IllegalArgumentException("해당 프롬프트 없음"));
+		String question = "";
 
 		// 2. Redis에 저장
 		ChildAnswerRedisDto redisDto = ChildAnswerRedisDto.of(step, question, dto.getAnswer());
