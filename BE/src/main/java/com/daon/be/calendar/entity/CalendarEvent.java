@@ -3,6 +3,8 @@ package com.daon.be.calendar.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.daon.be.calendar.dto.CalendarRequestDto;
+import com.daon.be.calendar.dto.CalendarUpdateRequestDto;
 import com.daon.be.user.entity.User;
 
 import jakarta.persistence.Column;
@@ -50,4 +52,20 @@ public class CalendarEvent {
 
 	@Column(name = "updated_at")
 	private LocalDateTime updatedAt = LocalDateTime.now();
+
+	public static CalendarEvent of(User user, CalendarRequestDto dto) {
+		CalendarEvent event = new CalendarEvent();
+		event.setUser(user);
+		event.setEventDate(dto.getEventDate());
+		event.setTitle(dto.getTitle());
+		event.setDescription(dto.getDescription());
+		return event;
+	}
+
+	public void updateFrom(CalendarUpdateRequestDto dto) {
+		this.eventDate = dto.getEventDate();
+		this.title = dto.getTitle();
+		this.description = dto.getDescription();
+		this.updatedAt = java.time.LocalDateTime.now();
+	}
 }
