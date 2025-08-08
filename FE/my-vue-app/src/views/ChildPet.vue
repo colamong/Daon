@@ -16,10 +16,13 @@
         :disabled="isLoading"
         :class="[
           'w-20 h-20 bg-white rounded-lg shadow flex items-center justify-center',
-          isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'
+          isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50',
         ]"
       >
-        <div v-if="isLoading" class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div
+          v-if="isLoading"
+          class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+        ></div>
         <img
           v-else
           :src="HomeIcon"
@@ -70,20 +73,27 @@
       </div>
 
       <!-- 대화 상태 표시 -->
-      <div 
-        v-if="conversationState.isActive" 
+      <div
+        v-if="conversationState.isActive"
         class="mt-6 bg-white/90 backdrop-blur-sm rounded-2xl p-6 max-w-md w-full shadow-lg"
       >
         <div class="text-center">
           <!-- 진행 상태 -->
           <div class="mb-4">
             <span class="text-sm text-gray-600">
-              {{ conversationState.currentStep }} / {{ conversationState.totalSteps }}
+              {{ conversationState.currentStep }} /
+              {{ conversationState.totalSteps }}
             </span>
             <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div 
+              <div
                 class="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                :style="{ width: (conversationState.currentStep / conversationState.totalSteps * 100) + '%' }"
+                :style="{
+                  width:
+                    (conversationState.currentStep /
+                      conversationState.totalSteps) *
+                      100 +
+                    '%',
+                }"
               ></div>
             </div>
           </div>
@@ -97,11 +107,17 @@
 
           <!-- 상태 메시지 -->
           <div class="text-sm text-gray-600">
-            <div v-if="conversationState.isSpeaking" class="flex items-center justify-center gap-2">
+            <div
+              v-if="conversationState.isSpeaking"
+              class="flex items-center justify-center gap-2"
+            >
               <div class="animate-pulse w-2 h-2 bg-blue-500 rounded-full"></div>
               <span>펭구가 말하고 있어요...</span>
             </div>
-            <div v-else-if="conversationState.isListening" class="flex items-center justify-center gap-2">
+            <div
+              v-else-if="conversationState.isListening"
+              class="flex items-center justify-center gap-2"
+            >
               <div class="animate-ping w-2 h-2 bg-red-500 rounded-full"></div>
               <span>듣고 있어요... 말해주세요!</span>
             </div>
@@ -120,7 +136,10 @@
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useChildStore } from "@/store/child";
-import { getChildPenguinData, incrementConversation } from "@/data/penguinData.js";
+import {
+  getChildPenguinData,
+  incrementConversation,
+} from "@/data/penguinData.js";
 import { childService } from "@/services/childService.js";
 import { speechService } from "@/services/speechService.js";
 
@@ -154,10 +173,10 @@ const conversationState = ref({
   totalSteps: 5,
   topicId: null,
   conversationResultId: null,
-  currentQuestion: '',
+  currentQuestion: "",
   isListening: false,
   isSpeaking: false,
-  answers: []
+  answers: [],
 });
 
 // 선택된 아이의 펭귄 데이터 로드
@@ -170,41 +189,47 @@ function loadPenguinData() {
 }
 
 // 선택된 아이가 변경될 때마다 펭귄 데이터 다시 로드
-watch(selectedChild, (newChild) => {
-  if (newChild && newChild.name) {
-    loadPenguinData();
-  }
-}, { immediate: true });
+watch(
+  selectedChild,
+  (newChild) => {
+    if (newChild && newChild.name) {
+      loadPenguinData();
+    }
+  },
+  { immediate: true }
+);
 
 async function goBack() {
   if (isLoading.value) return; // 이미 로딩 중이면 중복 실행 방지
-  
+
   try {
     isLoading.value = true;
-    
+
     const childId = 3;
-    const conversationResultId = 10; // 테스트용으로 고정값 설정
-    
+    const conversationResultId = 15; // 테스트용으로 고정값 설정
+
     // conversationResultId가 있을 때만 API 호출
     if (conversationResultId) {
       // 1. 아이 표정 기록 API 호출
-      const expressionResult = await childService.recordExpression(childId, conversationResultId);
-      console.log('표정 기록 결과:', expressionResult);
-      
+      const expressionResult = await childService.recordExpression(
+        childId,
+        conversationResultId
+      );
+      console.log("표정 기록 결과:", expressionResult);
+
       // 2. 다이어리 생성 API 호출
       const diaryResult = await childService.createDiary(conversationResultId);
-      console.log('다이어리 생성 결과:', diaryResult);
+      console.log("다이어리 생성 결과:", diaryResult);
     } else {
-      console.warn('conversationResultId가 없어서 API 호출을 건너뜁니다.');
+      console.warn("conversationResultId가 없어서 API 호출을 건너뜁니다.");
     }
-    
+
     // 3. 모든 API 호출이 완료되면 이전 페이지로 이동
     router.back();
-    
   } catch (error) {
-    console.error('홈으로 가기 중 오류:', error);
+    console.error("홈으로 가기 중 오류:", error);
     // 에러가 발생해도 페이지는 이동
-    alert(error.message || '처리 중 오류가 발생했지만 홈으로 이동합니다.');
+    alert(error.message || "처리 중 오류가 발생했지만 홈으로 이동합니다.");
     router.back();
   } finally {
     isLoading.value = false;
@@ -215,31 +240,31 @@ async function goBack() {
 async function startConversation() {
   try {
     const childId = 3; // 임시 childId
-    
+
     // 1. 대화 시작 API 호출하여 주제 받기
     const conversationStart = await childService.startConversation(childId);
-    console.log('대화 시작 API 응답:', conversationStart);
-    
+    console.log("대화 시작 API 응답:", conversationStart);
+
     // 대화 상태 초기화
     conversationState.value = {
       isActive: true,
       currentStep: 1,
       totalSteps: 5,
-      topicId: conversationStart.id || conversationStart.topicId || 1, // id 필드 우선 확인
-      currentQuestion: '',
+      topicId: 2,
+      // topicId: conversationStart.id || conversationStart.topicId || 2, // id 필드 우선 확인
+      currentQuestion: "",
       isListening: false,
       isSpeaking: false,
-      answers: []
+      answers: [],
     };
-    
-    console.log('사용할 topicId:', conversationState.value.topicId);
-    
+
+    console.log("사용할 topicId:", conversationState.value.topicId);
+
     // 첫 번째 질문 받기
     await getFirstQuestion();
-    
   } catch (error) {
-    console.error('대화 시작 오류:', error);
-    alert('대화를 시작할 수 없습니다: ' + error.message);
+    console.error("대화 시작 오류:", error);
+    alert("대화를 시작할 수 없습니다: " + error.message);
   }
 }
 
@@ -248,20 +273,28 @@ async function getFirstQuestion() {
   try {
     const childId = 3;
     const { topicId } = conversationState.value;
-    
+
     // 첫 번째 질문은 answer를 빈 문자열로 보내기
-    const response = await childService.sendConversationAnswer(childId, topicId, 1, "");
-    console.log('첫 번째 질문 API 응답:', response);
-    
+    const response = await childService.sendConversationAnswer(
+      childId,
+      topicId,
+      1,
+      ""
+    );
+    console.log("첫 번째 질문 API 응답:", response);
+
     // 응답에서 질문 추출
-    conversationState.value.currentQuestion = response.question || response.text || response.prompt || '질문을 받지 못했습니다.';
-    
+    conversationState.value.currentQuestion =
+      response.question ||
+      response.text ||
+      response.prompt ||
+      "질문을 받지 못했습니다.";
+
     // TTS로 질문 읽기
     await speakQuestion(conversationState.value.currentQuestion);
-    
   } catch (error) {
-    console.error('첫 번째 질문 받기 오류:', error);
-    alert('첫 번째 질문을 받을 수 없습니다: ' + error.message);
+    console.error("첫 번째 질문 받기 오류:", error);
+    alert("첫 번째 질문을 받을 수 없습니다: " + error.message);
   }
 }
 
@@ -270,34 +303,43 @@ async function getNextQuestion(previousAnswer) {
   try {
     const childId = 3;
     const { topicId, currentStep } = conversationState.value;
-    
-    console.log(`Step ${currentStep} 답변 제출:`, { childId, topicId, currentStep, previousAnswer });
-    
+
+    console.log(`Step ${currentStep} 답변 제출:`, {
+      childId,
+      topicId,
+      currentStep,
+      previousAnswer,
+    });
+
     const response = await childService.sendConversationAnswer(
-      childId, 
-      topicId, 
+      childId,
+      topicId,
       currentStep, // 현재 단계의 답변 제출
       previousAnswer,
       conversationState.value.currentQuestion
     );
     console.log(`Step ${currentStep} API 응답:`, response);
-    
+
     // 응답에서 다음 질문 추출
-    conversationState.value.currentQuestion = response.question || response.text || response.prompt || '질문을 받지 못했습니다.';
-    
+    conversationState.value.currentQuestion =
+      response.question ||
+      response.text ||
+      response.prompt ||
+      "질문을 받지 못했습니다.";
+
     // TTS로 질문 읽기
     await speakQuestion(conversationState.value.currentQuestion);
-    
   } catch (error) {
-    console.error('다음 질문 받기 오류:', error);
-    
+    console.error("다음 질문 받기 오류:", error);
+
     // API 오류 시에도 대화를 계속 진행할 수 있도록 기본 질문으로 처리
-    conversationState.value.currentQuestion = '서버 연결에 문제가 있어요. 다음 질문으로 넘어갈게요.';
-    
+    conversationState.value.currentQuestion =
+      "서버 연결에 문제가 있어요. 다음 질문으로 넘어갈게요.";
+
     try {
       await speakQuestion(conversationState.value.currentQuestion);
     } catch (ttsError) {
-      console.error('TTS 오류:', ttsError);
+      console.error("TTS 오류:", ttsError);
     }
   }
 }
@@ -306,23 +348,22 @@ async function getNextQuestion(previousAnswer) {
 async function speakQuestion(question) {
   try {
     conversationState.value.isSpeaking = true;
-    
+
     // 아이를 위한 친근한 음성 설정
     const voiceOptions = {
-      rate: 0.7,        // 천천히
-      pitch: 1.2,       // 조금 높게 (아이 친화적)
-      volume: 0.9,      // 적당한 볼륨
+      rate: 0.7, // 천천히
+      pitch: 1.2, // 조금 높게 (아이 친화적)
+      volume: 0.9, // 적당한 볼륨
       // voiceName: 'Google 한국의'  // 특정 음성 지정 (선택사항)
     };
-    
+
     await speechService.speak(question, voiceOptions);
     conversationState.value.isSpeaking = false;
-    
+
     // 질문이 끝나면 사용자 입력 대기 상태로 변경
-    console.log('스페이스바를 눌러 대답하세요.');
-    
+    console.log("스페이스바를 눌러 대답하세요.");
   } catch (error) {
-    console.error('TTS 오류:', error);
+    console.error("TTS 오류:", error);
     conversationState.value.isSpeaking = false;
   }
 }
@@ -333,22 +374,22 @@ async function listenForAnswer() {
     conversationState.value.isListening = true;
     const answer = await speechService.listen({
       continuous: false,
-      interimResults: false
+      interimResults: false,
     });
-    
-    console.log('사용자 답변:', answer);
+
+    console.log("사용자 답변:", answer);
     conversationState.value.isListening = false;
-    
+
     // 답변 저장
-    conversationState.value.answers[conversationState.value.currentStep - 1] = answer;
-    
+    conversationState.value.answers[conversationState.value.currentStep - 1] =
+      answer;
+
     // 다음 단계로 진행
     await processAnswer();
-    
   } catch (error) {
-    console.error('음성 인식 오류:', error);
+    console.error("음성 인식 오류:", error);
     conversationState.value.isListening = false;
-    alert('음성 인식에 실패했습니다. 다시 시도해주세요.');
+    alert("음성 인식에 실패했습니다. 다시 시도해주세요.");
   }
 }
 
@@ -356,9 +397,9 @@ async function listenForAnswer() {
 async function processAnswer() {
   const { currentStep, totalSteps, answers } = conversationState.value;
   const currentAnswer = answers[currentStep - 1]; // 현재 단계의 답변
-  
+
   console.log(`Step ${currentStep} 답변 처리:`, currentAnswer);
-  
+
   if (currentStep < totalSteps) {
     // 현재 답변을 제출하고 다음 질문을 받은 후 단계 증가
     await getNextQuestion(currentAnswer);
@@ -374,64 +415,70 @@ async function finishConversation(finalAnswer) {
   try {
     const childId = 3;
     const { topicId } = conversationState.value;
-    
-    let closingMessage = '대화가 완료되었습니다. 수고했어요!';
-    
+
+    let closingMessage = "대화가 완료되었습니다. 수고했어요!";
+
     try {
       // 마지막 답변 제출
       const response = await childService.sendConversationAnswer(
-        childId, 
-        topicId, 
-        5, 
+        childId,
+        topicId,
+        5,
         finalAnswer,
         conversationState.value.currentQuestion
       );
-      console.log('최종 API 응답:', response);
-      
+      console.log("최종 API 응답:", response);
+
       // 서버에서 받은 마무리 멘트 사용
-      closingMessage = response.closingMessage || response.text || response.prompt || closingMessage;
-      
+      closingMessage =
+        response.closingMessage ||
+        response.text ||
+        response.prompt ||
+        closingMessage;
     } catch (apiError) {
-      console.error('마지막 답변 제출 오류:', apiError);
-      closingMessage = '서버 연결에 문제가 있었지만 대화가 완료되었어요. 수고했어요!';
+      console.error("마지막 답변 제출 오류:", apiError);
+      closingMessage =
+        "서버 연결에 문제가 있었지만 대화가 완료되었어요. 수고했어요!";
     }
-    
+
     // 마무리 멘트 TTS로 출력
     try {
       await speechService.speak(closingMessage);
     } catch (ttsError) {
-      console.error('TTS 오류:', ttsError);
+      console.error("TTS 오류:", ttsError);
     }
-    
+
     // Redis에서 DB로 flush하고 conversationResultId 받기
     try {
-      const flushResult = await childService.flushConversation(childId, topicId);
+      const flushResult = await childService.flushConversation(
+        childId,
+        topicId
+      );
       if (flushResult) {
         conversationState.value.conversationResultId = flushResult;
-        console.log('conversationResultId 저장됨:', flushResult);
+        console.log("conversationResultId 저장됨:", flushResult);
       }
     } catch (error) {
-      console.warn('대화 flush 오류:', error);
+      console.warn("대화 flush 오류:", error);
       // 오류 시 임시로 10으로 설정하여 홈 버튼 API 테스트 가능하게 함
       conversationState.value.conversationResultId = 10;
-      console.log('conversationResultId 임시로 10으로 설정');
+      console.log("conversationResultId 임시로 10으로 설정");
     }
-    
+
     // 대화 상태 초기화
     conversationState.value.isActive = false;
-    console.log('대화 완료!');
-    
+    console.log("대화 완료!");
   } catch (error) {
-    console.error('대화 마무리 오류:', error);
-    
+    console.error("대화 마무리 오류:", error);
+
     // 어떤 오류가 발생해도 대화는 종료시킴
     conversationState.value.isActive = false;
-    
+
     // 기본 마무리 멘트 출력
     try {
-      await speechService.speak('대화가 완료되었습니다. 수고했어요!');
+      await speechService.speak("대화가 완료되었습니다. 수고했어요!");
     } catch (ttsError) {
-      console.error('TTS 오류:', ttsError);
+      console.error("TTS 오류:", ttsError);
     }
   }
 }
@@ -439,7 +486,12 @@ async function finishConversation(finalAnswer) {
 // 키보드 이벤트 핸들러
 function handleKeyPress(event) {
   // 스페이스바 (코드 32)
-  if (event.code === 'Space' && conversationState.value.isActive && !conversationState.value.isListening && !conversationState.value.isSpeaking) {
+  if (
+    event.code === "Space" &&
+    conversationState.value.isActive &&
+    !conversationState.value.isListening &&
+    !conversationState.value.isSpeaking
+  ) {
     event.preventDefault();
     listenForAnswer();
   }
@@ -449,10 +501,10 @@ function handleKeyPress(event) {
 onMounted(async () => {
   childStore.initialize();
   loadPenguinData();
-  
+
   // 키보드 이벤트 리스너 등록
-  window.addEventListener('keydown', handleKeyPress);
-  
+  window.addEventListener("keydown", handleKeyPress);
+
   // 페이지 진입 시 대화 시작
   await startConversation();
 });
@@ -460,21 +512,21 @@ onMounted(async () => {
 // 컴포넌트 언마운트 시 정리
 onUnmounted(() => {
   // 키보드 이벤트 리스너 제거
-  window.removeEventListener('keydown', handleKeyPress);
-  
+  window.removeEventListener("keydown", handleKeyPress);
+
   // 스피치 서비스 정리
   speechService.cleanup();
 });
 
 // 2) 각 레벨별 다음 단계까지 필요한 대화 횟수 매핑
 const levelRequirements = {
-  1: 2,   // 1→2레벨: 2번 대화
-  2: 4,   // 2→3레벨: 4번 대화  
-  3: 6,   // 3→4레벨: 6번 대화
-  4: 8,   // 4→5레벨: 8번 대화
-  5: 10,  // 5→6레벨: 10번 대화
-  6: 12,  // 6→7레벨: 12번 대화
-  7: 0    // 7레벨은 최대 레벨
+  1: 2, // 1→2레벨: 2번 대화
+  2: 4, // 2→3레벨: 4번 대화
+  3: 6, // 3→4레벨: 6번 대화
+  4: 8, // 4→5레벨: 8번 대화
+  5: 10, // 5→6레벨: 10번 대화
+  6: 12, // 6→7레벨: 12번 대화
+  7: 0, // 7레벨은 최대 레벨
 };
 
 // 3) 현재 레벨에서 다음 단계까지 필요한 대화 횟수
@@ -503,18 +555,18 @@ const expRatio = computed(() => {
   if (currentStage.value >= dinosaur.max_stage) {
     return 100;
   }
-  
+
   // 현재 레벨에서 다음 레벨까지 필요한 대화 횟수
   const requiredConversations = thresholdConvs.value;
-  
+
   // 필요 대화 횟수가 0이면 100% (에러 방지)
   if (requiredConversations === 0) {
     return 100;
   }
-  
+
   // 경험치 비율 계산: (현재 대화 횟수 / 필요 대화 횟수) * 100
   const ratio = (conversationCnt.value / requiredConversations) * 100;
-  
+
   // 100%를 넘지 않도록 제한
   return Math.min(100, Math.max(0, ratio));
 });
