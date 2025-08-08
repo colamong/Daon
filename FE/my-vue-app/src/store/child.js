@@ -146,11 +146,28 @@ export const useChildStore = defineStore("child", {
       if (childIndex !== -1) {
         this.children[childIndex].hasTodayDiary = hasTodayDiary;
         console.log(`아이 ${childId}의 당일 그림일기 상태 업데이트:`, hasTodayDiary);
+        
+        // localStorage에도 저장하여 페이지 새로고침 후에도 유지
+        const today = new Date().toDateString();
+        const diaryStatusKey = `todayDiary_${today}`;
+        const todayDiaryStatus = JSON.parse(localStorage.getItem(diaryStatusKey) || '{}');
+        todayDiaryStatus[childId] = hasTodayDiary;
+        localStorage.setItem(diaryStatusKey, JSON.stringify(todayDiaryStatus));
       }
     },
 
     // 특정 아이의 당일 그림일기 상태 확인
     getChildTodayDiary(childId) {
+      // 1순위: localStorage에서 확인 (페이지 새로고침 후에도 유지)
+      const today = new Date().toDateString();
+      const diaryStatusKey = `todayDiary_${today}`;
+      const todayDiaryStatus = JSON.parse(localStorage.getItem(diaryStatusKey) || '{}');
+      
+      if (todayDiaryStatus.hasOwnProperty(childId)) {
+        return todayDiaryStatus[childId];
+      }
+      
+      // 2순위: 메모리에서 확인
       const child = this.children.find(c => c.id === childId);
       return child ? child.hasTodayDiary : false;
     },
@@ -160,6 +177,12 @@ export const useChildStore = defineStore("child", {
       this.children.forEach(child => {
         child.hasTodayDiary = false;
       });
+      
+      // localStorage의 당일 다이어리 상태도 정리
+      const today = new Date().toDateString();
+      const diaryStatusKey = `todayDiary_${today}`;
+      localStorage.removeItem(diaryStatusKey);
+      console.log('당일 그림일기 상태 초기화 완료');
     },
 
     // 날짜 변경 체크 및 초기화

@@ -243,7 +243,13 @@ async function goBack() {
   // 가장 먼저 당일 그림일기 상태를 확인
   const hasTodayDiary = childStore.getChildTodayDiary(currentChildId);
   
+  console.log('🏠 goBack 호출됨');
+  console.log('📅 currentChildId:', currentChildId);
+  console.log('📖 hasTodayDiary:', hasTodayDiary);
+  console.log('🗣️ conversationResultId:', conversationState.value.conversationResultId);
+  
   if (hasTodayDiary) {
+    console.log('✅ 이미 당일 다이어리가 있어서 API 호출 없이 홈으로 이동');
     router.back();
     return;
   }
@@ -265,7 +271,9 @@ async function goBack() {
       await childService.createDiary(conversationResultId);
 
       // 3. 다이어리 생성 성공 시 해당 아이의 당일 그림일기 상태를 true로 설정
+      console.log('📝 다이어리 생성 완료, 상태 업데이트 중...');
       childStore.setChildTodayDiary(currentChildId, true);
+      console.log('✅ 당일 다이어리 상태가 true로 설정됨');
     }
 
     // 4. 모든 API 호출이 완료되면 이전 페이지로 이동
