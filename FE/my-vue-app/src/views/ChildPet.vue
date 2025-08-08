@@ -216,11 +216,8 @@ async function goBack() {
   
   // 가장 먼저 당일 그림일기 상태를 확인
   const hasTodayDiary = childStore.getChildTodayDiary(currentChildId);
-  console.log('현재 아이 ID:', currentChildId);
-  console.log('당일 그림일기 상태:', hasTodayDiary);
   
   if (hasTodayDiary) {
-    console.log("오늘 이미 그림일기를 생성했으므로 모든 API 호출을 건너뜁니다.");
     router.back();
     return;
   }
@@ -233,22 +230,16 @@ async function goBack() {
     // childId와 conversationResultId가 있을 때만 API 호출
     if (currentChildId && conversationResultId) {
       // 1. 아이 표정 기록 API 호출
-      const expressionResult = await childService.recordExpression(
+      await childService.recordExpression(
         currentChildId,
         conversationResultId
       );
-      console.log("표정 기록 결과:", expressionResult);
 
       // 2. 다이어리 생성 API 호출
-      const diaryResult = await childService.createDiary(conversationResultId);
-      console.log("다이어리 생성 결과:", diaryResult);
+      await childService.createDiary(conversationResultId);
 
       // 3. 다이어리 생성 성공 시 해당 아이의 당일 그림일기 상태를 true로 설정
       childStore.setChildTodayDiary(currentChildId, true);
-    } else {
-      console.warn(
-        "childId 또는 conversationResultId가 없어서 API 호출을 건너뜁니다."
-      );
     }
 
     // 4. 모든 API 호출이 완료되면 이전 페이지로 이동
@@ -273,10 +264,7 @@ async function startConversation() {
     }
 
     // 1. 대화 시작 API 호출하여 주제 받기
-    const conversationStart = await childService.startConversation(
-      currentChildId
-    );
-    console.log("대화 시작 API 응답:", conversationStart);
+    await childService.startConversation(currentChildId);
 
     // 대화 상태 초기화
     conversationState.value = {
@@ -291,7 +279,6 @@ async function startConversation() {
       answers: [],
     };
 
-    console.log("사용할 topicId:", conversationState.value.topicId);
 
     // 첫 번째 질문 받기
     await getFirstQuestion();
@@ -318,7 +305,6 @@ async function getFirstQuestion() {
       1,
       ""
     );
-    console.log("첫 번째 질문 API 응답:", response);
 
     // 응답에서 질문 추출
     conversationState.value.currentQuestion =
@@ -345,13 +331,6 @@ async function getNextQuestion(previousAnswer) {
       throw new Error("아이 ID를 찾을 수 없습니다.");
     }
 
-    console.log(`Step ${currentStep} 답변 제출:`, {
-      childId: currentChildId,
-      topicId,
-      currentStep,
-      previousAnswer,
-    });
-
     const response = await childService.sendConversationAnswer(
       currentChildId,
       topicId,
@@ -359,7 +338,6 @@ async function getNextQuestion(previousAnswer) {
       previousAnswer,
       conversationState.value.currentQuestion
     );
-    console.log(`Step ${currentStep} API 응답:`, response);
 
     // 응답에서 다음 질문 추출
     conversationState.value.currentQuestion =
@@ -401,8 +379,6 @@ async function speakQuestion(question) {
     await speechService.speak(question, voiceOptions);
     conversationState.value.isSpeaking = false;
 
-    // 질문이 끝나면 사용자 입력 대기 상태로 변경
-    console.log("스페이스바를 눌러 대답하세요.");
   } catch (error) {
     console.error("TTS 오류:", error);
     conversationState.value.isSpeaking = false;
@@ -418,7 +394,6 @@ async function listenForAnswer() {
       interimResults: false,
     });
 
-    console.log("사용자 답변:", answer);
     conversationState.value.isListening = false;
 
     // 답변 저장
@@ -439,7 +414,6 @@ async function processAnswer() {
   const { currentStep, totalSteps, answers } = conversationState.value;
   const currentAnswer = answers[currentStep - 1]; // 현재 단계의 답변
 
-  console.log(`Step ${currentStep} 답변 처리:`, currentAnswer);
 
   if (currentStep < totalSteps) {
     // 현재 답변을 제출하고 다음 질문을 받은 후 단계 증가
@@ -462,17 +436,17 @@ async function finishConversation(finalAnswer) {
     }
 
     let closingMessage = "대화가 완료되었습니다. 수고했어요!";
+    let response = null;
 
     try {
       // 마지막 답변 제출
-      const response = await childService.sendConversationAnswer(
+      response = await childService.sendConversationAnswer(
         currentChildId,
         topicId,
         5,
         finalAnswer,
         conversationState.value.currentQuestion
       );
-      console.log("최종 API 응답:", response);
 
       // 서버에서 받은 마무리 멘트 사용
       closingMessage =
@@ -493,26 +467,16 @@ async function finishConversation(finalAnswer) {
       console.error("TTS 오류:", ttsError);
     }
 
-    // Redis에서 DB로 flush하고 conversationResultId 받기
-    try {
-      const flushResult = await childService.flushConversation(
-        currentChildId,
-        topicId
-      );
-      if (flushResult) {
-        conversationState.value.conversationResultId = flushResult;
-        console.log("conversationResultId 저장됨:", flushResult);
-      }
-    } catch (error) {
-      console.warn("대화 flush 오류:", error);
-      // 오류 시 임시로 10으로 설정하여 홈 버튼 API 테스트 가능하게 함
-      conversationState.value.conversationResultId = 10;
-      console.log("conversationResultId 임시로 10으로 설정");
+    // 마지막 답변 제출 시 응답에서 conversationResultIds 추출
+    if (response && response.conversationResultIds) {
+      conversationState.value.conversationResultId = response.conversationResultIds;
+      console.log("conversationResultId 저장됨:", response.conversationResultIds);
+    } else {
+      console.warn("응답에서 conversationResultIds를 찾을 수 없음");
     }
 
     // 대화 상태 초기화
     conversationState.value.isActive = false;
-    console.log("대화 완료!");
   } catch (error) {
     console.error("대화 마무리 오류:", error);
 

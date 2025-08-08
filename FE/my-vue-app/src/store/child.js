@@ -46,10 +46,8 @@ export const useChildStore = defineStore("child", {
 
         // API에서 실제 데이터 불러오기
         const response = await childService.getAllChildren(userId);
-        console.log('API 응답 데이터:', response);
         // API 응답 데이터를 적절한 형식으로 변환
         this.children = response.data?.map(child => {
-          console.log('개별 child 데이터:', child);
           return {
             id: child.childId,
             name: child.name,
@@ -162,7 +160,6 @@ export const useChildStore = defineStore("child", {
       this.children.forEach(child => {
         child.hasTodayDiary = false;
       });
-      console.log('모든 아이의 당일 그림일기 상태가 초기화되었습니다.');
     },
 
     // 날짜 변경 체크 및 초기화
@@ -174,7 +171,6 @@ export const useChildStore = defineStore("child", {
         // 날짜가 바뀌었으면 초기화
         this.resetAllTodayDiaries();
         localStorage.setItem('lastDiaryResetDate', today);
-        console.log('날짜 변경으로 인한 그림일기 상태 초기화 완료');
       }
     },
 
