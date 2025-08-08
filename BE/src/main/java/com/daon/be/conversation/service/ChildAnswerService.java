@@ -86,10 +86,10 @@ public class ChildAnswerService {
 			String endMessage = "오늘 이야기 들려줘서 고마워! 다음에 또 이야기 나눠보자!";
 
 			//대화 저장
-			flushAnswersFromRedis(childId, topicId);
+			Long result_id = flushAnswersFromRedis(childId, topicId);
 
 
-			return new GptAudioResponseDto(endMessage, null, true);
+			return new GptAudioResponseDto(endMessage, null, true, result_id);
 		}
 
 		// 4. 다음 질문 생성
@@ -99,7 +99,7 @@ public class ChildAnswerService {
 		// 아직 미구현
 		// String mp3Url = gmsOpenAiClient.tts(nextQuestion);
 
-		return new GptAudioResponseDto(nextQuestion, null, false);
+		return new GptAudioResponseDto(nextQuestion, null, false, 0L);
 	}
 
 

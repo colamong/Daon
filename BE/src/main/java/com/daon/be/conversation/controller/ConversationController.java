@@ -12,9 +12,12 @@ import com.daon.be.conversation.service.ChildAnswerService;
 import com.daon.be.conversation.service.ConversationPromptService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/conversation")
@@ -46,8 +49,8 @@ public class ConversationController {
 	 */
 	@PostMapping("/flush")
 	public ResponseEntity<Long> flushAnswersAsync(@RequestParam Long childId, @RequestParam Long topicId) {
-		Long resultId = childAnswerService.flushAnswersFromRedis(childId, topicId);
-		return ResponseEntity.ok(resultId);  // 바로 응답 반환
+			Long resultId = childAnswerService.flushAnswersFromRedis(childId, topicId);
+			return ResponseEntity.ok(resultId);  // 바로 응답 반환
 	}
 
 	@PostMapping("/answer")
