@@ -109,15 +109,6 @@
                 </div>
               </div>
 
-              <!-- 성별 -->
-              <div>
-                <BaseRadioGroup
-                  v-model="childData.gender"
-                  label="성별"
-                  name="gender"
-                  :options="genderOptions"
-                />
-              </div>
 
               <!-- 관심사 -->
               <div>
@@ -199,7 +190,6 @@ import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
 import { useNotification } from '@/composables/useNotification.js';
 import BaseImageUpload from "@/components/form/BaseImageUpload.vue";
-import BaseRadioGroup from "@/components/form/BaseRadioGroup.vue";
 import BaseCheckboxGroup from "@/components/form/BaseCheckboxGroup.vue";
 
 const router = useRouter();
@@ -244,11 +234,6 @@ watch([selectedYear, selectedMonth, selectedDay], () => {
   }
 });
 
-// 성별 옵션
-const genderOptions = [
-  { label: "남자", value: "MALE" },
-  { label: "여자", value: "FEMALE" },
-];
 
 // 관심사 옵션 (동적으로 생성)
 const interestOptions = ref([]);
@@ -376,10 +361,6 @@ async function handleUpdateChild() {
     return;
   }
 
-  if (!childData.gender) {
-    showError("성별을 선택해주세요.", "입력 오류");
-    return;
-  }
 
   loading.value = true;
 
