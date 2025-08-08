@@ -195,6 +195,8 @@
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
+import { useChildStore } from "@/store/child";
+import { childService } from "@/services/childService.js";
 import { useNotification } from '@/composables/useNotification.js';
 import BaseImageUpload from "@/components/form/BaseImageUpload.vue";
 import BaseRadioGroup from "@/components/form/BaseRadioGroup.vue";
@@ -202,10 +204,10 @@ import BaseCheckboxGroup from "@/components/form/BaseCheckboxGroup.vue";
 
 const router = useRouter();
 const auth = useAuthStore();
+const childStore = useChildStore();
 const { showSuccess, showError, showWarning, showInfo } = useNotification();
 
 const loading = ref(false);
-const childrenList = ref([]);
 const selectedChildIndex = ref(0);
 const selectedYear = ref("");
 const selectedMonth = ref("");
@@ -244,35 +246,29 @@ watch([selectedYear, selectedMonth, selectedDay], () => {
 
 // 성별 옵션
 const genderOptions = [
-  { label: "남자", value: "남자" },
-  { label: "여자", value: "여자" },
+  { label: "남자", value: "MALE" },
+  { label: "여자", value: "FEMALE" },
 ];
 
-// 관심사 옵션
-const interestOptions = ref([
-  { label: "스포츠", value: "스포츠" },
-  { label: "음식", value: "음식" },
-  { label: "여행", value: "여행" },
-  { label: "동물", value: "동물" },
-  { label: "음악", value: "음악" },
-  { label: "춤", value: "춤" },
-  { label: "게임", value: "게임" },
-  { label: "책읽기", value: "책읽기" },
-  { label: "요리", value: "요리" },
-]);
+// 관심사 옵션 (동적으로 생성)
+const interestOptions = ref([]);
 
-const hasChild = computed(() => childrenList.value.length > 0);
-const selectedChild = computed(
-  () => childrenList.value[selectedChildIndex.value] || {}
-);
+// childStore의 computed 속성 사용
+const hasChild = computed(() => childStore.hasChildren);
+const childrenList = computed(() => childStore.children);
+const selectedChild = computed(() => {
+  return childrenList.value[selectedChildIndex.value] || childStore.selectedChild || {};
+});
 
 // 아이 정보 로드
-function loadChildren() {
-  const children = JSON.parse(localStorage.getItem("children") || "[]");
-  childrenList.value = children;
-
-  if (children.length > 0) {
-    loadChildData(children[0]);
+async function loadChildren() {
+  await childStore.initialize();
+  
+  if (childStore.hasChildren) {
+    // 현재 선택된 아이나 첫 번째 아이의 데이터로 폼 초기화
+    const child = childStore.selectedChild || childStore.children[0];
+    selectedChildIndex.value = childStore.children.findIndex(c => c.id === child.id);
+    loadChildData(child);
   }
 }
 
@@ -287,6 +283,12 @@ function loadChildData(child) {
     selectedMonth.value = parseInt(month);
     selectedDay.value = parseInt(day);
   }
+
+  // 해당 아이의 실제 관심사만 옵션으로 설정
+  interestOptions.value = (child.interests || []).map(interest => ({
+    label: interest,
+    value: interest
+  }));
 }
 
 // 아이 선택
@@ -307,15 +309,17 @@ function handleImageUpload(file) {
 }
 
 // 새로운 관심사 추가
-function addNewInterest() {
+async function addNewInterest() {
   if (!newInterest.value.trim()) {
     showWarning("관심사를 입력해주세요.", "입력 오류");
     return;
   }
 
+  const newInterestValue = newInterest.value.trim();
+
+  // 이미 존재하는 관심사인지 확인
   const exists = interestOptions.value.find(
-    (option) =>
-      option.value.toLowerCase() === newInterest.value.trim().toLowerCase()
+    (option) => option.value.toLowerCase() === newInterestValue.toLowerCase()
   );
 
   if (exists) {
@@ -324,18 +328,39 @@ function addNewInterest() {
     return;
   }
 
-  const newInterestOption = {
-    label: newInterest.value.trim(),
-    value: newInterest.value.trim(),
-  };
+  try {
+    const userId = auth.user?.id;
+    
+    if (!userId) {
+      showError("로그인이 필요합니다.", "인증 오류");
+      return;
+    }
 
-  interestOptions.value.push(newInterestOption);
+    // 즉시 DB에 추가
+    await childService.addChildInterests(userId, childData.id, { interests: [newInterestValue] });
 
-  if (!childData.interests.includes(newInterestOption.value)) {
-    childData.interests.push(newInterestOption.value);
+    // 새로운 관심사 옵션 추가
+    const newInterestOption = {
+      label: newInterestValue,
+      value: newInterestValue,
+    };
+
+    interestOptions.value.push(newInterestOption);
+
+    // 자동으로 선택상태로 만들기
+    if (!childData.interests.includes(newInterestValue)) {
+      childData.interests.push(newInterestValue);
+    }
+
+    newInterest.value = "";
+    showSuccess(`"${newInterestValue}" 관심사가 추가되었습니다.`, "관심사 추가");
+    
+    // childStore도 업데이트
+    await childStore.loadChildren();
+  } catch (error) {
+    console.error("관심사 추가 실패:", error);
+    showError("관심사 추가에 실패했습니다.", "추가 실패");
   }
-
-  newInterest.value = "";
 }
 
 // 아이 정보 수정
@@ -359,37 +384,64 @@ async function handleUpdateChild() {
   loading.value = true;
 
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // localStorage에서 기존 데이터 업데이트
-    const existingChildren = JSON.parse(
-      localStorage.getItem("children") || "[]"
-    );
-    const childIndex = existingChildren.findIndex(
-      (child) => child.id === childData.id
-    );
-
-    if (childIndex !== -1) {
-      existingChildren[childIndex] = {
-        ...childData,
-        updatedAt: new Date().toISOString(),
-      };
-      localStorage.setItem("children", JSON.stringify(existingChildren));
-
-      // auth 스토어에도 업데이트
-      if (auth.user) {
-        auth.user.children = existingChildren;
-        localStorage.setItem("auth_user", JSON.stringify(auth.user));
-      }
-
-      showSuccess(`${childData.name}의 정보가 성공적으로 수정되었습니다!`, "수정 완료");
-      router.push({ name: "ChildProfile" });
+    const userId = auth.user?.id;
+    
+    if (!userId) {
+      showError("로그인이 필요합니다.", "인증 오류");
+      return;
     }
+
+    // 1. 기본 정보 수정 (프로필 정보만)
+    const requestData = {
+      name: childData.name.trim(),
+      birthDate: childData.birthDate,
+      gender: childData.gender,
+      profileImg: childData.profileImage || childData.profileImg
+    };
+
+    await childService.updateChild(userId, childData.id, requestData);
+
+    // 2. 관심사 변경 처리
+    await updateInterests(userId, childData.id);
+
+    // childStore 새로고침 (최신 데이터 로드)
+    await childStore.loadChildren();
+
+    showSuccess(`${childData.name}의 정보가 성공적으로 수정되었습니다!`, "수정 완료");
+    
+    // 프로필 페이지로 이동
+    router.push({ name: "ChildProfile" });
   } catch (error) {
     console.error("아이 정보 수정 실패:", error);
     showError("아이 정보 수정에 실패했습니다. 다시 시도해주세요.", "수정 실패");
   } finally {
     loading.value = false;
+  }
+}
+
+// 관심사 변경 처리 - 체크된 것만 남기고 나머지 삭제
+async function updateInterests(userId, childId) {
+  const originalChild = childStore.children.find(c => c.id === childId);
+  const originalInterests = originalChild?.interests || [];
+  const currentInterests = childData.interests || [];
+
+  console.log('관심사 최종 정리:', {
+    original: originalInterests,
+    current: currentInterests
+  });
+
+  // 삭제할 관심사 (체크 해제된 것들)  
+  const interestsToDelete = originalInterests.filter(interest => 
+    !currentInterests.includes(interest)
+  );
+
+  console.log('삭제할 관심사:', interestsToDelete);
+
+  // 체크 해제된 관심사 삭제
+  if (interestsToDelete.length > 0) {
+    console.log('관심사 삭제 API 호출:', { userId, childId, interests: interestsToDelete });
+    await childService.deleteChildInterests(userId, childId, { interests: interestsToDelete });
+    console.log('관심사 삭제 완료');
   }
 }
 
@@ -414,26 +466,32 @@ function confirmDelete() {
 }
 
 // 아이 삭제
-function deleteChild() {
-  const existingChildren = JSON.parse(localStorage.getItem("children") || "[]");
-  const updatedChildren = existingChildren.filter(
-    (child) => child.id !== childData.id
-  );
+async function deleteChild() {
+  try {
+    const userId = auth.user?.id;
+    
+    if (!userId) {
+      showError("로그인이 필요합니다.", "인증 오류");
+      return;
+    }
 
-  localStorage.setItem("children", JSON.stringify(updatedChildren));
+    // 실제 API 호출
+    await childService.deleteChild(userId, childData.id);
 
-  // auth 스토어에도 업데이트
-  if (auth.user) {
-    auth.user.children = updatedChildren;
-    localStorage.setItem("auth_user", JSON.stringify(auth.user));
-  }
+    // childStore에서도 제거
+    childStore.removeChild(childData.id);
 
-  showInfo(`${childData.name}의 정보가 삭제되었습니다.`, "삭제 완료");
+    showInfo(`${childData.name}의 정보가 삭제되었습니다.`, "삭제 완료");
 
-  if (updatedChildren.length > 0) {
-    router.push({ name: "ChildProfile" });
-  } else {
-    router.push({ name: "Dashboard" });
+    // 남은 아이가 있으면 프로필 페이지로, 없으면 대시보드로
+    if (childStore.hasChildren) {
+      router.push({ name: "ChildProfile" });
+    } else {
+      router.push({ name: "Dashboard" });
+    }
+  } catch (error) {
+    console.error("아이 삭제 실패:", error);
+    showError("아이 삭제에 실패했습니다. 다시 시도해주세요.", "삭제 실패");
   }
 }
 
@@ -447,8 +505,8 @@ function goBack() {
 }
 
 // 컴포넌트 마운트 시 실행
-onMounted(() => {
-  loadChildren();
+onMounted(async () => {
+  await loadChildren();
 });
 </script>
 

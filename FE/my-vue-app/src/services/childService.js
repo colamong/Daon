@@ -103,15 +103,16 @@ export const childService = {
     }
   },
 
-  // 월별 다이어리 조회 API
-  async getMonthlyDiaries(childId, year, month) {
+  // 자녀 등록 API
+  async registerChild(userId, childData) {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/diaries/monthly`, {
-        params: {
-          childId,
-          year,
-          month
-        },
+      const response = await axios.post(`${API_BASE_URL}/api/users/${userId}/children`, {
+        name: childData.name,
+        birthDate: childData.birthDate,
+        gender: childData.gender,
+        profileImg: childData.profileImg,
+        interests: childData.interests
+      }, {
         timeout: 30000 // 30초 타임아웃
       });
       
@@ -121,7 +122,127 @@ export const childService = {
         throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
       }
       
-      throw new Error(error.response?.data?.message || '월별 다이어리 조회 중 오류가 발생했습니다.');
+      throw new Error(error.response?.data?.message || '자녀 등록 중 오류가 발생했습니다.');
+    }
+  },
+
+  // 월별 그림일기 조회 API
+  async getMonthlyDiaries(childId, year, month) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/diaries/monthly`, {
+        params: { childId, year, month },
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '월별 그림일기 조회 중 오류가 발생했습니다.');
+    }
+  },
+
+  // 사용자의 모든 자녀 조회 API
+  async getAllChildren(userId) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/users/${userId}/children`, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '자녀 목록 조회 중 오류가 발생했습니다.');
+    }
+  },
+
+  // 특정 자녀 정보 조회 API
+  async getChild(userId, childId) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/users/${userId}/children/${childId}`, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '자녀 정보 조회 중 오류가 발생했습니다.');
+    }
+  },
+
+  // 자녀 정보 수정 API
+  async updateChild(userId, childId, childData) {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/users/${userId}/children/${childId}`, {
+        name: childData.name,
+        birthDate: childData.birthDate,
+        gender: childData.gender,
+        profileImg: childData.profileImg,
+        interests: childData.interests
+      }, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '자녀 정보 수정 중 오류가 발생했습니다.');
+    }
+  },
+
+  // 자녀 삭제 API
+  async deleteChild(userId, childId) {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/api/users/${userId}/children/${childId}`, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '자녀 삭제 중 오류가 발생했습니다.');
+    }
+  },
+
+  // 자녀 관심사 추가 API
+  async addChildInterests(userId, childId, data) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/users/${userId}/children/${childId}/interest`, data, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '관심사 추가 중 오류가 발생했습니다.');
+    }
+  },
+
+  // 자녀 관심사 삭제 API
+  async deleteChildInterests(userId, childId, data) {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/api/users/${userId}/children/${childId}/interest`, {
+        data: data,
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '관심사 삭제 중 오류가 발생했습니다.');
     }
   }
 };

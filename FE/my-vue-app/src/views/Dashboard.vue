@@ -339,8 +339,8 @@ const todayDrawing = ref({
 });
 
 // 컴포넌트 마운트 시 아이 정보 로드
-onMounted(() => {
-  childStore.initialize();
+onMounted(async () => {
+  await childStore.initialize();
 });
 
 // childStore의 computed 속성 사용
@@ -358,14 +358,8 @@ const selectedChildIndex = computed({
 
 // 선택된 아이의 오늘 활동 체크
 const todayActivity = computed(() => {
-  if (!selectedChild.value || !selectedChild.value.name) return null;
-  
-  const today = dayjs().format('YYYY-MM-DD');
-  const childData = emotionReportsByChild[selectedChild.value.name];
-  
-  if (!childData) return null;
-  
-  return childData.reports.find(report => report.date === today);
+  // 더미 데이터 제거됨 - API 연동 필요
+  return null;
 });
 
 const hasActivity = computed(() => !!todayActivity.value);

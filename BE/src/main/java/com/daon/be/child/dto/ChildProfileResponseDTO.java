@@ -3,6 +3,7 @@ package com.daon.be.child.dto;
 import com.daon.be.child.entity.ChildProfile.Gender;
 import lombok.*;
 
+import java.util.List;
 import java.time.LocalDate;
 
 @Getter
@@ -16,4 +17,5 @@ public class ChildProfileResponseDTO {
     private LocalDate birthDate;
     private Gender gender;
     private String profileImg;
+    private List<String> registeredInterests;
 }

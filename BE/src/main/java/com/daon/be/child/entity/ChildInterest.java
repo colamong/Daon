@@ -11,17 +11,17 @@ import com.daon.be.child.entity.ChildProfile;
 @AllArgsConstructor
 @Builder
 public class ChildInterest {
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	private Long id;  // 이게 PRIMARY KEY
 
-	// 관심사 이름
 	@Column(nullable = false)
 	private String name;
 
-	// 어떤 자녀의 관심사인지
+	// child_profile_id 컬럼 사용 (이미 올바름)
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "child_profile_id", nullable = false)
 	private ChildProfile childProfile;
+
+	// child_id는 사용하지 않거나 별도 용도로 사용
 }
