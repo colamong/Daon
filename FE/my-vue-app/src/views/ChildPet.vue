@@ -134,7 +134,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useChildStore } from "@/store/child";
 import {
   getChildPenguinData,
@@ -155,7 +155,17 @@ import lvl6 from "../assets/images/lv_6.png";
 import lvl7 from "../assets/images/lv_7.png";
 
 const router = useRouter();
+const route = useRoute();
 const childStore = useChildStore();
+
+// route params에서 childId 받아오기 (fallback으로 selectedChild 사용)
+const childId = computed(() => {
+  const routeChildId = route.params.childId;
+  if (routeChildId) {
+    return parseInt(routeChildId);
+  }
+  return selectedChild.value?.id || null;
+});
 
 // 선택된 아이 정보
 const selectedChild = computed(() => childStore.selectedChild);
@@ -205,14 +215,15 @@ async function goBack() {
   try {
     isLoading.value = true;
 
-    const childId = 3;
-    const conversationResultId = 15; // 테스트용으로 고정값 설정
+    const currentChildId = childId.value;
+    const conversationResultId =
+      conversationState.value.conversationResultId || 15; // 대화 결과 ID 또는 테스트용 고정값
 
-    // conversationResultId가 있을 때만 API 호출
-    if (conversationResultId) {
+    // childId와 conversationResultId가 있을 때만 API 호출
+    if (currentChildId && conversationResultId) {
       // 1. 아이 표정 기록 API 호출
       const expressionResult = await childService.recordExpression(
-        childId,
+        currentChildId,
         conversationResultId
       );
       console.log("표정 기록 결과:", expressionResult);
@@ -221,7 +232,9 @@ async function goBack() {
       const diaryResult = await childService.createDiary(conversationResultId);
       console.log("다이어리 생성 결과:", diaryResult);
     } else {
-      console.warn("conversationResultId가 없어서 API 호출을 건너뜁니다.");
+      console.warn(
+        "childId 또는 conversationResultId가 없어서 API 호출을 건너뜁니다."
+      );
     }
 
     // 3. 모든 API 호출이 완료되면 이전 페이지로 이동
@@ -239,10 +252,16 @@ async function goBack() {
 // 대화 시작 함수
 async function startConversation() {
   try {
-    const childId = 3; // 임시 childId
+    const currentChildId = childId.value;
+
+    if (!currentChildId) {
+      throw new Error("아이 ID를 찾을 수 없습니다.");
+    }
 
     // 1. 대화 시작 API 호출하여 주제 받기
-    const conversationStart = await childService.startConversation(childId);
+    const conversationStart = await childService.startConversation(
+      currentChildId
+    );
     console.log("대화 시작 API 응답:", conversationStart);
 
     // 대화 상태 초기화
@@ -271,12 +290,16 @@ async function startConversation() {
 // 첫 번째 질문 받기
 async function getFirstQuestion() {
   try {
-    const childId = 3;
+    const currentChildId = childId.value;
     const { topicId } = conversationState.value;
+
+    if (!currentChildId) {
+      throw new Error("아이 ID를 찾을 수 없습니다.");
+    }
 
     // 첫 번째 질문은 answer를 빈 문자열로 보내기
     const response = await childService.sendConversationAnswer(
-      childId,
+      currentChildId,
       topicId,
       1,
       ""
@@ -301,18 +324,22 @@ async function getFirstQuestion() {
 // 다음 질문 받기 (답변 제출 후)
 async function getNextQuestion(previousAnswer) {
   try {
-    const childId = 3;
+    const currentChildId = childId.value;
     const { topicId, currentStep } = conversationState.value;
 
+    if (!currentChildId) {
+      throw new Error("아이 ID를 찾을 수 없습니다.");
+    }
+
     console.log(`Step ${currentStep} 답변 제출:`, {
-      childId,
+      childId: currentChildId,
       topicId,
       currentStep,
       previousAnswer,
     });
 
     const response = await childService.sendConversationAnswer(
-      childId,
+      currentChildId,
       topicId,
       currentStep, // 현재 단계의 답변 제출
       previousAnswer,
@@ -413,15 +440,19 @@ async function processAnswer() {
 // 대화 마무리
 async function finishConversation(finalAnswer) {
   try {
-    const childId = 3;
+    const currentChildId = childId.value;
     const { topicId } = conversationState.value;
+
+    if (!currentChildId) {
+      throw new Error("아이 ID를 찾을 수 없습니다.");
+    }
 
     let closingMessage = "대화가 완료되었습니다. 수고했어요!";
 
     try {
       // 마지막 답변 제출
       const response = await childService.sendConversationAnswer(
-        childId,
+        currentChildId,
         topicId,
         5,
         finalAnswer,
@@ -451,7 +482,7 @@ async function finishConversation(finalAnswer) {
     // Redis에서 DB로 flush하고 conversationResultId 받기
     try {
       const flushResult = await childService.flushConversation(
-        childId,
+        currentChildId,
         topicId
       );
       if (flushResult) {
