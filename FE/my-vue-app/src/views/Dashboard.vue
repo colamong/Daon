@@ -231,7 +231,6 @@ import BaseCard from "@/components/card/BaseCard.vue";
 import EmotionReportModal from '@/components/modal/EmotionReportModal.vue';
 import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
-import { emotionReportsByChild } from '@/data/emotionReports.js';
 import { useNotification } from '@/composables/useNotification.js';
 import { fetchMonthlyEvents, createEvent, updateEvent, deleteEvent } from "@/store/calendar";
 
