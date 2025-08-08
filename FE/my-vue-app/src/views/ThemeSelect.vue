@@ -31,6 +31,24 @@
 </template>
 
 <script setup>
-import ScenarioCard from "@/components/card/ScenarioCard.vue";
-import { learningThemes } from "@/data/learningThemes.js";
+import { ref, onMounted } from 'vue'
+import ScenarioCard from '@/components/card/ScenarioCard.vue'
+import learningService from '@/services/learningService' // 
+
+// 상태
+const learningThemes = ref([])
+const loading = ref(true)
+const error = ref('')
+
+// 로딩
+onMounted(async () => {
+  try {
+    const themes = await learningService.getThemes() // [{id,title,description,image}]
+    learningThemes.value = themes
+  } catch (e) {
+    error.value = 'failed'
+  } finally {
+    loading.value = false
+  }
+})
 </script>
