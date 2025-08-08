@@ -90,7 +90,7 @@
         다문화 가정의 행복한 내일을 위해 다온이 함께합니다.
       </p>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <BaseCard variant="schedule" link="/schedule" />
+        <BaseCard variant="schedule" @click="openScheduleModal" />
         <BaseCard variant="growth" :to="{ name: 'Growth' }" />
         <BaseCard variant="community" :to="{ name: 'Community' }" />
         <BaseCard variant="language" :to="{ name: 'OCRTool' }" />
@@ -332,6 +332,11 @@ function onMonthChange(newYm) {
 // 일정 추가 모달
 const modalVisible = ref(false);
 function openModal() {
+  modalVisible.value = true;
+}
+
+// 일정 관리 카드 클릭 시 모달 열기
+function openScheduleModal() {
   modalVisible.value = true;
 }
 
