@@ -154,16 +154,32 @@ import lvl5 from "../assets/images/lv_5.png";
 import lvl6 from "../assets/images/lv_6.png";
 import lvl7 from "../assets/images/lv_7.png";
 
+// props 정의
+const props = defineProps({
+  childId: {
+    type: [String, Number],
+    default: null,
+  },
+});
+
 const router = useRouter();
 const route = useRoute();
 const childStore = useChildStore();
 
-// route params에서 childId 받아오기 (fallback으로 selectedChild 사용)
+// route params 또는 props에서 childId 받아오기 (fallback으로 selectedChild 사용)
 const childId = computed(() => {
+  // 1순위: props로 전달된 childId
+  if (props.childId) {
+    return parseInt(props.childId);
+  }
+  
+  // 2순위: route params의 childId
   const routeChildId = route.params.childId;
   if (routeChildId) {
     return parseInt(routeChildId);
   }
+  
+  // 3순위: 현재 선택된 아이의 ID
   return selectedChild.value?.id || null;
 });
 
@@ -508,7 +524,14 @@ function handleKeyPress(event) {
 
 // 컴포넌트 마운트 시 초기화
 onMounted(async () => {
-  childStore.initialize();
+  await childStore.initialize();
+  
+  // URL에서 childId가 전달된 경우 해당 아이를 선택
+  const currentChildId = childId.value;
+  if (currentChildId && childStore.children.find(child => child.id === currentChildId)) {
+    childStore.selectChild(currentChildId);
+  }
+  
   loadPenguinData();
 
   // 키보드 이벤트 리스너 등록

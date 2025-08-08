@@ -116,7 +116,10 @@ function goBack() {
 function goToPenguin() {
   // 현재 선택된 아이가 있으면 바로 펭귄 페이지로
   if (currentChild.value) {
-    router.push({ name: "ChildPet" });
+    router.push({ 
+      name: "ChildPet", 
+      params: { childId: currentChild.value.id }
+    });
   }
 }
 
