@@ -182,8 +182,8 @@ async function goBack() {
   try {
     isLoading.value = true;
     
-    const childId = 2;
-    const { conversationResultId } = conversationState.value;
+    const childId = 3;
+    const conversationResultId = 10; // 테스트용으로 고정값 설정
     
     // conversationResultId가 있을 때만 API 호출
     if (conversationResultId) {
@@ -214,7 +214,7 @@ async function goBack() {
 // 대화 시작 함수
 async function startConversation() {
   try {
-    const childId = 2; // 임시 childId
+    const childId = 3; // 임시 childId
     
     // 1. 대화 시작 API 호출하여 주제 받기
     const conversationStart = await childService.startConversation(childId);
@@ -246,7 +246,7 @@ async function startConversation() {
 // 첫 번째 질문 받기
 async function getFirstQuestion() {
   try {
-    const childId = 2;
+    const childId = 3;
     const { topicId } = conversationState.value;
     
     // 첫 번째 질문은 answer를 빈 문자열로 보내기
@@ -268,7 +268,7 @@ async function getFirstQuestion() {
 // 다음 질문 받기 (답변 제출 후)
 async function getNextQuestion(previousAnswer) {
   try {
-    const childId = 2;
+    const childId = 3;
     const { topicId, currentStep } = conversationState.value;
     
     console.log(`Step ${currentStep} 답변 제출:`, { childId, topicId, currentStep, previousAnswer });
@@ -290,7 +290,15 @@ async function getNextQuestion(previousAnswer) {
     
   } catch (error) {
     console.error('다음 질문 받기 오류:', error);
-    alert('다음 질문을 받을 수 없습니다: ' + error.message);
+    
+    // API 오류 시에도 대화를 계속 진행할 수 있도록 기본 질문으로 처리
+    conversationState.value.currentQuestion = '서버 연결에 문제가 있어요. 다음 질문으로 넘어갈게요.';
+    
+    try {
+      await speakQuestion(conversationState.value.currentQuestion);
+    } catch (ttsError) {
+      console.error('TTS 오류:', ttsError);
+    }
   }
 }
 
@@ -364,22 +372,36 @@ async function processAnswer() {
 // 대화 마무리
 async function finishConversation(finalAnswer) {
   try {
-    const childId = 2;
+    const childId = 3;
     const { topicId } = conversationState.value;
     
-    // 마지막 답변 제출
-    const response = await childService.sendConversationAnswer(
-      childId, 
-      topicId, 
-      5, 
-      finalAnswer,
-      conversationState.value.currentQuestion
-    );
-    console.log('최종 API 응답:', response);
+    let closingMessage = '대화가 완료되었습니다. 수고했어요!';
+    
+    try {
+      // 마지막 답변 제출
+      const response = await childService.sendConversationAnswer(
+        childId, 
+        topicId, 
+        5, 
+        finalAnswer,
+        conversationState.value.currentQuestion
+      );
+      console.log('최종 API 응답:', response);
+      
+      // 서버에서 받은 마무리 멘트 사용
+      closingMessage = response.closingMessage || response.text || response.prompt || closingMessage;
+      
+    } catch (apiError) {
+      console.error('마지막 답변 제출 오류:', apiError);
+      closingMessage = '서버 연결에 문제가 있었지만 대화가 완료되었어요. 수고했어요!';
+    }
     
     // 마무리 멘트 TTS로 출력
-    const closingMessage = response.closingMessage || response.text || response.prompt || '대화가 완료되었습니다. 수고했어요!';
-    await speechService.speak(closingMessage);
+    try {
+      await speechService.speak(closingMessage);
+    } catch (ttsError) {
+      console.error('TTS 오류:', ttsError);
+    }
     
     // Redis에서 DB로 flush하고 conversationResultId 받기
     try {
@@ -390,6 +412,9 @@ async function finishConversation(finalAnswer) {
       }
     } catch (error) {
       console.warn('대화 flush 오류:', error);
+      // 오류 시 임시로 10으로 설정하여 홈 버튼 API 테스트 가능하게 함
+      conversationState.value.conversationResultId = 10;
+      console.log('conversationResultId 임시로 10으로 설정');
     }
     
     // 대화 상태 초기화
@@ -398,7 +423,16 @@ async function finishConversation(finalAnswer) {
     
   } catch (error) {
     console.error('대화 마무리 오류:', error);
+    
+    // 어떤 오류가 발생해도 대화는 종료시킴
     conversationState.value.isActive = false;
+    
+    // 기본 마무리 멘트 출력
+    try {
+      await speechService.speak('대화가 완료되었습니다. 수고했어요!');
+    } catch (ttsError) {
+      console.error('TTS 오류:', ttsError);
+    }
   }
 }
 
