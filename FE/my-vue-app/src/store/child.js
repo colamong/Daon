@@ -140,8 +140,8 @@ export const useChildStore = defineStore("child", {
       }
     },
 
-    // 특정 아이의 당일 그림일기 상태 업데이트
-    setChildTodayDiary(childId, hasTodayDiary) {
+    // 특정 아이의 당일 그림일기 상태 및 conversationResultId 업데이트
+    setChildTodayDiary(childId, hasTodayDiary, conversationResultId = null) {
       const childIndex = this.children.findIndex(c => c.id === childId);
       if (childIndex !== -1) {
         this.children[childIndex].hasTodayDiary = hasTodayDiary;
@@ -149,10 +149,22 @@ export const useChildStore = defineStore("child", {
         
         // localStorage에도 저장하여 페이지 새로고침 후에도 유지
         const today = new Date().toDateString();
-        const diaryStatusKey = `todayDiary_${today}`;
+        const auth = useAuthStore();
+        const userId = auth.user?.id || 'anonymous';
+        
+        const diaryStatusKey = `todayDiary_${userId}_${today}`;
+        const conversationIdKey = `todayConversationId_${userId}_${today}`;
+        
         const todayDiaryStatus = JSON.parse(localStorage.getItem(diaryStatusKey) || '{}');
+        const todayConversationIds = JSON.parse(localStorage.getItem(conversationIdKey) || '{}');
+        
         todayDiaryStatus[childId] = hasTodayDiary;
+        if (conversationResultId) {
+          todayConversationIds[childId] = conversationResultId;
+        }
+        
         localStorage.setItem(diaryStatusKey, JSON.stringify(todayDiaryStatus));
+        localStorage.setItem(conversationIdKey, JSON.stringify(todayConversationIds));
       }
     },
 
@@ -160,7 +172,9 @@ export const useChildStore = defineStore("child", {
     getChildTodayDiary(childId) {
       // 1순위: localStorage에서 확인 (페이지 새로고침 후에도 유지)
       const today = new Date().toDateString();
-      const diaryStatusKey = `todayDiary_${today}`;
+      const auth = useAuthStore();
+      const userId = auth.user?.id || 'anonymous';
+      const diaryStatusKey = `todayDiary_${userId}_${today}`;
       const todayDiaryStatus = JSON.parse(localStorage.getItem(diaryStatusKey) || '{}');
       
       if (todayDiaryStatus.hasOwnProperty(childId)) {
@@ -172,28 +186,48 @@ export const useChildStore = defineStore("child", {
       return child ? child.hasTodayDiary : false;
     },
 
+    // 특정 아이의 당일 conversationResultId 조회
+    getChildTodayConversationId(childId) {
+      const today = new Date().toDateString();
+      const auth = useAuthStore();
+      const userId = auth.user?.id || 'anonymous';
+      const conversationIdKey = `todayConversationId_${userId}_${today}`;
+      const todayConversationIds = JSON.parse(localStorage.getItem(conversationIdKey) || '{}');
+      
+      return todayConversationIds[childId] || null;
+    },
+
     // 모든 아이의 당일 그림일기 상태 초기화 (자정에 호출)
     resetAllTodayDiaries() {
       this.children.forEach(child => {
         child.hasTodayDiary = false;
       });
       
-      // localStorage의 당일 다이어리 상태도 정리
+      // localStorage의 당일 다이어리 상태 및 conversationId도 정리
       const today = new Date().toDateString();
-      const diaryStatusKey = `todayDiary_${today}`;
+      const auth = useAuthStore();
+      const userId = auth.user?.id || 'anonymous';
+      
+      const diaryStatusKey = `todayDiary_${userId}_${today}`;
+      const conversationIdKey = `todayConversationId_${userId}_${today}`;
+      
       localStorage.removeItem(diaryStatusKey);
-      console.log('당일 그림일기 상태 초기화 완료');
+      localStorage.removeItem(conversationIdKey);
+      console.log('당일 그림일기 상태 및 conversationId 초기화 완료');
     },
 
     // 날짜 변경 체크 및 초기화
     checkAndResetTodayDiaries() {
       const today = new Date().toDateString();
-      const lastResetDate = localStorage.getItem('lastDiaryResetDate');
+      const auth = useAuthStore();
+      const userId = auth.user?.id || 'anonymous';
+      const lastResetDateKey = `lastDiaryResetDate_${userId}`;
+      const lastResetDate = localStorage.getItem(lastResetDateKey);
       
       if (lastResetDate !== today) {
         // 날짜가 바뀌었으면 초기화
         this.resetAllTodayDiaries();
-        localStorage.setItem('lastDiaryResetDate', today);
+        localStorage.setItem(lastResetDateKey, today);
       }
     },
 

@@ -56,79 +56,119 @@
       <span class="mb-4 text-black text-4xl text-outline-white font-shark">
         {{ penguinData.name }}
       </span>
-      <img
-        :src="getPenguinImage(penguinData.currentStage)"
-        alt="펭귄 단계 이미지"
-        class="object-contain w-[140px] sm:w-[160px] lg:w-[200px] xl:w-[250px]"
-      />
 
-      <!-- 펭귄 바로 아래에 붙이는 게이지 바 -->
+      <!-- 펭귄과 대화 UI를 감싸는 컨테이너 -->
+      <div class="relative flex items-center justify-center">
+        <!-- 펭귄 이미지 -->
+        <img
+          :src="getPenguinImage(penguinData.currentStage)"
+          alt="펭귄 단계 이미지"
+          class="object-contain w-[140px] sm:w-[160px] lg:w-[200px] xl:w-[250px]"
+        />
+      </div>
+
+      <!-- 대화 말풍선 - 펭귄과 우측 사이에 배치 -->
       <div
-        class="mt-2 w-[clamp(200px,80vw,600px)] h-8 bg-white border-4 border-rose-600 rounded-full overflow-hidden relative"
+        v-if="conversationState.isActive"
+        class="fixed right-[8%] top-1/2 -translate-y-1/2 !w-[450px] z-20 font-shark"
+      >
+        <!-- 대화 UI 패널 - 손그림 말풍선 스타일 -->
+        <div class="bg-white p-4 shadow-lg hand-drawn-bubble">
+          <!-- 말풍선 내용 -->
+          <div class="text-center">
+            <!-- 진행 상태 -->
+            <div class="mb-3">
+              <span class="text-xs text-gray-600">
+                {{ conversationState.currentStep }} /
+                {{ conversationState.totalSteps }}
+              </span>
+              <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                <div
+                  class="bg-rose-400 h-1.5 rounded-full transition-all duration-300"
+                  :style="{
+                    width:
+                      (conversationState.currentStep /
+                        conversationState.totalSteps) *
+                        100 +
+                      '%',
+                  }"
+                ></div>
+              </div>
+            </div>
+
+            <!-- 현재 질문 -->
+            <div v-if="conversationState.currentQuestion" class="mb-3">
+              <p class="text-xl text-gray-800 leading-relaxed">
+                {{ conversationState.currentQuestion }}
+              </p>
+            </div>
+
+            <!-- 상태 메시지 -->
+            <div class="text-s text-gray-600">
+              <div
+                v-if="conversationState.isSpeaking"
+                class="flex items-center justify-center gap-2"
+              >
+                <div
+                  class="animate-pulse w-1.5 h-1.5 bg-blue-500 rounded-full"
+                ></div>
+                <span>펭구가 말하고 있어요...</span>
+              </div>
+              <div
+                v-else-if="conversationState.isListening"
+                class="flex items-center justify-center gap-2"
+              >
+                <div
+                  class="animate-ping w-1.5 h-1.5 bg-red-500 rounded-full"
+                ></div>
+                <span>듣고 있어요... 말해주세요!</span>
+              </div>
+              <div v-else class="flex items-center justify-center gap-2">
+                <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                <span>스페이스바를 눌러 대답하세요</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 펭귄 바로 아래에 고정된 경험치 바 -->
+      <div
+        class="mt-4 w-[clamp(200px,80vw,600px)] h-8 bg-white border-4 border-rose-600 rounded-full overflow-hidden relative"
       >
         <div
           class="h-full bg-emerald-300 rounded-full"
           :style="{ width: penguinData.progressPercent + '%' }"
         ></div>
       </div>
-
-      <!-- 대화 상태 표시 -->
-      <div
-        v-if="conversationState.isActive"
-        class="mt-6 bg-white/90 backdrop-blur-sm rounded-2xl p-6 max-w-md w-full shadow-lg"
-      >
-        <div class="text-center">
-          <!-- 진행 상태 -->
-          <div class="mb-4">
-            <span class="text-sm text-gray-600">
-              {{ conversationState.currentStep }} /
-              {{ conversationState.totalSteps }}
-            </span>
-            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div
-                class="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                :style="{
-                  width:
-                    (conversationState.currentStep /
-                      conversationState.totalSteps) *
-                      100 +
-                    '%',
-                }"
-              ></div>
-            </div>
-          </div>
-
-          <!-- 현재 질문 -->
-          <div v-if="conversationState.currentQuestion" class="mb-4">
-            <p class="text-lg text-gray-800 font-medium">
-              {{ conversationState.currentQuestion }}
-            </p>
-          </div>
-
-          <!-- 상태 메시지 -->
-          <div class="text-sm text-gray-600">
-            <div
-              v-if="conversationState.isSpeaking"
-              class="flex items-center justify-center gap-2"
-            >
-              <div class="animate-pulse w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span>펭구가 말하고 있어요...</span>
-            </div>
-            <div
-              v-else-if="conversationState.isListening"
-              class="flex items-center justify-center gap-2"
-            >
-              <div class="animate-ping w-2 h-2 bg-red-500 rounded-full"></div>
-              <span>듣고 있어요... 말해주세요!</span>
-            </div>
-            <div v-else class="flex items-center justify-center gap-2">
-              <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
-              <span>스페이스바를 눌러 대답하세요</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </main>
+
+    <!-- 그림일기 생성 중 로딩 모달 -->
+    <div
+      v-if="isLoading"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div
+        class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl"
+      >
+        <!-- 햄스터 휠 애니메이션 -->
+        <div class="mb-6 flex justify-center">
+          <HamsterLoading />
+        </div>
+
+        <!-- 메시지 -->
+        <h3 class="text-xl font-shark text-gray-800 mb-2">
+          그림일기를 만들고 있는 중입니다
+        </h3>
+        <p class="text-gray-600 font-shark">
+          펭구와의 특별한 대화를 바탕으로<br />
+          아름다운 그림일기를 생성하고 있어요!<br />
+          <span class="text-rose-500 font-semibold"
+            >조금만 기다려 주세요 ✨</span
+          >
+        </p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -138,6 +178,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
 import { speechService } from "@/services/speechService.js";
+import HamsterLoading from "@/components/common/HamsterLoading.vue";
 
 // 이미지
 import HomeIcon from "../assets/images/Home.png";
@@ -168,13 +209,13 @@ const childId = computed(() => {
   if (props.childId) {
     return parseInt(props.childId);
   }
-  
+
   // 2순위: route params의 childId
   const routeChildId = route.params.childId;
   if (routeChildId) {
     return parseInt(routeChildId);
   }
-  
+
   // 3순위: 현재 선택된 아이의 ID
   return selectedChild.value?.id || null;
 });
@@ -187,7 +228,7 @@ const penguinData = ref({
   currentStage: 1,
   conversationCount: 0,
   totalConversations: 0,
-  expRatio: 0
+  expRatio: 0,
 });
 const isLoading = ref(false); // 로딩 상태
 
@@ -208,7 +249,7 @@ const conversationState = ref({
 async function loadPenguinData() {
   const currentChildId = childId.value;
   if (!currentChildId) {
-    console.warn('childId가 없어서 펭귄 데이터를 로드할 수 없습니다.');
+    console.warn("childId가 없어서 펭귄 데이터를 로드할 수 없습니다.");
     return;
   }
 
@@ -219,18 +260,18 @@ async function loadPenguinData() {
       currentStage: response.currentStage || 1,
       totalExperience: response.totalExperience || 0,
       progressPercent: response.progressPercent || 0,
-      imageUrl: response.imageUrl || '/images/lv_1.png'
+      imageUrl: response.imageUrl || "/images/lv_1.png",
     };
-    console.log('펭귄 데이터 로드됨:', penguinData.value);
+    console.log("펭귄 데이터 로드됨:", penguinData.value);
   } catch (error) {
-    console.error('펭귄 데이터 로드 실패:', error);
+    console.error("펭귄 데이터 로드 실패:", error);
     // 실패 시 기본값 설정
     penguinData.value = {
       name: "펭구",
       currentStage: 1,
       totalExperience: 0,
       progressPercent: 0,
-      imageUrl: '/images/lv_1.png'
+      imageUrl: "/images/lv_1.png",
     };
   }
 }
@@ -239,18 +280,23 @@ async function goBack() {
   if (isLoading.value) return; // 이미 로딩 중이면 중복 실행 방지
 
   const currentChildId = childId.value;
-  
+
   // 가장 먼저 당일 그림일기 상태를 확인
   const hasTodayDiary = childStore.getChildTodayDiary(currentChildId);
-  
-  console.log('🏠 goBack 호출됨');
-  console.log('📅 currentChildId:', currentChildId);
-  console.log('📖 hasTodayDiary:', hasTodayDiary);
-  console.log('🗣️ conversationResultId:', conversationState.value.conversationResultId);
-  
+
+  console.log("🏠 goBack 호출됨");
+  console.log("📅 currentChildId:", currentChildId);
+  console.log("📖 hasTodayDiary:", hasTodayDiary);
+  console.log(
+    "🗣️ conversationResultId:",
+    conversationState.value.conversationResultId
+  );
+
   if (hasTodayDiary) {
-    console.log('✅ 이미 당일 다이어리가 있어서 API 호출 없이 홈으로 이동');
-    router.back();
+    console.log(
+      "✅ 이미 당일 다이어리가 있어서 API 호출 없이 펭귄 메뉴로 이동"
+    );
+    router.push({ name: "ChildMain", params: { childId: currentChildId } });
     return;
   }
 
@@ -262,27 +308,23 @@ async function goBack() {
     // childId와 conversationResultId가 있을 때만 API 호출
     if (currentChildId && conversationResultId) {
       // 1. 아이 표정 기록 API 호출
-      await childService.recordExpression(
-        currentChildId,
-        conversationResultId
-      );
+      await childService.recordExpression(currentChildId, conversationResultId);
 
       // 2. 다이어리 생성 API 호출
       await childService.createDiary(conversationResultId);
 
-      // 3. 다이어리 생성 성공 시 해당 아이의 당일 그림일기 상태를 true로 설정
-      console.log('📝 다이어리 생성 완료, 상태 업데이트 중...');
-      childStore.setChildTodayDiary(currentChildId, true);
-      console.log('✅ 당일 다이어리 상태가 true로 설정됨');
+      // 3. 다이어리 생성 성공 시 해당 아이의 당일 그림일기 상태를 true로 설정하고 conversationResultId 저장
+      console.log("📝 다이어리 생성 완료, 상태 업데이트 중...");
+      childStore.setChildTodayDiary(currentChildId, true, conversationResultId);
+      console.log("✅ 당일 다이어리 상태가 true로 설정되고 conversationResultId가 저장됨");
     }
 
-    // 4. 모든 API 호출이 완료되면 이전 페이지로 이동
-    router.back();
+    // 4. 모든 API 호출이 완료되면 펭귄 메뉴로 이동
+    router.push({ name: "ChildMain", params: { childId: currentChildId } });
   } catch (error) {
-    console.error("홈으로 가기 중 오류:", error);
-    // 에러가 발생해도 페이지는 이동
-    alert(error.message || "처리 중 오류가 발생했지만 홈으로 이동합니다.");
-    router.back();
+    console.error("펭귄 메뉴로 가기 중 오류:", error);
+    // 에러가 발생해도 페이지는 이동 (alert 제거)
+    router.push({ name: "ChildMain", params: { childId: currentChildId } });
   } finally {
     isLoading.value = false;
   }
@@ -298,9 +340,11 @@ async function startConversation() {
     }
 
     // 1. 대화 시작 API 호출하여 주제 받기
-    const conversationStart = await childService.startConversation(currentChildId);
-    
-    console.log('대화 시작 API 응답:', conversationStart);
+    const conversationStart = await childService.startConversation(
+      currentChildId
+    );
+
+    console.log("대화 시작 API 응답:", conversationStart);
 
     // 대화 상태 초기화 - API 응답의 topic ID 활용
     conversationState.value = {
@@ -313,7 +357,6 @@ async function startConversation() {
       isSpeaking: false,
       answers: [],
     };
-
 
     // 첫 번째 질문 받기
     await getFirstQuestion();
@@ -413,7 +456,6 @@ async function speakQuestion(question) {
 
     await speechService.speak(question, voiceOptions);
     conversationState.value.isSpeaking = false;
-
   } catch (error) {
     console.error("TTS 오류:", error);
     conversationState.value.isSpeaking = false;
@@ -448,7 +490,6 @@ async function listenForAnswer() {
 async function processAnswer() {
   const { currentStep, totalSteps, answers } = conversationState.value;
   const currentAnswer = answers[currentStep - 1]; // 현재 단계의 답변
-
 
   if (currentStep < totalSteps) {
     // 현재 답변을 제출하고 다음 질문을 받은 후 단계 증가
@@ -504,8 +545,12 @@ async function finishConversation(finalAnswer) {
 
     // 마지막 답변 제출 시 응답에서 conversationResultIds 추출
     if (response && response.conversationResultIds) {
-      conversationState.value.conversationResultId = response.conversationResultIds;
-      console.log("conversationResultId 저장됨:", response.conversationResultIds);
+      conversationState.value.conversationResultId =
+        response.conversationResultIds;
+      console.log(
+        "conversationResultId 저장됨:",
+        response.conversationResultIds
+      );
     } else {
       console.warn("응답에서 conversationResultIds를 찾을 수 없음");
     }
@@ -514,7 +559,7 @@ async function finishConversation(finalAnswer) {
     try {
       await childService.givePetReward(currentChildId);
       console.log("펭귄 보상 지급 완료");
-      
+
       // 보상 후 펭귄 상태 업데이트
       await loadPenguinData();
     } catch (rewardError) {
@@ -556,13 +601,16 @@ function handleKeyPress(event) {
 // 컴포넌트 마운트 시 초기화
 onMounted(async () => {
   await childStore.initialize();
-  
+
   // URL에서 childId가 전달된 경우 해당 아이를 선택
   const currentChildId = childId.value;
-  if (currentChildId && childStore.children.find(child => child.id === currentChildId)) {
+  if (
+    currentChildId &&
+    childStore.children.find((child) => child.id === currentChildId)
+  ) {
     childStore.selectChild(currentChildId);
   }
-  
+
   await loadPenguinData();
 
   // 키보드 이벤트 리스너 등록
@@ -592,11 +640,63 @@ function getPenguinImage(stage) {
     6: lvl6,
     7: lvl7,
   };
-  
+
   return penguinImgs[stage] || lvl1;
 }
 </script>
 
 <style scoped>
-/* TailwindCSS 유틸만 사용 */
+/* 손그림 말풍선 스타일 */
+.hand-drawn-bubble {
+  position: relative;
+  border-radius: 25px 20px 28px 18px; /* 불규칙한 모서리 */
+  border: 3px solid #e11d48;
+  /* 손그림 느낌의 그림자와 효과 */
+  box-shadow: 2px 2px 0 #e11d48, 4px 4px 0 rgba(225, 29, 72, 0.3);
+  animation: wobble 0.3s ease-in-out;
+}
+
+/* 말풍선 꼬리 - 삼각형 스타일 */
+.hand-drawn-bubble::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border: 15px solid transparent;
+  border-right: 20px solid #e11d48;
+  border-left: 0;
+}
+
+.hand-drawn-bubble::after {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border: 12px solid transparent;
+  border-right: 16px solid white;
+  border-left: 0;
+  z-index: 1;
+}
+
+/* 나타날 때 애니메이션 */
+@keyframes wobble {
+  0% {
+    transform: scale(0.8) rotate(-2deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05) rotate(1deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
 </style>

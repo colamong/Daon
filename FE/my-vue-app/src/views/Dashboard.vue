@@ -115,9 +115,13 @@
           <div
             class="bg-gray-500 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
           >
-            <template v-if="hasActivity">
+            <template v-if="isLoadingActivity">
+              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              <p class="text-white mt-4">활동 데이터를 불러오는 중...</p>
+            </template>
+            <template v-else-if="hasActivity && todayActivity">
               <img
-                :src="todayActivity.diaryImage"
+                :src="todayActivity.imageUrl"
                 alt="오늘의 그림일기"
                 class="w-full h-full object-cover rounded-lg shadow"
               />
@@ -257,7 +261,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import dayjs from "dayjs";
 
@@ -268,6 +272,7 @@ import BaseCard from "@/components/card/BaseCard.vue";
 import EmotionReportModal from "@/components/modal/EmotionReportModal.vue";
 import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
+import { childService } from "@/services/childService.js";
 
 import { useNotification } from "@/composables/useNotification.js";
 import {
@@ -369,19 +374,9 @@ async function handleDelete(id) {
   }
 }
 
-// 오늘의 활동 & 아이 정보 (더미)
-const todayDrawing = ref({
-  imgUrl: "",
-  profile: "",
-  name: "",
-  age: "",
-  interests: "",
-});
-
-// 컴포넌트 마운트 시 아이 정보 로드
-onMounted(async () => {
-  await childStore.initialize();
-});
+// 오늘의 활동 데이터
+const todayActivity = ref(null);
+const isLoadingActivity = ref(false);
 
 // childStore의 computed 속성 사용
 const hasChild = computed(() => childStore.hasChildren);
@@ -392,24 +387,87 @@ const selectedChildIndex = computed({
   set: (index) => {
     if (childrenList.value[index]) {
       childStore.selectChild(childrenList.value[index].id);
+      // watch가 자동으로 loadTodayActivity() 호출함
     }
   },
 });
 
-// 선택된 아이의 오늘 활동 체크
-const todayActivity = computed(() => {
-  // 더미 데이터 제거됨 - API 연동 필요
-  return null;
+// 컴포넌트 마운트 시 아이 정보 로드
+onMounted(async () => {
+  await childStore.initialize();
+  await loadTodayActivity();
 });
 
+// 선택된 아이가 변경될 때마다 활동 데이터 다시 로드
+watch(selectedChild, async (newChild, oldChild) => {
+  if (newChild && newChild.id !== oldChild?.id) {
+    console.log('🔍 selectedChild 변경됨:', newChild.id);
+    await loadTodayActivity();
+  }
+}, { deep: true });
+
+// 오늘 활동이 있는지 여부
 const hasActivity = computed(() => !!todayActivity.value);
+
+// 선택된 아이의 오늘 다이어리 조회
+async function loadTodayActivity() {
+  if (!selectedChild.value) {
+    todayActivity.value = null;
+    return;
+  }
+
+  try {
+    isLoadingActivity.value = true;
+    // 한국 시간 기준으로 오늘 날짜 계산 (브라우저 로컬 시간 사용)
+    const today = dayjs(); // 로컬 시간 그대로 사용
+    const year = today.year();
+    const month = today.month() + 1; // dayjs는 0부터 시작하므로 +1
+
+    console.log('🔍 한국 시간 기준:', {
+      today: today.format('YYYY-MM-DD HH:mm:ss'),
+      childId: selectedChild.value.id,
+      year,
+      month
+    });
+
+    // 월별 다이어리 조회
+    const response = await childService.getMonthlyDiaries(selectedChild.value.id, year, month);
+    console.log('🔍 월별 다이어리 응답:', response);
+    
+    // ChildDrawing.vue와 동일한 방식으로 처리
+    const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
+    console.log('🔍 responseArray:', responseArray);
+    
+    // 오늘 날짜와 일치하는 다이어리 찾기
+    const todayDateStr = today.format('YYYY-MM-DD');
+    
+    const todayDiary = responseArray.find(diary => {
+      console.log('🔍 다이어리 개별 항목:', diary);
+      
+      // ChildDrawing.vue와 동일한 방식: createdAt에서 날짜 부분만 추출
+      const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+      console.log(`🔍 날짜 비교: ${diaryDate} vs ${todayDateStr}`);
+      
+      return diaryDate === todayDateStr;
+    });
+
+    console.log('🔍 오늘 다이어리 결과:', todayDiary);
+    todayActivity.value = todayDiary || null;
+    
+  } catch (error) {
+    console.error('월별 다이어리 조회 실패:', error);
+    todayActivity.value = null;
+  } finally {
+    isLoadingActivity.value = false;
+  }
+}
 
 // 감정 리포트 모달 관련
 const showEmotionReportModal = ref(false);
 
 // 오늘의 리포트 모달 열기
 function openTodayReport() {
-  if (hasActivity.value) {
+  if (hasActivity.value && todayActivity.value) {
     showEmotionReportModal.value = true;
   } else {
     showWarning(

@@ -260,5 +260,21 @@ export const childService = {
       
       throw new Error(error.response?.data?.message || '펭귄 보상 지급 중 오류가 발생했습니다.');
     }
+  },
+
+  // conversationId로 다이어리 조회 API
+  async getDiaryByConversationId(conversationId) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/diaries/${conversationId}`, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '다이어리 조회 중 오류가 발생했습니다.');
+    }
   }
 };
