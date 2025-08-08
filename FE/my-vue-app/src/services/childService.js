@@ -184,11 +184,25 @@ export const childService = {
   // 자녀 삭제 API
   async deleteChild(userId, childId) {
     try {
-      const response = await axios.delete(`${API_BASE_URL}/api/users/${userId}/children/${childId}`, {
+      const url = `${API_BASE_URL}/api/users/${userId}/children/${childId}`;
+      console.log('DELETE 요청 URL:', url);
+      console.log('DELETE 요청 파라미터:', { userId, childId });
+      
+      const response = await axios.delete(url, {
         timeout: 30000
       });
+      
+      console.log('DELETE 응답:', response.status, response.data);
       return response.data;
     } catch (error) {
+      console.error('DELETE 요청 실패:', {
+        url: `${API_BASE_URL}/api/users/${userId}/children/${childId}`,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
         throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
       }

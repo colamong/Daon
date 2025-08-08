@@ -26,6 +26,7 @@ import LearningPage from "@/views/LearningPage.vue";
 import RegisterChild from "@/views/RegisterChild.vue";
 import EditChild from "@/views/EditChild.vue";
 import ChildProfile from "@/views/ChildProfile.vue";
+import Growth from "@/views/Growth.vue";
 
 // 프로필
 import ProfileEdit from "@/views/ProfileEdit.vue";
@@ -90,6 +91,7 @@ const routes = [
       },
       { path: "child/profile", name: "ChildProfile", component: ChildProfile },
       { path: "child/edit", name: "EditChild", component: EditChild },
+      { path: "growth", name: "Growth", component: Growth },
       { path: "profile/edit", name: "ProfileEdit", component: ProfileEdit },
     ],
   },

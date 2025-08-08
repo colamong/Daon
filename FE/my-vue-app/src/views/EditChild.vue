@@ -451,28 +451,45 @@ async function deleteChild() {
   try {
     const userId = auth.user?.id;
     
+    console.log('삭제 시도:', { userId, childId: childData.id, childName: childData.name });
+    
     if (!userId) {
       showError("로그인이 필요합니다.", "인증 오류");
       return;
     }
 
+    if (!childData.id) {
+      showError("아이 정보를 찾을 수 없습니다.", "삭제 실패");
+      return;
+    }
+
+    console.log('API 호출 전');
     // 실제 API 호출
-    await childService.deleteChild(userId, childData.id);
+    const result = await childService.deleteChild(userId, childData.id);
+    console.log('API 호출 완료:', result);
 
     // childStore에서도 제거
     childStore.removeChild(childData.id);
+    console.log('childStore에서 제거 완료');
 
     showInfo(`${childData.name}의 정보가 삭제되었습니다.`, "삭제 완료");
 
     // 남은 아이가 있으면 프로필 페이지로, 없으면 대시보드로
     if (childStore.hasChildren) {
+      console.log('다른 아이가 있음 - 프로필 페이지로 이동');
       router.push({ name: "ChildProfile" });
     } else {
+      console.log('아이가 없음 - 대시보드로 이동');
       router.push({ name: "Dashboard" });
     }
   } catch (error) {
-    console.error("아이 삭제 실패:", error);
-    showError("아이 삭제에 실패했습니다. 다시 시도해주세요.", "삭제 실패");
+    console.error("아이 삭제 실패 상세:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      error
+    });
+    showError(`아이 삭제에 실패했습니다: ${error.message}`, "삭제 실패");
   }
 }
 
