@@ -86,22 +86,6 @@ export const childService = {
     }
   },
 
-  // 대화 내용을 Redis에서 DB로 flush
-  async flushConversation(childId, topicId) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/api/conversation/flush?childId=${childId}&topicId=${topicId}`, {}, {
-        timeout: 30000 // 30초 타임아웃
-      });
-      
-      return response.data;
-    } catch (error) {
-      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
-      }
-      
-      throw new Error(error.response?.data?.message || '대화 내용 저장 중 오류가 발생했습니다.');
-    }
-  },
 
   // 자녀 등록 API
   async registerChild(userId, childData) {
