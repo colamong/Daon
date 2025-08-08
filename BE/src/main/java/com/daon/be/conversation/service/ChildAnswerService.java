@@ -34,9 +34,6 @@ import com.daon.be.calendar.repository.CalendarRepository;
 
 import lombok.RequiredArgsConstructor;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChildAnswerService {
@@ -121,57 +118,39 @@ public class ChildAnswerService {
 		String qKey = "child:" + childId + ":topic:" + topicId + ":questions";
 		String aKey = "child:" + childId + ":topic:" + topicId + ":answers";
 
-		log.info("[clearConversationRedis] 시작 - childId={}, topicId={}", childId, topicId);
 
 		Boolean qDeleted = redisTemplate.delete(qKey);
 		Boolean aDeleted = redisTemplate.delete(aKey);
-
-		log.info("[clearConversationRedis] qKey={} 삭제결과={}, 존재여부(삭제 후)={}",
-			qKey, qDeleted, redisTemplate.hasKey(qKey));
-		log.info("[clearConversationRedis] aKey={} 삭제결과={}, 존재여부(삭제 후)={}",
-			aKey, aDeleted, redisTemplate.hasKey(aKey));
-
-		log.info("[clearConversationRedis] 종료");
 	}
 
 	@Transactional
 	public Long flushAnswersFromRedis(Long childId, Long topicId) {
-		log.info("[flushAnswersFromRedis] 시작 - childId={}, topicId={}", childId, topicId);
 
 		String redisKey = String.format("child:%d:topic:%d:answers", childId, topicId);
 		List<Object> rawList = redisTemplate.opsForList().range(redisKey, 0, -1);
-		log.info("[flushAnswersFromRedis] Redis answers key={} size={}", redisKey, (rawList == null ? null : rawList.size()));
 
 		if (rawList == null || rawList.isEmpty()) {
-			log.warn("[flushAnswersFromRedis] Redis에 저장된 answers 없음 - childId={}, topicId={}", childId, topicId);
 			return -1L;
 		}
 
 		List<ChildAnswerRedisDto> list = rawList.stream()
 			.map(o -> (ChildAnswerRedisDto) o)
 			.toList();
-		log.info("[flushAnswersFromRedis] 변환된 Answer DTO 개수={}", list.size());
 
 		String sttText = list.stream().map(ChildAnswerRedisDto::answer).collect(Collectors.joining(" "));
-		log.debug("[flushAnswersFromRedis] STT 합친 텍스트={}", sttText);
 
 		ChildProfile child = childRepository.findById(childId)
 			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 자녀 ID: " + childId));
-		log.info("[flushAnswersFromRedis] ChildProfile 로드 성공 - id={}", child.getId());
 
 		ConversationTopic topic = conversationTopicRepository.getReferenceById(topicId);
-		log.info("[flushAnswersFromRedis] ConversationTopic 로드 성공 - id={}", topic.getId());
 
 		Calendar calendar = ensureTodayCalendar(childId);
-		log.info("[flushAnswersFromRedis] Calendar 준비 완료 - id={}, date={}", calendar.getId(), calendar.getDate());
 
 		boolean existsToday = conversationResultRepository.existsByChildIdAndCalendarId(childId, calendar.getId());
-		log.info("[flushAnswersFromRedis] 오늘 데이터 존재 여부={}", existsToday);
 
 		if (existsToday) {
 			Long id = conversationResultRepository.findByChildIdAndCalendarId(childId, calendar.getId())
 				.map(ConversationResult::getId).orElse(-2L);
-			log.info("[flushAnswersFromRedis] 이미 오늘 데이터 존재 - id={}", id);
 			redisTemplate.delete(redisKey);
 			return id;
 		}
@@ -180,18 +159,13 @@ public class ChildAnswerService {
 		try {
 			conversationResultRepository.save(result);
 			conversationResultRepository.flush();
-			log.info("[flushAnswersFromRedis] ConversationResult 저장 성공 - id={}", result.getId());
 		} catch (DataIntegrityViolationException e) {
-			log.error("[flushAnswersFromRedis] 저장 중 무결성 예외 발생 - childId={}, calendarId={}, message={}",
-				childId, calendar.getId(), e.getMessage());
 			return conversationResultRepository.findByChildIdAndCalendarId(childId, calendar.getId())
 				.map(ConversationResult::getId).orElseThrow(() -> e);
 		} finally {
 			clearConversationRedis(childId, topicId);
-			log.info("[flushAnswersFromRedis] Redis keys 삭제 완료 - childId={}, topicId={}", childId, topicId);
 		}
 
-		log.info("[flushAnswersFromRedis] 종료 - 저장된 result id={}", result.getId());
 		return result.getId();
 	}
 
