@@ -1,5 +1,6 @@
 package com.daon.be.child.repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -10,25 +11,31 @@ import org.springframework.data.repository.query.Param;
 
 public interface ConversationResultRepository extends JpaRepository<ConversationResult, Long> {
 
-	// 특정 아이가 특정 주제에 대해 대화 결과 이미 등록했는지 여부를 확인
-	boolean existsByChildIdAndTopicId(Long childId, Long topicId);
-
-	// 특정 아이의 특정 주제에 해당하는 대화 결과를 조회
-	Optional<ConversationResult> findByChildIdAndTopicId(Long childId, Long topicId);
-
-	@Query("""
-    SELECT COUNT(cr)
-    FROM ConversationResult cr
-    WHERE cr.child.id = :childId
-      AND cr.createdAt BETWEEN :start AND :end
-""")
-	long countTodayByChildId(
-		@Param("childId") Long childId,
-		@Param("start") LocalDateTime start,
-		@Param("end") LocalDateTime end
+	// 아이별로 오늘 저장됐는지(서비스 레벨 검사용)
+	boolean existsByChildIdAndCreatedAtBetween(
+		Long childId, LocalDateTime start, LocalDateTime end
 	);
 
+	// 아이별로 오늘 첫 저장 레코드
+	Optional<ConversationResult> findTopByChildIdAndCreatedAtBetweenOrderByCreatedAtAsc(
+		Long childId, LocalDateTime start, LocalDateTime end
+	);
+
+	// 아이+캘린더(하루) 기준 조회/검사 — DB에 (child_id, calendar_id) UNIQUE를 둘 경우 동시성 방어에 유용
+	boolean existsByChildIdAndCalendarId(Long childId, Long calendarId);
+	Optional<ConversationResult> findByChildIdAndCalendarId(Long childId, Long calendarId);
+
+	// 날짜 기반으로 바로 찾고 싶을 때(옵션)
+	@Query("""
+        select cr
+        from ConversationResult cr
+        join cr.calendar c
+        where cr.child.id = :childId
+          and c.date = :date
+        order by cr.createdAt asc
+    """)
+	Optional<ConversationResult> findFirstByChildIdAndDate(
+		@Param("childId") Long childId,
+		@Param("date") LocalDate date
+	);
 }
-
-
-

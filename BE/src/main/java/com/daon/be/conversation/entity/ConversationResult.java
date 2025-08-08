@@ -54,19 +54,16 @@ public class ConversationResult {
 	@JoinColumn(name = "calendar_id", nullable = false)
 	private Calendar calendar;
 
-	public static ConversationResult createFromAi(ChildProfile child, ConversationTopic topic,
-		GptChildConversationResponseDto gptResponse, String sttText, Calendar calendar) {
-
-		ConversationResult result = new ConversationResult();
-		result.child = child;
-		result.topic = topic;
-		result.calendar = calendar;
-		result.emotionReport = gptResponse.getEmotion();
-		result.analysisResult = gptResponse.getSummary();
-		result.sttText = sttText;
-		result.createdAt = LocalDateTime.now();
-
-		return result;
+	public static ConversationResult create(ChildProfile child,
+		ConversationTopic topic,
+		String sttText,
+		Calendar calendar) {
+		ConversationResult r = new ConversationResult();
+		r.setChild(child);
+		r.setTopic(topic);
+		r.setSttText(sttText);
+		r.setCalendar(calendar);
+		return r;
 	}
 
 	public void applyGptAnalysis(GptChildConversationResponseDto gptResponse) {
