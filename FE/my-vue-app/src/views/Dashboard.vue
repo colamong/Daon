@@ -34,10 +34,12 @@
       <!-- 달력 -->
       <div class="lg:col-span-2 bg-white rounded-xl shadow p-6 h-[530px]">
         <CalendarWidget
-          :events="events.map(ev => ({
-            ...ev,
-            date: ev.eventDate || ev.date // date 필드가 항상 있음
-          }))"
+          :events="
+            events.map((ev) => ({
+              ...ev,
+              date: ev.eventDate || ev.date, // date 필드가 항상 있음
+            }))
+          "
           @update-month="onMonthChange"
         />
       </div>
@@ -68,7 +70,6 @@
                 @update="handleUpdate"
                 @delete="handleDelete"
               />
-
             </div>
           </template>
           <template v-else>
@@ -102,8 +103,8 @@
     >
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-2xl font-semibold">오늘의 활동</h3>
-        <button 
-          @click="openTodayReport" 
+        <button
+          @click="openTodayReport"
           class="text-sm text-gray-600 hover:underline"
         >
           자세히 보기 →
@@ -123,13 +124,17 @@
             </template>
             <template v-else>
               <p class="text-white mb-4">
-                {{ hasChild && selectedChild && selectedChild.name ? getSubjectSentence(selectedChild.name) : '아직 활동하지 않았습니다.' }}
+                {{
+                  hasChild && selectedChild && selectedChild.name
+                    ? getSubjectSentence(selectedChild.name)
+                    : "아직 활동하지 않았습니다."
+                }}
               </p>
               <button
                 @click="goToActivity"
                 class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-paper"
               >
-                {{ hasChild ? '활동하러 가기' : '아이 등록하러 가기' }}
+                {{ hasChild ? "활동하러 가기" : "아이 등록하러 가기" }}
               </button>
             </template>
           </div>
@@ -149,15 +154,19 @@
                 <div
                   class="px-4 py-2 rounded-t-lg cursor-pointer transition-colors mr-1"
                   :class="{
-                    'bg-yellow-200 text-black font-bold': selectedChildIndex === index,
-                    'bg-yellow-200 text-gray-700': selectedChildIndex !== index
+                    'bg-yellow-200 text-black font-bold':
+                      selectedChildIndex === index,
+                    'bg-yellow-200 text-gray-700': selectedChildIndex !== index,
                   }"
-                  style="background-color: #fef08a !important; margin-bottom: -1px;"
+                  style="
+                    background-color: #fef08a !important;
+                    margin-bottom: -1px;
+                  "
                 >
                   {{ child.name }}
                 </div>
               </div>
-              
+
               <!-- 아이 추가 버튼 탭 -->
               <div
                 @click="goToChildRegister"
@@ -168,11 +177,21 @@
             </div>
 
             <!-- 선택된 아이의 프로필 카드 -->
-            <div class="bg-yellow-200 rounded-lg flex-1 p-6 flex flex-col items-center relative" style="background-color: #fef08a !important; border-top-left-radius: 0; border-top-right-radius: 0.5rem;">
+            <div
+              class="bg-yellow-200 rounded-lg flex-1 p-6 flex flex-col items-center relative"
+              style="
+                background-color: #fef08a !important;
+                border-top-left-radius: 0;
+                border-top-right-radius: 0.5rem;
+              "
+            >
               <!-- 중앙 프로필 이미지 -->
               <div class="flex-1 flex items-center justify-center">
                 <img
-                  :src="selectedChild?.profileImage || 'https://placehold.co/200x200'"
+                  :src="
+                    selectedChild?.profileImage ||
+                    'https://placehold.co/200x200'
+                  "
                   alt="아이 프로필"
                   class="w-48 h-48 rounded-full object-cover border-4 border-white shadow-lg"
                 />
@@ -181,10 +200,28 @@
               <!-- 하단 정보 -->
               <div class="w-full text-center space-y-2">
                 <p class="text-lg font-bold text-black">
-                  나이 : {{ selectedChild ? calculateAge(selectedChild.birthDate) : 0 }}세(만 {{ selectedChild ? calculateAge(selectedChild.birthDate) - 1 : 0 }}세)
+                  나이 :
+                  {{
+                    selectedChild ? calculateAge(selectedChild.birthDate) : 0
+                  }}세(만
+                  {{
+                    selectedChild
+                      ? calculateAge(selectedChild.birthDate) - 1
+                      : 0
+                  }}세)
                 </p>
                 <p class="text-lg font-bold text-black">
-                  관심사 : {{ selectedChild?.interests ? selectedChild.interests.slice(0, 2).join(', ') : '없음' }}{{ selectedChild?.interests && selectedChild.interests.length > 2 ? ' ...' : '' }}
+                  관심사 :
+                  {{
+                    selectedChild?.interests
+                      ? selectedChild.interests.slice(0, 2).join(", ")
+                      : "없음"
+                  }}{{
+                    selectedChild?.interests &&
+                    selectedChild.interests.length > 2
+                      ? " ..."
+                      : ""
+                  }}
                 </p>
               </div>
             </div>
@@ -209,30 +246,36 @@
     <EmotionReportModal
       v-if="hasActivity"
       v-model="showEmotionReportModal"
-      :child-name="selectedChild && selectedChild.name ? selectedChild.name : ''"
+      :child-name="
+        selectedChild && selectedChild.name ? selectedChild.name : ''
+      "
       :report-date="dayjs().format('YYYY-MM-DD')"
       :report-data="todayActivity"
       :show-navigation="false"
     />
-    
-
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 import dayjs from "dayjs";
 
 import AddEventModal from "@/components/modal/AddEventModal.vue";
 import CalendarWidget from "@/components/widget/CalendarWidget.vue";
 import ScheduleCard from "@/components/card/ScheduleCard.vue";
 import BaseCard from "@/components/card/BaseCard.vue";
-import EmotionReportModal from '@/components/modal/EmotionReportModal.vue';
+import EmotionReportModal from "@/components/modal/EmotionReportModal.vue";
 import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
-import { useNotification } from '@/composables/useNotification.js';
-import { fetchMonthlyEvents, createEvent, updateEvent, deleteEvent } from "@/store/calendar";
+
+import { useNotification } from "@/composables/useNotification.js";
+import {
+  fetchMonthlyEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+} from "@/store/calendar";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -256,15 +299,14 @@ async function loadEvents(year, month) {
 // 일정 데이터 서버에서 받아오는 함수
 const filteredEvents = computed(() =>
   events.value
-    .map(ev => ({
+    .map((ev) => ({
       ...ev,
-      id: ev.id || ev.calendarId,   // ← calendarId를 id로 통일!
-      date: ev.eventDate || ev.date // ← 날짜도 통일
+      id: ev.id || ev.calendarId, // ← calendarId를 id로 통일!
+      date: ev.eventDate || ev.date, // ← 날짜도 통일
     }))
-    .filter(ev => dayjs(ev.date).format("YYYY-MM") === selectedMonth.value)
+    .filter((ev) => dayjs(ev.date).format("YYYY-MM") === selectedMonth.value)
     .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix())
 );
-
 
 // 마운트 시 바로 일정 불러오기
 onMounted(() => {
@@ -279,7 +321,6 @@ function onMonthChange(newYm) {
   const [year, month] = newYm.split("-").map(Number);
   loadEvents(year, month);
 }
-
 
 // 일정 추가 모달
 const modalVisible = ref(false);
@@ -296,7 +337,7 @@ async function handleAddEvent({ title, date, description }) {
       description,
     });
     // 추가 후 다시 불러오기!
-    const [year, month] = selectedMonth.value.split('-').map(Number);
+    const [year, month] = selectedMonth.value.split("-").map(Number);
     await loadEvents(year, month);
     modalVisible.value = false;
   } catch (e) {
@@ -311,7 +352,7 @@ async function handleUpdate({ id, newDate, newTitle, newDescription }) {
       title: newTitle,
       description: newDescription,
     });
-    const [year, month] = selectedMonth.value.split('-').map(Number);
+    const [year, month] = selectedMonth.value.split("-").map(Number);
     await loadEvents(year, month);
   } catch (e) {
     showWarning("일정 수정 실패", e.message);
@@ -321,7 +362,7 @@ async function handleUpdate({ id, newDate, newTitle, newDescription }) {
 async function handleDelete(id) {
   try {
     await deleteEvent(id);
-    const [year, month] = selectedMonth.value.split('-').map(Number);
+    const [year, month] = selectedMonth.value.split("-").map(Number);
     await loadEvents(year, month);
   } catch (e) {
     showWarning("일정 삭제 실패", e.message);
@@ -352,7 +393,7 @@ const selectedChildIndex = computed({
     if (childrenList.value[index]) {
       childStore.selectChild(childrenList.value[index].id);
     }
-  }
+  },
 });
 
 // 선택된 아이의 오늘 활동 체크
@@ -366,83 +407,81 @@ const hasActivity = computed(() => !!todayActivity.value);
 // 감정 리포트 모달 관련
 const showEmotionReportModal = ref(false);
 
-
 // 오늘의 리포트 모달 열기
 function openTodayReport() {
   if (hasActivity.value) {
     showEmotionReportModal.value = true;
   } else {
     showWarning(
-      selectedChild.value && selectedChild.value.name ? 
-        getObjectSentence(selectedChild.value.name) : 
-        '아직 활동하지 않았습니다!',
-      '아직 활동하지 않았습니다!'
+      selectedChild.value && selectedChild.value.name
+        ? getObjectSentence(selectedChild.value.name)
+        : "아직 활동하지 않았습니다!",
+      "아직 활동하지 않았습니다!"
     );
   }
 }
 
 // 날짜 포맷팅 함수
 function formatDate(dateString) {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 // 한국어 조사 선택 함수
 function getParticle(name, particles) {
-  if (!name) return particles[0]
-  
-  const lastChar = name[name.length - 1]
-  const lastCharCode = lastChar.charCodeAt(0)
-  
+  if (!name) return particles[0];
+
+  const lastChar = name[name.length - 1];
+  const lastCharCode = lastChar.charCodeAt(0);
+
   // 한글인지 확인
-  if (lastCharCode < 0xAC00 || lastCharCode > 0xD7A3) {
-    return particles[0] // 한글이 아니면 첫 번째 조사 사용
+  if (lastCharCode < 0xac00 || lastCharCode > 0xd7a3) {
+    return particles[0]; // 한글이 아니면 첫 번째 조사 사용
   }
-  
+
   // 받침 여부 확인 (종성이 있으면 받침 있음)
-  const hasJongseong = (lastCharCode - 0xAC00) % 28 !== 0
-  
-  return hasJongseong ? particles[0] : particles[1] // 받침있으면 첫번째, 없으면 두번째
+  const hasJongseong = (lastCharCode - 0xac00) % 28 !== 0;
+
+  return hasJongseong ? particles[0] : particles[1]; // 받침있으면 첫번째, 없으면 두번째
 }
 
 // 조사가 포함된 문장 생성 함수들
 function getSubjectSentence(name) {
-  const particle = getParticle(name, ['은', '는'])
-  return `${name}${particle} 아직 활동하지 않았습니다.`
+  const particle = getParticle(name, ["은", "는"]);
+  return `${name}${particle} 아직 활동하지 않았습니다.`;
 }
 
 function getObjectSentence(name) {
-  const particle = getParticle(name, ['이', '가'])
-  return `${name}${particle} 활동하게 해주세요.`
+  const particle = getParticle(name, ["이", "가"]);
+  return `${name}${particle} 활동하게 해주세요.`;
 }
 
 // 아이 등록/수정 페이지로 이동
 function goToChildRegister() {
-  router.push({ name: 'RegisterChild' });
+  router.push({ name: "RegisterChild" });
 }
 
 function goToChildEdit() {
-  router.push({ name: 'EditChild' });
+  router.push({ name: "EditChild" });
 }
 
 // 활동하러 가기 버튼 클릭
 function goToActivity() {
   if (hasChild.value && selectedChild.value) {
     // 선택된 아이 정보와 함께 ChildMain으로 이동
-    router.push({ 
-      name: 'ChildMain',
-      params: { childId: selectedChild.value.id }
+    router.push({
+      name: "ChildMain",
+      params: { childId: selectedChild.value.id },
     });
   } else {
-    router.push({ name: 'RegisterChild' });
+    router.push({ name: "RegisterChild" });
   }
 }
-
 
 // 나이 계산 함수
 function calculateAge(birthDate) {
@@ -451,11 +490,11 @@ function calculateAge(birthDate) {
   const birth = new Date(birthDate);
   let age = today.getFullYear() - birth.getFullYear();
   const monthDiff = today.getMonth() - birth.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
-  
+
   return age + 1; // 한국 나이로 표시 (만 나이 + 1)
 }
 </script>
