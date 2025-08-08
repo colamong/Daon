@@ -5,11 +5,9 @@ import com.daon.be.conversation.dto.ChildAnswerRequestDto;
 import com.daon.be.conversation.dto.ConversationTopicRequestDto;
 import com.daon.be.conversation.dto.ConversationTopicResponseDto;
 import com.daon.be.conversation.dto.GptAudioResponseDto;
-import com.daon.be.conversation.entity.ConversationPrompt;
 import com.daon.be.conversation.entity.ConversationTopic;
 import com.daon.be.conversation.repository.ConversationTopicRepository;
 import com.daon.be.conversation.service.ChildAnswerService;
-import com.daon.be.conversation.service.ConversationPromptService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,7 +23,6 @@ public class ConversationController {
 	private final ChildAnswerService childAnswerService;
 	private final ChildProfileRepository childRepository;
 	private final ConversationTopicRepository topicRepository;
-	private final ConversationPromptService conversationPromptService;
 
 
 
@@ -38,7 +35,7 @@ public class ConversationController {
 	@PostMapping("/topic")
 	public ResponseEntity<ConversationTopicResponseDto> createTopic(
 		@RequestBody ConversationTopicRequestDto dto) {
-		ConversationTopic topic = conversationPromptService.createTopic(dto);
+		ConversationTopic topic = childAnswerService.createTopic(dto);
 		return ResponseEntity.ok(ConversationTopicResponseDto.fromEntity(topic));
 	}
 

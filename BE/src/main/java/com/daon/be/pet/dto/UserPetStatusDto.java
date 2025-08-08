@@ -41,6 +41,39 @@
 
 			return new UserPetStatusDto(pet.getName(), stage, pet.getExperience(), percent, image);
 		}
+		public static UserPetStatusDto fromEntity(UserPet up, int totalConversations) {
+			int stage = up.getCurrentStage();
+			int max = 7;
+
+			int currMin = requiredTotalForStage(stage);
+			int nextStage = Math.min(stage + 1, max);
+			int nextMin = requiredTotalForStage(nextStage);
+
+			int progressPercent;
+			if (stage >= max) {
+				progressPercent = 100;
+			} else {
+				int denom = Math.max(1, nextMin - currMin);
+				int numer = Math.max(0, totalConversations - currMin);
+				progressPercent = Math.min(100, (int) Math.floor((numer * 100.0) / denom));
+			}
+
+			String imageUrl = String.format("%s_%d.png", up.getPet().getImageBaseUrl(), stage);
+
+			return new UserPetStatusDto(
+				up.getName(),
+				stage,
+				up.getExperience(),
+				progressPercent,
+				imageUrl
+			);
+		}
+
+		/** DTO에서도 동일 식을 쓰게 유틸로 복제하거나 공용 유틸 클래스로 분리 */
+		private static int requiredTotalForStage(int stage) {
+			if (stage <= 1) return 0;
+			return stage * (stage - 1);
+		}
 
 
 	}
