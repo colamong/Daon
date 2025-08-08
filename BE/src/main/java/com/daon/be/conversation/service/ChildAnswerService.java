@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,9 @@ import com.daon.be.calendar.repository.CalendarRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChildAnswerService {
@@ -104,56 +108,95 @@ public class ChildAnswerService {
 		return redisTemplate.opsForList().range(redisKey, 0, -1);
 	}
 
+	private Calendar ensureTodayCalendar(Long childId) {
+		ChildProfile child = childRepository.findById(childId)
+			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 자녀 ID: " + childId));
+
+		LocalDate today = LocalDate.now();
+		return calendarRepository.findByChildIdAndDate(childId, today)
+			.orElseGet(() -> calendarRepository.save(Calendar.of(child, today)));
+	}
+
+	void clearConversationRedis(long childId, long topicId) {
+		String qKey = "child:" + childId + ":topic:" + topicId + ":questions";
+		String aKey = "child:" + childId + ":topic:" + topicId + ":answers";
+
+		log.info("[clearConversationRedis] 시작 - childId={}, topicId={}", childId, topicId);
+
+		Boolean qDeleted = redisTemplate.delete(qKey);
+		Boolean aDeleted = redisTemplate.delete(aKey);
+
+		log.info("[clearConversationRedis] qKey={} 삭제결과={}, 존재여부(삭제 후)={}",
+			qKey, qDeleted, redisTemplate.hasKey(qKey));
+		log.info("[clearConversationRedis] aKey={} 삭제결과={}, 존재여부(삭제 후)={}",
+			aKey, aDeleted, redisTemplate.hasKey(aKey));
+
+		log.info("[clearConversationRedis] 종료");
+	}
+
 	@Transactional
 	public Long flushAnswersFromRedis(Long childId, Long topicId) {
+		log.info("[flushAnswersFromRedis] 시작 - childId={}, topicId={}", childId, topicId);
+
 		String redisKey = String.format("child:%d:topic:%d:answers", childId, topicId);
 		List<Object> rawList = redisTemplate.opsForList().range(redisKey, 0, -1);
-		if (rawList == null || rawList.isEmpty()) return (long)-1;
+		log.info("[flushAnswersFromRedis] Redis answers key={} size={}", redisKey, (rawList == null ? null : rawList.size()));
+
+		if (rawList == null || rawList.isEmpty()) {
+			log.warn("[flushAnswersFromRedis] Redis에 저장된 answers 없음 - childId={}, topicId={}", childId, topicId);
+			return -1L;
+		}
 
 		List<ChildAnswerRedisDto> list = rawList.stream()
 			.map(o -> (ChildAnswerRedisDto) o)
 			.toList();
+		log.info("[flushAnswersFromRedis] 변환된 Answer DTO 개수={}", list.size());
 
-		String sttText = list.stream()
-			.map(ChildAnswerRedisDto::answer)
-			.collect(Collectors.joining(" "));
+		String sttText = list.stream().map(ChildAnswerRedisDto::answer).collect(Collectors.joining(" "));
+		log.debug("[flushAnswersFromRedis] STT 합친 텍스트={}", sttText);
 
 		ChildProfile child = childRepository.findById(childId)
 			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 자녀 ID: " + childId));
+		log.info("[flushAnswersFromRedis] ChildProfile 로드 성공 - id={}", child.getId());
+
 		ConversationTopic topic = conversationTopicRepository.getReferenceById(topicId);
+		log.info("[flushAnswersFromRedis] ConversationTopic 로드 성공 - id={}", topic.getId());
 
-		// 오늘 날짜의 캘린더 row가 있는지 확인
-		LocalDate today = LocalDate.now();
-		Calendar calendar = calendarRepository.findByChildIdAndDate(childId, today)
-			.orElseGet(() -> {
-				Calendar newCalendar = new Calendar();
-				newCalendar.setChild(child);
-				newCalendar.setDate(today);
-				return calendarRepository.save(newCalendar);
-			});
+		Calendar calendar = ensureTodayCalendar(childId);
+		log.info("[flushAnswersFromRedis] Calendar 준비 완료 - id={}, date={}", calendar.getId(), calendar.getDate());
 
+		boolean existsToday = conversationResultRepository.existsByChildIdAndCalendarId(childId, calendar.getId());
+		log.info("[flushAnswersFromRedis] 오늘 데이터 존재 여부={}", existsToday);
 
-		// 중복 확인 후 ConversationResult 저장
-		LocalDateTime startOfToday = LocalDate.now().atStartOfDay();     // 오늘 00:00:00
-		LocalDateTime startOfTomorrow = startOfToday.plusDays(1);        // 내일 00:00:00
-
-		boolean exists = conversationResultRepository
-			.countTodayByChildId(childId, startOfToday, startOfTomorrow) > 0;
-		if (!exists) {
-			ConversationResult result = new ConversationResult();
-			result.setChild(child);
-			result.setTopic(topic);
-			result.setSttText(sttText);
-			result.setCalendar(calendar);
-			conversationResultRepository.save(result);
+		if (existsToday) {
+			Long id = conversationResultRepository.findByChildIdAndCalendarId(childId, calendar.getId())
+				.map(ConversationResult::getId).orElse(-2L);
+			log.info("[flushAnswersFromRedis] 이미 오늘 데이터 존재 - id={}", id);
 			redisTemplate.delete(redisKey);
-			return result.getId();
+			return id;
 		}
 
-		redisTemplate.delete(redisKey);
-		return conversationResultRepository.findByChildIdAndTopicId(childId, topicId).get().getId();
+		ConversationResult result = ConversationResult.create(child, topic, sttText, calendar);
+		try {
+			conversationResultRepository.save(result);
+			conversationResultRepository.flush();
+			log.info("[flushAnswersFromRedis] ConversationResult 저장 성공 - id={}", result.getId());
+		} catch (DataIntegrityViolationException e) {
+			log.error("[flushAnswersFromRedis] 저장 중 무결성 예외 발생 - childId={}, calendarId={}, message={}",
+				childId, calendar.getId(), e.getMessage());
+			return conversationResultRepository.findByChildIdAndCalendarId(childId, calendar.getId())
+				.map(ConversationResult::getId).orElseThrow(() -> e);
+		} finally {
+			clearConversationRedis(childId, topicId);
+			log.info("[flushAnswersFromRedis] Redis keys 삭제 완료 - childId={}, topicId={}", childId, topicId);
+		}
 
+		log.info("[flushAnswersFromRedis] 종료 - 저장된 result id={}", result.getId());
+		return result.getId();
 	}
+
+
+
 	public String generateNextPrompt(ChildAnswerRequestDto dto) {
 		Long childId = dto.getChildId();
 		Long topicId = dto.getTopicId();
@@ -185,25 +228,48 @@ public class ChildAnswerService {
 		return nextQuestion;
 	}
 
-	// 시스템 프롬프트 템플릿 (Pengu 역할 + 평가 목적 통합 + 현재 질문 번호)
+
+	// 시스템 프롬프트 템플릿 (Pengu 역할 + 첫 질문 규칙 포함)
 	public String buildSystemPrompt(String topicObjective, int questionNumber) {
-		return String.join("\n\n",
-			"너는 Pengu라는 감정 코칭 AI 펭귄이야.",
-			"아이와 감정에 대해 대화할 때, 다음 규칙을 꼭 따라야 해:",
-			"- 아이는 5~7세야.",
-			"- 말투는 따뜻하고 부드럽게.",
-			"- 질문은 반드시 한 번에 하나만.",
-			"- 절대 요약, 칭찬, 설명하지 말고 질문만 해.",
-			"- 질문은 꼭 친구처럼, 부드럽고 편안하게 말해줘. 너무 똑똑하거나 어른스럽게 들리면 안 돼.",
-			"- 질문은 반드시 5~7세가 바로 이해할 수 있는 말이어야 해.",
-			"- 너무 어려운 개념(예: 색으로 감정 표현, 감정과 표정 연결)은 쓰지 마.",
-			"- 질문은 일상 속 경험이나 행동을 묻는 식으로 구체적으로 해줘.",
-			"- 총 5번 질문할 수 있어.",
-			"이번 대화에서 도와줄 목표는: " + topicObjective,
-			"지금은 " + questionNumber + "번째 질문이야.",
-			"지금까지의 대화 흐름을 참고해서, 아이의 감정을 더 잘 표현할 수 있게 다음 질문을 하나만 자연스럽게 만들어줘."
-		);
+			String base = String.join("\n\n",
+				"너는 Pengu라는 감정 코칭 AI 펭귄이야.",
+				"아이와 감정에 대해 대화할 때, 다음 규칙을 따라:",
+				"- 대상: 5~7세.",
+				"- 말투: 친구처럼 부드럽고 짧게.",
+				"- 출력: 질문 1개만. 요약·칭찬·설명 금지.",
+				"- 난이도: 아이가 바로 이해할 쉬운 말만 사용.",
+				"- 금지: 색으로 감정 표현, 표정-감정 연결 같은 추상 요구 금지.",
+				"- 방식: '감정 자체'를 캐내려 하지 말고, 오늘 있었던 구체적 행동·상황을 물어봐.",
+				"- 반응: 아이가 '몰라요/대답 없음'이면 심화 질문 금지, 더 쉬운 일상 질문으로 전환.",
+				"- 목표: 아이에게 부담을 주지 않고 자연스러운 대화를 이끌 것.",
+				"- 총 질문 수: 5회."
+			);
+
+			String stepRule = (questionNumber == 1)
+				? String.join("\n",
+				"- 첫 질문 규칙:",
+				"  1) 반드시 '감정과 관련된 경험'을 물어봐.",
+				"  2) 기준은 '오늘/최근'으로 한정.",
+				"  3) 예시 범주를 제시해 선택을 돕되 강요하지 마: 좋았던 일, 속상했던 일, 놀란 일, 무서웠던 일.",
+				"  4) 한 번에 하나 또는 많아도 두 가지 감정 경험만 물어봐야 한다.",
+				"  5) 긴 문장 금지. 한 문장, 15자 내외를 우선 고려."
+			)
+				: String.join("\n",
+				"- 진행 질문 규칙:",
+				"  1) 바로 직전 답변의 '행동/상황'에서 한 걸음만 확장.",
+				"  2) 원인·분석·메타인지 요구 금지(왜 그랬는지, 먼저 움직인 곳 등).",
+				"  3) 선택지·구체화 표현을 활용해 부담을 낮춰.",
+				"  4) 필요하면 '그때 뭐 했어?', '누가 같이 있었어?'처럼 상황 묻기."
+			);
+
+			String goal = "이번 대화의 목표: " + topicObjective;
+			String stepInfo = "지금은 " + questionNumber + "번째 질문이야. 질문은 1개만 출력해.";
+
+			String ask = "위 규칙을 지켜, 5~7세가 바로 이해할 수 있는 매우 짧은 질문 1개만 만들어줘.";
+
+			return String.join("\n\n", base, stepRule, goal, stepInfo, ask);
 	}
+
 
 
 	// Q&A 기록을 messages 포맷으로 변환 + 마지막 요청 추가
