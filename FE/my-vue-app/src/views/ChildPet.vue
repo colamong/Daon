@@ -212,12 +212,23 @@ watch(
 async function goBack() {
   if (isLoading.value) return; // 이미 로딩 중이면 중복 실행 방지
 
+  const currentChildId = childId.value;
+  
+  // 가장 먼저 당일 그림일기 상태를 확인
+  const hasTodayDiary = childStore.getChildTodayDiary(currentChildId);
+  console.log('현재 아이 ID:', currentChildId);
+  console.log('당일 그림일기 상태:', hasTodayDiary);
+  
+  if (hasTodayDiary) {
+    console.log("오늘 이미 그림일기를 생성했으므로 모든 API 호출을 건너뜁니다.");
+    router.back();
+    return;
+  }
+
   try {
     isLoading.value = true;
 
-    const currentChildId = childId.value;
-    const conversationResultId =
-      conversationState.value.conversationResultId || 15; // 대화 결과 ID 또는 테스트용 고정값
+    const conversationResultId = conversationState.value.conversationResultId;
 
     // childId와 conversationResultId가 있을 때만 API 호출
     if (currentChildId && conversationResultId) {
@@ -231,13 +242,16 @@ async function goBack() {
       // 2. 다이어리 생성 API 호출
       const diaryResult = await childService.createDiary(conversationResultId);
       console.log("다이어리 생성 결과:", diaryResult);
+
+      // 3. 다이어리 생성 성공 시 해당 아이의 당일 그림일기 상태를 true로 설정
+      childStore.setChildTodayDiary(currentChildId, true);
     } else {
       console.warn(
         "childId 또는 conversationResultId가 없어서 API 호출을 건너뜁니다."
       );
     }
 
-    // 3. 모든 API 호출이 완료되면 이전 페이지로 이동
+    // 4. 모든 API 호출이 완료되면 이전 페이지로 이동
     router.back();
   } catch (error) {
     console.error("홈으로 가기 중 오류:", error);

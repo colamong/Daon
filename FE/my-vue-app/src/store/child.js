@@ -1,8 +1,8 @@
 // src/store/child.js
 import { defineStore } from "pinia";
-import { ensureAllChildrenHaveColors } from "@/utils/colorManager.js";
 import { childService } from "@/services/childService.js";
 import { useAuthStore } from "@/store/auth";
+import { assignColorToChild } from "@/utils/colorManager.js";
 
 export const useChildStore = defineStore("child", {
   state: () => ({
@@ -39,26 +39,28 @@ export const useChildStore = defineStore("child", {
         const userId = auth.user?.id;
         
         if (!userId) {
-          // 로그인되지 않은 경우 로컬 더미 데이터 사용
-          const children = ensureAllChildrenHaveColors();
-          this.children = children;
-        } else {
-          // API에서 실제 데이터 불러오기
-          const response = await childService.getAllChildren(userId);
-          console.log('API 응답 데이터:', response);
-          // API 응답 데이터를 적절한 형식으로 변환
-          this.children = response.data?.map(child => {
-            console.log('개별 child 데이터:', child);
-            return {
-              id: child.childId,
-              name: child.name,
-              birthDate: child.birthDate || child.birth_date,
-              gender: child.gender,
-              profileImage: child.profileImg || child.profile_img,
-              interests: child.registeredInterests || child.interests || []
-            };
-          }) || [];
+          console.warn('사용자 ID가 없습니다.');
+          this.children = [];
+          return;
         }
+
+        // API에서 실제 데이터 불러오기
+        const response = await childService.getAllChildren(userId);
+        console.log('API 응답 데이터:', response);
+        // API 응답 데이터를 적절한 형식으로 변환
+        this.children = response.data?.map(child => {
+          console.log('개별 child 데이터:', child);
+          return {
+            id: child.childId,
+            name: child.name,
+            birthDate: child.birthDate || child.birth_date,
+            gender: child.gender,
+            profileImage: child.profileImg || child.profile_img,
+            interests: child.registeredInterests || child.interests || [],
+            hasTodayDiary: false, // 당일 그림일기 생성 여부 (기본값 false)
+            color: assignColorToChild(child.childId) // 아이별 고유 컬러 할당
+          };
+        }) || [];
         
         // 선택된 아이가 없거나 해당 아이가 목록에 없으면 첫 번째 아이 선택
         if (!this.selectedChildId || !this.children.find(child => child.id === this.selectedChildId)) {
@@ -66,9 +68,7 @@ export const useChildStore = defineStore("child", {
         }
       } catch (error) {
         console.error('아이 목록 불러오기 실패:', error);
-        // 에러 발생 시 로컬 더미 데이터 사용
-        const children = ensureAllChildrenHaveColors();
-        this.children = children;
+        this.children = [];
       }
     },
 
@@ -142,10 +142,49 @@ export const useChildStore = defineStore("child", {
       }
     },
 
+    // 특정 아이의 당일 그림일기 상태 업데이트
+    setChildTodayDiary(childId, hasTodayDiary) {
+      const childIndex = this.children.findIndex(c => c.id === childId);
+      if (childIndex !== -1) {
+        this.children[childIndex].hasTodayDiary = hasTodayDiary;
+        console.log(`아이 ${childId}의 당일 그림일기 상태 업데이트:`, hasTodayDiary);
+      }
+    },
+
+    // 특정 아이의 당일 그림일기 상태 확인
+    getChildTodayDiary(childId) {
+      const child = this.children.find(c => c.id === childId);
+      return child ? child.hasTodayDiary : false;
+    },
+
+    // 모든 아이의 당일 그림일기 상태 초기화 (자정에 호출)
+    resetAllTodayDiaries() {
+      this.children.forEach(child => {
+        child.hasTodayDiary = false;
+      });
+      console.log('모든 아이의 당일 그림일기 상태가 초기화되었습니다.');
+    },
+
+    // 날짜 변경 체크 및 초기화
+    checkAndResetTodayDiaries() {
+      const today = new Date().toDateString();
+      const lastResetDate = localStorage.getItem('lastDiaryResetDate');
+      
+      if (lastResetDate !== today) {
+        // 날짜가 바뀌었으면 초기화
+        this.resetAllTodayDiaries();
+        localStorage.setItem('lastDiaryResetDate', today);
+        console.log('날짜 변경으로 인한 그림일기 상태 초기화 완료');
+      }
+    },
+
     // 스토어 초기화
     async initialize() {
       await this.loadChildren();
       this.loadSelectedChildId();
+      
+      // 날짜 변경 체크 및 초기화
+      this.checkAndResetTodayDiaries();
     }
   },
 });
