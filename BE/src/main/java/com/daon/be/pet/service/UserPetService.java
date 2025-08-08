@@ -4,5 +4,5 @@ import com.daon.be.pet.dto.UserPetStatusDto;
 
 public interface UserPetService {
 	UserPetStatusDto getPetStatus(Long childId);
-	void rewardAfterConversation(Long childId);
+	UserPetStatusDto rewardAfterConversation(Long childId);
 }
