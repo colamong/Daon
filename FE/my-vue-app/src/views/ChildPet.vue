@@ -54,10 +54,10 @@
       class="absolute left-1/2 top-[63%] -translate-x-1/2 -translate-y-1/2 transform z-10 flex flex-col items-center relative"
     >
       <span class="mb-4 text-black text-4xl text-outline-white font-shark">
-        {{ "펭구" }}
+        {{ penguinData.name }}
       </span>
       <img
-        :src="penguinSrc"
+        :src="getPenguinImage(penguinData.currentStage)"
         alt="펭귄 단계 이미지"
         class="object-contain w-[140px] sm:w-[160px] lg:w-[200px] xl:w-[250px]"
       />
@@ -68,7 +68,7 @@
       >
         <div
           class="h-full bg-emerald-300 rounded-full"
-          :style="{ width: expRatio + '%' }"
+          :style="{ width: penguinData.progressPercent + '%' }"
         ></div>
       </div>
 
@@ -136,10 +136,6 @@
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useChildStore } from "@/store/child";
-import {
-  getChildPenguinData,
-  incrementConversation,
-} from "@/data/penguinData.js";
 import { childService } from "@/services/childService.js";
 import { speechService } from "@/services/speechService.js";
 
@@ -187,9 +183,12 @@ const childId = computed(() => {
 const selectedChild = computed(() => childStore.selectedChild);
 
 // 펭귄 데이터 상태
-const currentStage = ref(1);
-const conversationCnt = ref(0);
-const dinosaur = { max_stage: 7 }; // 최대 단계
+const penguinData = ref({
+  currentStage: 1,
+  conversationCount: 0,
+  totalConversations: 0,
+  expRatio: 0
+});
 const isLoading = ref(false); // 로딩 상태
 
 // 대화 상태 관리
@@ -205,25 +204,36 @@ const conversationState = ref({
   answers: [],
 });
 
-// 선택된 아이의 펭귄 데이터 로드
-function loadPenguinData() {
-  if (selectedChild.value && selectedChild.value.name) {
-    const penguinData = getChildPenguinData(selectedChild.value.name);
-    currentStage.value = penguinData.currentStage;
-    conversationCnt.value = penguinData.conversationCount;
+// 백엔드에서 펭귄 데이터 로드
+async function loadPenguinData() {
+  const currentChildId = childId.value;
+  if (!currentChildId) {
+    console.warn('childId가 없어서 펭귄 데이터를 로드할 수 없습니다.');
+    return;
+  }
+
+  try {
+    const response = await childService.getPetStatus(currentChildId);
+    penguinData.value = {
+      name: response.name || "펭구",
+      currentStage: response.currentStage || 1,
+      totalExperience: response.totalExperience || 0,
+      progressPercent: response.progressPercent || 0,
+      imageUrl: response.imageUrl || '/images/lv_1.png'
+    };
+    console.log('펭귄 데이터 로드됨:', penguinData.value);
+  } catch (error) {
+    console.error('펭귄 데이터 로드 실패:', error);
+    // 실패 시 기본값 설정
+    penguinData.value = {
+      name: "펭구",
+      currentStage: 1,
+      totalExperience: 0,
+      progressPercent: 0,
+      imageUrl: '/images/lv_1.png'
+    };
   }
 }
-
-// 선택된 아이가 변경될 때마다 펭귄 데이터 다시 로드
-watch(
-  selectedChild,
-  (newChild) => {
-    if (newChild && newChild.name) {
-      loadPenguinData();
-    }
-  },
-  { immediate: true }
-);
 
 async function goBack() {
   if (isLoading.value) return; // 이미 로딩 중이면 중복 실행 방지
@@ -280,15 +290,16 @@ async function startConversation() {
     }
 
     // 1. 대화 시작 API 호출하여 주제 받기
-    await childService.startConversation(currentChildId);
+    const conversationStart = await childService.startConversation(currentChildId);
+    
+    console.log('대화 시작 API 응답:', conversationStart);
 
-    // 대화 상태 초기화
+    // 대화 상태 초기화 - API 응답의 topic ID 활용
     conversationState.value = {
       isActive: true,
       currentStep: 1,
       totalSteps: 5,
-      topicId: 2,
-      // topicId: conversationStart.id || conversationStart.topicId || 2, // id 필드 우선 확인
+      topicId: conversationStart.id || conversationStart.data?.id || 1, // API에서 받은 올바른 topic ID (fallback: 1)
       currentQuestion: "",
       isListening: false,
       isSpeaking: false,
@@ -491,6 +502,18 @@ async function finishConversation(finalAnswer) {
       console.warn("응답에서 conversationResultIds를 찾을 수 없음");
     }
 
+    // 대화 완료 후 펭귄에게 보상 지급
+    try {
+      await childService.givePetReward(currentChildId);
+      console.log("펭귄 보상 지급 완료");
+      
+      // 보상 후 펭귄 상태 업데이트
+      await loadPenguinData();
+    } catch (rewardError) {
+      console.error("펭귄 보상 지급 실패:", rewardError);
+      // 보상 실패해도 대화는 정상 종료
+    }
+
     // 대화 상태 초기화
     conversationState.value.isActive = false;
   } catch (error) {
@@ -532,7 +555,7 @@ onMounted(async () => {
     childStore.selectChild(currentChildId);
   }
   
-  loadPenguinData();
+  await loadPenguinData();
 
   // 키보드 이벤트 리스너 등록
   window.addEventListener("keydown", handleKeyPress);
@@ -550,58 +573,20 @@ onUnmounted(() => {
   speechService.cleanup();
 });
 
-// 2) 각 레벨별 다음 단계까지 필요한 대화 횟수 매핑
-const levelRequirements = {
-  1: 2, // 1→2레벨: 2번 대화
-  2: 4, // 2→3레벨: 4번 대화
-  3: 6, // 3→4레벨: 6번 대화
-  4: 8, // 4→5레벨: 8번 대화
-  5: 10, // 5→6레벨: 10번 대화
-  6: 12, // 6→7레벨: 12번 대화
-  7: 0, // 7레벨은 최대 레벨
-};
-
-// 3) 현재 레벨에서 다음 단계까지 필요한 대화 횟수
-const thresholdConvs = computed(() => {
-  return levelRequirements[currentStage.value] || 0;
-});
-
-// 4) 단계별 펭귄 이미지
-const penguinImgs = {
-  1: lvl1,
-  2: lvl2,
-  3: lvl3,
-  4: lvl4,
-  5: lvl5,
-  6: lvl6,
-  7: lvl7,
-};
-const penguinSrc = computed(() => {
-  const stage = Math.min(currentStage.value, dinosaur.max_stage);
+// 펭귄 이미지 매핑 함수
+function getPenguinImage(stage) {
+  const penguinImgs = {
+    1: lvl1,
+    2: lvl2,
+    3: lvl3,
+    4: lvl4,
+    5: lvl5,
+    6: lvl6,
+    7: lvl7,
+  };
+  
   return penguinImgs[stage] || lvl1;
-});
-
-// 5) 경험치(대화) 비율 0~100%
-const expRatio = computed(() => {
-  // 7레벨(최대 레벨) 달성 시 항상 100%
-  if (currentStage.value >= dinosaur.max_stage) {
-    return 100;
-  }
-
-  // 현재 레벨에서 다음 레벨까지 필요한 대화 횟수
-  const requiredConversations = thresholdConvs.value;
-
-  // 필요 대화 횟수가 0이면 100% (에러 방지)
-  if (requiredConversations === 0) {
-    return 100;
-  }
-
-  // 경험치 비율 계산: (현재 대화 횟수 / 필요 대화 횟수) * 100
-  const ratio = (conversationCnt.value / requiredConversations) * 100;
-
-  // 100%를 넘지 않도록 제한
-  return Math.min(100, Math.max(0, ratio));
-});
+}
 </script>
 
 <style scoped>

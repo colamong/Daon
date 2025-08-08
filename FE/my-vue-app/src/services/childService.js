@@ -228,5 +228,37 @@ export const childService = {
       
       throw new Error(error.response?.data?.message || '관심사 삭제 중 오류가 발생했습니다.');
     }
+  },
+
+  // 펭귄 상태 조회 API
+  async getPetStatus(childId) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/pet/${childId}`, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '펭귄 상태 조회 중 오류가 발생했습니다.');
+    }
+  },
+
+  // 대화 후 보상 지급 API
+  async givePetReward(childId) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/pet/reward/${childId}`, {}, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '펭귄 보상 지급 중 오류가 발생했습니다.');
+    }
   }
 };
