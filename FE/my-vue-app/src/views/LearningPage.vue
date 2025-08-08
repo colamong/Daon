@@ -231,58 +231,45 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNotification } from '@/composables/useNotification'
-import { learningThemes } from '@/data/learningThemes.js'
-import { learningContent } from '@/data/learningContent.js'
 import IconButton from '@/components/button/IconButton.vue'
-import QuestionCard from '@/components/card/QuestionCard.vue'
 import AnswerCard from '@/components/card/AnswerCard.vue'
-import ConfirmModal from '@/components/modal/ConfirmModal.vue'
 import PronunciationModal from '@/components/modal/PronunciationModal.vue'
+import learningService from '@/services/learningService'
+import ttsService from '@/services/ttsService'
 
 const route = useRoute()
 const router = useRouter()
 const { showInfo, showWarning } = useNotification()
 
 // 라우트 파라미터
-const themeId = computed(() => route.params.themeId)
+const themeId = computed(() => Number(route.params.themeId))
 const chapterId = computed(() => Number(route.params.chapterId))
-const questionId = computed(() => Number(route.params.questionId) || 1)
-
-// 현재 테마와 챕터 정보
-const currentTheme = computed(() => 
-  learningThemes.find(theme => theme.id === themeId.value)
-)
-
-const currentChapter = computed(() => 
-  currentTheme.value?.chapters.find(chapter => chapter.id === chapterId.value)
-)
-
-// 현재 학습 콘텐츠
-const currentContent = computed(() => {
-  const themeContent = learningContent[themeId.value]
-  if (!themeContent) return null
-  
-  const chapterContent = themeContent[chapterId.value]
-  if (!chapterContent) return null
-  
-  return chapterContent[questionId.value - 1]
-})
-
-// 총 질문 수
-const totalQuestions = computed(() => {
-  const themeContent = learningContent[themeId.value]
-  if (!themeContent) return 0
-  
-  const chapterContent = themeContent[chapterId.value]
-  if (!chapterContent) return 0
-  
-  return chapterContent.length
-})
+const questionId = computed(() => Math.max(1, Number(route.params.questionId) || 1)) // 1-base index
 
 // 상태
+const themes = ref([])       // 전체 테마
+const chapters = ref([])     // 현재 테마의 챕터 목록
+const questions = ref([])    // 현재 챕터의 질문 목록
+
+// 현재 테마/챕터/문항
+const currentTheme = computed(() =>
+  themes.value.find(t => t.id === themeId.value)
+)
+
+const currentChapter = computed(() =>
+  chapters.value.find(c => c.id === chapterId.value)
+)
+
+const currentContent = computed(() =>
+  questions.value[questionId.value - 1]
+)
+
+const totalQuestions = computed(() => questions.value.length)
+
+// UI 상태
 const selectedAnswer = ref(null)
 const showPronunciationConfirm = ref(false)
 const showPronunciationModal = ref(false)
@@ -291,132 +278,164 @@ const showNavigationConfirm = ref(false)
 const showExitConfirm = ref(false)
 const pendingNavigation = ref(null)
 
-// 답변 선택
-const selectAnswer = (answerId) => {
-  selectedAnswer.value = answerId
+// ---------- API 로딩 ----------
+const loadThemes = async () => {
+  const list = await learningService.getThemes()
+  themes.value = list
 }
 
-// 정답 처리
+const loadChapters = async () => {
+  if (!themeId.value) return
+  const list = await learningService.getChaptersByTheme(themeId.value)
+  chapters.value = list
+}
+
+const loadQuestions = async () => {
+  if (!chapterId.value) return
+  const list = await learningService.getQuestionsByChapter(chapterId.value)
+  questions.value = list
+  // 범위 보정
+  if (questionId.value > totalQuestions.value && totalQuestions.value > 0) {
+    router.replace(`/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/1`)
+  }
+}
+
+// 최초 로딩
+onMounted(async () => {
+  await Promise.all([loadThemes(), loadChapters()])
+  await loadQuestions()
+})
+
+// 라우트 변경 대응
+watch(() => chapterId.value, async () => {
+  await loadQuestions()
+})
+watch(() => questionId.value, () => {
+  selectedAnswer.value = null
+  selectedCorrectAnswer.value = null
+})
+
+// ---------- 정답/발음 ----------
 const handleCorrectAnswer = (answer) => {
   selectedAnswer.value = answer.id
   selectedCorrectAnswer.value = answer
   showPronunciationConfirm.value = true
 }
 
-// 오답 처리
-const handleIncorrectAnswer = (answer) => {
+const handleIncorrectAnswer = () => {
   showWarning('틀렸습니다. 다시 시도해보세요.', '오답', { duration: 2000 })
 }
 
-// 발음 연습 시작
 const startPronunciationPractice = () => {
   showPronunciationConfirm.value = false
   showPronunciationModal.value = true
 }
 
-// 발음 연습 생략
 const skipPronunciationPractice = () => {
   showPronunciationConfirm.value = false
   showInfo('정답입니다!', '성공', { duration: 2000 })
-  setTimeout(() => {
-    nextQuestion()
-  }, 1500)
+  setTimeout(() => nextQuestion(), 1500)
 }
 
-// 발음 연습 완료
 const completePronunciationPractice = (score) => {
   showPronunciationModal.value = false
   showInfo(`발음 점수: ${score}점! 잘했습니다!`, '발음 평가 완료', { duration: 3000 })
-  setTimeout(() => {
-    nextQuestion()
-  }, 2000)
+  setTimeout(() => nextQuestion(), 2000)
 }
 
-// 답변 제출
 const submitAnswer = () => {
-  const answer = currentContent.value.answers.find(a => a.id === selectedAnswer.value)
+  const answer = currentContent.value?.answers.find(a => a.id === selectedAnswer.value)
+  if (!answer) return
+  // 서버 DTO에 isCorrect가 이미 있음 (DB is_correct)
   if (answer.isCorrect) {
     showInfo('정답입니다!', '성공', { duration: 2000 })
-    // 다음 문제로 이동하거나 챕터 완료 처리
     nextQuestion()
   } else {
     showWarning('틀렸습니다. 다시 시도해보세요.', '오답', { duration: 2000 })
     selectedAnswer.value = null
   }
+
+  // (옵션) 서버 텍스트 비교로 검증하려면:
+  // const correctText = await learningService.getCorrectChoiceText(currentContent.value.id)
+  // const isCorrect = answer.text?.trim() === String(correctText).trim()
 }
 
-// 다음 문제로 이동
 const nextQuestion = () => {
-  const currentQuestionNum = questionId.value
-  const totalQuestions = learningContent[themeId.value][chapterId.value].length
-  
-  // 상태 초기화
+  const curr = questionId.value
+  const total = totalQuestions.value
   selectedAnswer.value = null
   selectedCorrectAnswer.value = null
-  
-  if (currentQuestionNum < totalQuestions) {
-    // 같은 챕터의 다음 문제로
-    router.push(`/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/${currentQuestionNum + 1}`)
+
+  if (curr < total) {
+    router.push(`/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/${curr + 1}`)
   } else {
-    // 챕터 완료
     showInfo('챕터를 완료했습니다!', '완료', { duration: 3000 })
     setTimeout(() => {
       router.push(`/dashboard/learning/theme/${themeId.value}`)
-    }, 2000)
+    }, 1200)
   }
 }
 
-// 네비게이션 확인
+// ---------- 네비게이션 ----------
 const confirmNavigation = (direction) => {
   pendingNavigation.value = direction
   showNavigationConfirm.value = true
 }
 
-// 네비게이션 실행
 const executeNavigation = () => {
   const direction = pendingNavigation.value
   showNavigationConfirm.value = false
-  
-  if (direction === 'prev') {
-    router.push(`/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/${questionId.value - 1}`)
-  } else if (direction === 'next') {
-    router.push(`/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/${questionId.value + 1}`)
+  const target = direction === 'prev' ? questionId.value - 1 : questionId.value + 1
+  if (target >= 1 && target <= totalQuestions.value) {
+    router.push(`/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/${target}`)
   }
-  
-  // 상태 초기화
   selectedAnswer.value = null
   selectedCorrectAnswer.value = null
 }
 
-// 네비게이션 취소
 const cancelNavigation = () => {
   showNavigationConfirm.value = false
   pendingNavigation.value = null
 }
 
-// 나가기 확인
-const confirmExit = () => {
-  showExitConfirm.value = true
+// ---------- 나가기 ----------
+const confirmExit = () => { showExitConfirm.value = true }
+const executeExit = () => { showExitConfirm.value = false; router.push('/dashboard/learning') }
+const cancelExit = () => { showExitConfirm.value = false }
+
+// ---------- 오디오 ----------
+const playQuestionAudio = async () => {
+  const text = (currentContent.value?.question || '').trim()
+  const url  = currentContent.value?.audioUrl
+
+  try {
+    if (ttsService.supported && text) {
+      await ttsService.speakText(text, { lang: 'ko-KR', rate: 1, pitch: 1.05 })
+    } else if (url) {
+      await new Audio(url).play()
+    } else {
+      showInfo('질문 음성을 재생합니다', '음성 재생', { duration: 1000 })
+    }
+  } catch {
+    
+  }
 }
 
-// 나가기 실행
-const executeExit = () => {
-  showExitConfirm.value = false
-  router.push('/dashboard/learning')
+const playAnswerAudio = async (answer) => {
+  const text = (answer?.text || '').trim()
+  const url  = answer?.audioUrl
+
+  try {
+    if (ttsService.supported && text) {
+      await ttsService.speakText(text, { lang: 'ko-KR', rate: 1, pitch: 1.05 })
+    } else if (url) {
+      await new Audio(url).play()
+    } else {
+      showInfo(`"${answer.text}" 음성을 재생합니다`, '음성 재생', { duration: 1000 })
+    }
+  } catch {
+    showWarning('음성 재생에 실패했습니다.', '오류', { duration: 1500 })
+  }
 }
 
-// 나가기 취소
-const cancelExit = () => {
-  showExitConfirm.value = false
-}
-
-// 오디오 재생 (실제로는 TTS API 연동)
-const playQuestionAudio = () => {
-  showInfo('질문 음성을 재생합니다', '음성 재생', { duration: 1000 })
-}
-
-const playAnswerAudio = (answer) => {
-  showInfo(`"${answer.text}" 음성을 재생합니다`, '음성 재생', { duration: 1000 })
-  // 실제로는 여기서 TTS API를 호출하여 answer.text 음성을 재생
-}
 </script>
