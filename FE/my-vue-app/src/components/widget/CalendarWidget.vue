@@ -51,20 +51,8 @@
           @click="selectDate(day.date)"
           class="cursor-pointer flex flex-col items-center justify-center relative"
         >
-          <!-- 다이어리 이미지가 있으면 이미지 표시 -->
-          <div v-if="getDiaryForDate(day.date)" class="relative">
-            <img 
-              :src="getDiaryForDate(day.date).imageUrl" 
-              :alt="`${day.date.getDate()}일 그림일기`"
-              class="w-10 h-10 rounded-lg object-cover shadow-sm"
-              @error="(e) => e.target.style.display = 'none'"
-            />
-            <div class="absolute -bottom-1 -right-1 bg-white rounded-full w-4 h-4 flex items-center justify-center shadow-sm">
-              <span class="text-xs font-semibold text-gray-800">{{ day.date.getDate() }}</span>
-            </div>
-          </div>
-          <!-- 다이어리 이미지가 없으면 기본 날짜 표시 -->
-          <div v-else>
+          <!-- 기본 날짜 표시만 유지 -->
+          <div>
             <div
               class="rounded-full flex items-center justify-center"
               :class="day.isToday ? 'bg-blue-100' : ''"
@@ -91,9 +79,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed } from "vue";
 import dayjs from "dayjs";
-import { childService } from "@/services/childService.js";
 
 const emit = defineEmits(["update-month"]);
 const props = defineProps({
@@ -104,9 +91,6 @@ const today = dayjs();
 const current = ref(today.startOf("month"));
 const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
 
-// 다이어리 데이터 상태
-const diaries = ref([]);
-const childId = 3; // 고정 childId
 
 const currentYear = computed(() => current.value.year());
 const currentMonthLabel = computed(() => `${current.value.month() + 1}`);
@@ -131,31 +115,14 @@ const calendarDays = computed(() => {
   return days;
 });
 
-// 월별 다이어리 조회
-async function fetchMonthlyDiaries() {
-  try {
-    const year = current.value.year();
-    const month = current.value.month() + 1; // dayjs month는 0부터 시작하므로 +1
-    
-    console.log('다이어리 조회:', { childId, year, month });
-    const response = await childService.getMonthlyDiaries(childId, year, month);
-    diaries.value = response || [];
-    console.log('다이어리 조회 결과:', diaries.value);
-  } catch (error) {
-    console.error('다이어리 조회 오류:', error);
-    diaries.value = [];
-  }
-}
 
 function prevMonth() {
   current.value = current.value.subtract(1, "month");
   emit("update-month", current.value.format("YYYY-MM"));
-  fetchMonthlyDiaries(); // 월 변경 시 다이어리 재조회
 }
 function nextMonth() {
   current.value = current.value.add(1, "month");
   emit("update-month", current.value.format("YYYY-MM"));
-  fetchMonthlyDiaries(); // 월 변경 시 다이어리 재조회
 }
 function selectDate(date) {
   /* 필요한 경우 */
@@ -188,16 +155,6 @@ function getScheduleColor(date) {
   return colorList[idx % colorList.length];
 }
 
-// 해당 날짜의 다이어리 찾기
-function getDiaryForDate(date) {
-  const dateString = dayjs(date).format('YYYY-MM-DD');
-  return diaries.value.find(diary => {
-    if (diary.createdAt) {
-      return dayjs(diary.createdAt).format('YYYY-MM-DD') === dateString;
-    }
-    return false;
-  });
-}
 
 // 원 테두리 및 크기 조정
 function ringStyle(date) {
@@ -215,10 +172,6 @@ function ringStyle(date) {
   };
 }
 
-// 컴포넌트 마운트 시 초기 다이어리 조회
-onMounted(() => {
-  fetchMonthlyDiaries();
-});
 </script>
 
 <style scoped>
