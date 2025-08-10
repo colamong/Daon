@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.daon.be.conversation.controller.ConversationTtsController;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChildAnswerServiceImpl implements ChildAnswerService {
@@ -58,41 +61,106 @@ public class ChildAnswerServiceImpl implements ChildAnswerService {
 		return conversationTopicRepository.save(topic);
 	}
 
+//	@Transactional
+//	public GptAudioResponseDto saveAnswerAndGetNextQuestionAudio(ChildAnswerRequestDto dto) {
+//		Long childId = dto.getChildId();
+//		Long topicId = dto.getTopicId();
+//		int step = dto.getStep();
+//
+//		String redisKey = String.format("child:%d:topic:%d:answers", childId, topicId);
+//
+//		// 1. 이전 질문 저장된 Redis에서 가져오기
+//		List<Object> questionList = redisTemplate.opsForList().range(redisKey, step - 1, step - 1);
+//		String question = (questionList != null && !questionList.isEmpty()) ? questionList.get(0).toString() : "질문 없음";
+//
+//		// 2. Redis에 저장
+//		ChildAnswerRedisDto redisDto = ChildAnswerRedisDto.of(step, question, dto.getAnswer());
+//		redisTemplate.opsForList().rightPush(redisKey, redisDto);
+//
+//		// 3. 마지막 스텝이면 마무리 멘트
+//		if (step >= 5) {
+//			String endMessage = "오늘 이야기 들려줘서 고마워! 다음에 또 이야기 나눠보자!";
+//
+//			//대화 저장
+//			Long result_id = flushAnswersFromRedis(childId, topicId);
+//
+//
+//			return new GptAudioResponseDto(endMessage, null, true, result_id);
+//		}
+//
+//		// 4. 다음 질문 생성
+//		dto.setStep(step + 1); // 다음 질문 step으로 수정
+//		String nextQuestion = generateNextPrompt(dto);
+////
+////		// 아직 미구현
+////		// String mp3Url = gmsOpenAiClient.tts(nextQuestion);
+//
+//		// 5. 오디오 스트리밍 URL 구성 (WAV, voice=nova 기본)
+//		String audioUrl = ConversationTtsController.toStreamUrl(nextQuestion, "nova", "wav", 1.0, false);
+//
+//		return new GptAudioResponseDto(nextQuestion, audioUrl, false, 0L);
+//	}
+
+	// ChildAnswerServiceImpl.java (핵심 부분만 교체)
 	@Transactional
 	public GptAudioResponseDto saveAnswerAndGetNextQuestionAudio(ChildAnswerRequestDto dto) {
-		Long childId = dto.getChildId();
-		Long topicId = dto.getTopicId();
-		int step = dto.getStep();
+		final Long childId = dto.getChildId();
+		final Long topicId  = dto.getTopicId();
+		final int step      = dto.getStep();
 
-		String redisKey = String.format("child:%d:topic:%d:answers", childId, topicId);
-
-		// 1. 이전 질문 저장된 Redis에서 가져오기
-		List<Object> questionList = redisTemplate.opsForList().range(redisKey, step - 1, step - 1);
-		String question = (questionList != null && !questionList.isEmpty()) ? questionList.get(0).toString() : "질문 없음";
-
-		// 2. Redis에 저장
-		ChildAnswerRedisDto redisDto = ChildAnswerRedisDto.of(step, question, dto.getAnswer());
-		redisTemplate.opsForList().rightPush(redisKey, redisDto);
-
-		// 3. 마지막 스텝이면 마무리 멘트
-		if (step >= 5) {
-			String endMessage = "오늘 이야기 들려줘서 고마워! 다음에 또 이야기 나눠보자!";
-
-			//대화 저장
-			Long result_id = flushAnswersFromRedis(childId, topicId);
-
-
-			return new GptAudioResponseDto(endMessage, null, true, result_id);
+		// ✅ DTO 필수값 검증
+		if (childId == null || topicId == null || step <= 0) {
+			return safeResponse("지금은 준비 중이야. 오늘 재밌던 일을 하나 말해줄래?");
 		}
 
-		// 4. 다음 질문 생성
-		dto.setStep(step + 1); // 다음 질문 step으로 수정
-		String nextQuestion = generateNextPrompt(dto);
+		// ✅ Redis key
+		final String aKey = "child:%d:topic:%d:answers".formatted(childId, topicId);
 
-		// 아직 미구현
-		// String mp3Url = gmsOpenAiClient.tts(nextQuestion);
+		// 1) 직전 질문 읽기 - Redis 미기동/직렬화 오류 무시
+		String prevQuestion = "질문 없음";
+		try {
+			List<Object> one = redisTemplate.opsForList().range(aKey, step - 1, step - 1);
+			if (one != null && !one.isEmpty()) prevQuestion = String.valueOf(one.get(0));
+		} catch (Exception e) {
+			log.warn("Redis read skipped: {}", e.getMessage());
+		}
 
-		return new GptAudioResponseDto(nextQuestion, null, false, 0L);
+		// 2) 답변 저장 - Redis 오류 무시 (문자열로 저장하면 직렬화 충돌도 사라짐)
+		try {
+			ChildAnswerRedisDto redisDto = ChildAnswerRedisDto.of(step, prevQuestion, dto.getAnswer());
+			String json = new ObjectMapper().writeValueAsString(redisDto);
+			redisTemplate.opsForList().rightPush(aKey, json);
+		} catch (Exception e) {
+			log.warn("Redis push skipped: {}", e.getMessage());
+		}
+
+		// 3) 마지막 스텝이면 마무리
+		if (step >= 5) {
+			Long resultId = -1L;
+			try { resultId = flushAnswersFromRedis(childId, topicId); }
+			catch (Exception e) { log.warn("flushAnswersFromRedis failed: {}", e.getMessage()); }
+			return new GptAudioResponseDto("오늘 이야기 고마워! 다음에 또 하자!", null, true, resultId);
+		}
+
+		// 4) 다음 질문 생성 - 실패 시 폴백
+		String nextQuestion;
+		try {
+			dto.setStep(step + 1);
+			nextQuestion = generateNextPrompt(dto);
+			if (nextQuestion == null || nextQuestion.isBlank()) {
+				nextQuestion = "오늘 제일 재밌었던 건 뭐였어?";
+			}
+		} catch (Exception e) {
+			log.warn("generateNextPrompt failed: {}", e.getMessage());
+			nextQuestion = "오늘 제일 재밌었던 건 뭐였어?";
+		}
+
+		return safeResponse(nextQuestion);
+	}
+
+	private GptAudioResponseDto safeResponse(String question) {
+		String url = ConversationTtsController.toStreamUrl(question, "nova", "wav", 1.0, false);
+		return new GptAudioResponseDto(question, url, false, 0L);
 	}
 
 
