@@ -1,9 +1,10 @@
 package com.daon.be.ai.service;
 
-import com.daon.be.ai.dto.GptChildConversationResponseDto;
+import java.util.List;
+
+import com.daon.be.ai.dto.GptFullAnalysisResponseDto;
 
 public interface ChildConversationGptService {
 
-	GptChildConversationResponseDto analyzeText(String sttText);
-
+	GptFullAnalysisResponseDto analyzeConversation(String sttText);
 }
