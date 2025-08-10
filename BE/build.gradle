@@ -56,6 +56,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
     implementation 'net.sourceforge.tess4j:tess4j:5.4.0' // 또는 최신 버전
+
+    implementation 'org.apache.httpcomponents.client5:httpclient5'
+
 }
 
 dependencyManagement {
