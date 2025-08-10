@@ -3,7 +3,6 @@ package com.daon.be.child.service;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.daon.be.ai.dto.GptFullAnalysisResponseDto;
 import com.daon.be.ai.service.ChildConversationGptService;
 import com.daon.be.child.dto.FullAnalysisResponseDto;
 import com.daon.be.child.entity.ChildProfile;

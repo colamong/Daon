@@ -1,7 +1,7 @@
 package com.daon.be.conversation.entity;
 
 import java.time.LocalDateTime;
-import com.daon.be.ai.dto.GptFullAnalysisResponseDto;
+
 import com.daon.be.calendar.entity.Calendar;
 import com.daon.be.calendar.entity.ImageDiary;
 import com.daon.be.child.entity.ChildProfile;
