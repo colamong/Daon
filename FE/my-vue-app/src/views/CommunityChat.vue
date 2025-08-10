@@ -21,8 +21,8 @@
         </div>
 
         <!-- ChatWindow -->
-        <ChatWindow 
-          class="w-full" 
+        <ChatWindow
+          class="w-full"
           :messages="chatMessages"
           :currentUserId="authStore.user?.id || 0"
           @sendMessage="handleSendMessage"
@@ -56,7 +56,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 나가기 확인 모달 -->
     <ConfirmModal
       v-model="showConfirmModal"
@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ChatWindow from "@/components/widget/ChatWindow.vue";
 import ChatListCard from "@/components/card/ChatListCard.vue";
@@ -79,54 +79,50 @@ import { useCommunityStore } from "@/store/community.js";
 import { useAuthStore } from "@/store/auth.js";
 import axiosInstance from "@/utils/axios.js";
 
-// 1) 라우트 파라미터 및 라우터
+// 라우터 & 스토어
 const route = useRoute();
 const $router = useRouter();
 const communityStore = useCommunityStore();
 const authStore = useAuthStore();
 
-// 2) 현재 커뮤니티 정보
+// 상태
 const currentCommunity = ref(null);
 const chatMessages = ref([]);
 
-// 3) 현재 방 객체
+// 폴링 타이머 & 중복 방지
+let pollTimer = null;
+const knownIds = new Set();
+
+// 현재 방 정보
 const currentRoom = computed(() => {
   if (!currentCommunity.value) return null;
-  
   return {
     id: currentCommunity.value.id,
     location: currentCommunity.value.title,
-    userJoined: true // 임시로 모든 채팅방에서 나가기 버튼 표시
+    userJoined: true, // 임시: 모두 나가기 버튼 표시
   };
 });
 
-
-// 6) 참가중인 방들
+// 참가 중인 방 목록
 const joinedRooms = computed(() => {
-  console.log('joinedCommunities:', communityStore.joinedCommunities);
-  const rooms = communityStore.joinedCommunities.map(community => ({
+  return communityStore.joinedCommunities.map((community) => ({
     id: community.id,
     location: community.title,
-    image: '', // 기본 이미지 사용
+    image: "", // 기본 이미지 사용
   }));
-  console.log('joinedRooms with IDs:', rooms);
-  return rooms;
 });
-
-// 기본 이미지
-const defaultImage = new URL("@/assets/icons/image-placeholder.svg", import.meta.url).href;
 
 // 모달 상태
 const showConfirmModal = ref(false);
 const selectedRoom = ref(null);
 
-// 나가기 확인 모달 표시
+// 나가기 모달 열기
 const showLeaveConfirm = (room) => {
   selectedRoom.value = room;
   showConfirmModal.value = true;
 };
 
-// 나가기 확인
+// 나가기 확정
 const confirmLeave = () => {
   if (selectedRoom.value) {
     leaveRoom(selectedRoom.value.id);
@@ -134,108 +130,160 @@ const confirmLeave = () => {
   }
 };
 
-// 채팅방 나가기 함수
+// 채팅방 나가기
 const leaveRoom = async (roomId) => {
   try {
     await communityStore.leaveCommunity(roomId, authStore.user.id);
-    
-    // 현재 보고 있던 방에서 나간 경우 커뮤니티 목록으로 이동
     if (currentRoom.value && currentRoom.value.id === roomId) {
-      $router.push('/dashboard/community');
+      $router.push("/dashboard/community");
     }
   } catch (error) {
-    console.error('채팅방 나가기 실패:', error);
-    alert('채팅방 나가기에 실패했습니다.');
+    console.error("채팅방 나가기 실패:", error);
+    alert("채팅방 나가기에 실패했습니다.");
   }
 };
 
-// 메시지 전송 핸들러
+// 메시지 전송(REST)
 const handleSendMessage = async (message) => {
   if (!currentCommunity.value || !authStore.user?.id) {
-    console.error('커뮤니티 또는 사용자 정보가 없습니다.');
+    console.error("커뮤니티 또는 사용자 정보가 없습니다.");
     return;
   }
 
   try {
     const requestDto = {
       userId: authStore.user.id,
-      message: message
+      message,
     };
-
-    const response = await axiosInstance.post(`/api/community/${currentCommunity.value.id}/messages`, requestDto);
-    
-    // 성공적으로 전송되면 메시지 목록 새로고침
+    await axiosInstance.post(
+      `/api/community/${currentCommunity.value.id}/messages`,
+      requestDto
+    );
+    // 브로드캐스트가 없다면 폴링 간격 전에 반영하려면 즉시 한번 갱신
     await loadMessages();
-    
   } catch (error) {
-    console.error('메시지 전송 실패:', error);
-    alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
+    console.error("메시지 전송 실패:", error);
+    alert("메시지 전송에 실패했습니다. 다시 시도해주세요.");
   }
 };
 
-// 메시지 목록 로드 함수
+// 메시지 목록 조회(REST) - 새로운 것만 append (깜빡임/스크롤 튐 방지)
 const loadMessages = async () => {
   if (!currentCommunity.value) return;
-  
   try {
-    const response = await axiosInstance.get(`/api/community/${currentCommunity.value.id}/messages`);
-    chatMessages.value = response.data.data || [];
-    console.log('메시지 목록 로드 완료:', chatMessages.value.length, '개');
+    const res = await axiosInstance.get(
+      `/api/community/${currentCommunity.value.id}/messages`
+    );
+    const list = res.data.data || [];
+
+    if (chatMessages.value.length === 0) {
+      chatMessages.value = list;
+      knownIds.clear();
+      list.forEach((m) => knownIds.add(m.id));
+    } else {
+      for (const m of list) {
+        if (!knownIds.has(m.id)) {
+          chatMessages.value.push(m);
+          knownIds.add(m.id);
+        }
+      }
+    }
+    // console.log("메시지 목록 로드 완료:", chatMessages.value.length, "개");
   } catch (error) {
-    console.error('메시지 목록 로드 실패:', error);
+    console.error("메시지 목록 로드 실패:", error);
   }
 };
 
-// 데이터 로드 함수
+// 폴링 제어
+const startPolling = (intervalMs = 2000) => {
+  stopPolling();
+  pollTimer = setInterval(async () => {
+    try {
+      await loadMessages();
+    } catch (e) {
+      console.error("폴링 중 오류:", e);
+    }
+  }, intervalMs);
+  document.addEventListener("visibilitychange", onVisibilityChange);
+};
+
+const stopPolling = () => {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+  document.removeEventListener("visibilitychange", onVisibilityChange);
+};
+
+const onVisibilityChange = () => {
+  if (document.hidden) {
+    stopPolling();
+  } else {
+    startPolling();
+  }
+};
+
+// 초기 데이터 로드
 const loadCommunityData = async () => {
   const communityId = Number(route.params.id);
   if (!communityId) {
-    $router.push('/dashboard/community');
+    $router.push("/dashboard/community");
     return;
   }
-  
+
   try {
-    // 커뮤니티 정보 조회
+    // 커뮤니티 목록/현재 커뮤니티
     await communityStore.fetchAllCommunities();
-    currentCommunity.value = communityStore.communities.find(c => c.id === communityId);
-    
+    currentCommunity.value = communityStore.communities.find(
+      (c) => c.id === communityId
+    );
+
     if (!currentCommunity.value) {
-      console.error('해당 커뮤니티를 찾을 수 없습니다.');
-      $router.push('/dashboard/community');
+      console.error("해당 커뮤니티를 찾을 수 없습니다.");
+      $router.push("/dashboard/community");
       return;
     }
-    
-    // 자동으로 채팅방에 참가
-    if (!communityStore.isJoined(communityId)) {
-      console.log('커뮤니티 참가 시도:', communityId, 'userId:', authStore.user.id);
-      await communityStore.joinCommunity(communityId, authStore.user.id);
-    }
-    
-    // 참가중인 커뮤니티 목록 조회
+
+    // ✅ 새로고침 시 500 방지: 참여 목록 먼저 → 필요 시 join
     await communityStore.fetchJoinedCommunities(authStore.user.id);
-    
-    // 메시지 목록 로드
+    if (!communityStore.isJoined(communityId)) {
+      await communityStore.joinCommunity(communityId, authStore.user.id);
+      await communityStore.fetchJoinedCommunities(authStore.user.id);
+    }
+
+    // 히스토리 로드 후 폴링 시작
+    knownIds.clear();
+    chatMessages.value = [];
     await loadMessages();
-    
+    startPolling(2000); // 2초 간격 (원하면 1000~3000 조정)
   } catch (error) {
-    console.error('채팅방 로드 실패:', error);
-    alert('채팅방을 불러오는데 실패했습니다.');
-    $router.push('/dashboard/community');
+    console.error("채팅방 로드 실패:", error);
+    alert("채팅방을 불러오는데 실패했습니다.");
+    $router.push("/dashboard/community");
   }
 };
 
-// 컴포넌트 마운트 시 데이터 로드
 onMounted(() => {
   loadCommunityData();
 });
 
-// 라우트 파라미터 변경 감지
-watch(() => route.params.id, (newId, oldId) => {
-  if (newId && newId !== oldId) {
-    console.log('채팅방 변경:', oldId, '→', newId);
-    loadCommunityData();
-  }
+onBeforeUnmount(() => {
+  stopPolling();
 });
+
+// 라우트 변경 시 재로딩 + 폴링 재시작
+watch(
+  () => route.params.id,
+  async (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      // 방 이동 시 폴링 리셋
+      stopPolling();
+      knownIds.clear();
+      chatMessages.value = [];
+      await loadCommunityData();
+    }
+  }
+);
 </script>
 
 <style scoped>

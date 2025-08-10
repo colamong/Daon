@@ -7,10 +7,10 @@ class WebSocketService {
     this.client = null
     this.isConnected = ref(false)
     this.currentCommunityId = ref(null)
-    this.currentUserId = ref(null)
     this.messages = reactive([])
     this.connectionCallbacks = []
     this.messageCallbacks = []
+    this.currentSubscription = null
   }
 
   // WebSocket 연결
@@ -21,61 +21,42 @@ class WebSocketService {
     }
 
     try {
-      // SockJS 소켓 생성
       const socket = new SockJS('http://localhost:8080/ws')
-      
-      // STOMP 클라이언트 생성
+
       this.client = new Client({
         webSocketFactory: () => socket,
-        debug: (str) => {
-          console.log('STOMP Debug:', str)
-        },
+        debug: (str) => console.log('STOMP Debug:', str),
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
       })
 
-      // 연결 성공 콜백
       this.client.onConnect = (frame) => {
         console.log('WebSocket Connected:', frame)
         this.isConnected.value = true
-        
-        // 연결 성공 콜백 실행
-        this.connectionCallbacks.forEach(callback => callback(true))
+        this.connectionCallbacks.forEach((cb) => cb(true))
       }
 
-      // 연결 실패 콜백
       this.client.onStompError = (frame) => {
         console.error('WebSocket STOMP Error:', frame.headers['message'])
         console.error('Error details:', frame.body)
         this.isConnected.value = false
-        
-        // 연결 실패 콜백 실행
-        this.connectionCallbacks.forEach(callback => callback(false))
+        this.connectionCallbacks.forEach((cb) => cb(false))
       }
 
-      // 연결 해제 콜백
       this.client.onDisconnect = () => {
         console.log('WebSocket Disconnected')
         this.isConnected.value = false
         this.currentCommunityId.value = null
       }
 
-      // 연결 시작
       this.client.activate()
-      
-      return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('WebSocket connection timeout'))
-        }, 10000)
 
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('WebSocket connection timeout')), 10000)
         this.onConnect((success) => {
           clearTimeout(timeout)
-          if (success) {
-            resolve()
-          } else {
-            reject(new Error('Failed to connect to WebSocket'))
-          }
+          success ? resolve() : reject(new Error('Failed to connect to WebSocket'))
         })
       })
     } catch (error) {
@@ -87,6 +68,10 @@ class WebSocketService {
   // WebSocket 연결 해제
   disconnect() {
     if (this.client) {
+      if (this.currentSubscription) {
+        this.currentSubscription.unsubscribe()
+        this.currentSubscription = null
+      }
       this.client.deactivate()
       this.client = null
       this.isConnected.value = false
@@ -107,25 +92,23 @@ class WebSocketService {
     }
 
     this.currentCommunityId.value = communityId
-    
+
     // 새로운 커뮤니티 구독
     this.currentSubscription = this.client.subscribe(`/topic/community/${communityId}`, (message) => {
       try {
         const chatMessage = JSON.parse(message.body)
-        
-        // 메시지를 reactive 배열에 추가 (ChatWindow 컴포넌트 형식에 맞춤)
+
+        // ✅ 원래 형식으로 복구: text / timestamp 사용, isMine 고정(false 또는 기존 기본값)
         this.messages.push({
           id: chatMessage.id,
-          message: chatMessage.message, // ChatWindow는 'message' 속성 사용
+          text: chatMessage.message,
           userId: chatMessage.userId,
           userName: chatMessage.userName,
-          sentAt: chatMessage.sentAt, // ChatWindow는 'sentAt' 속성 사용
-          isMine: chatMessage.userId === this.currentUserId.value
+          timestamp: chatMessage.sentAt,
+          isMine: false,
         })
 
-        // 메시지 콜백 실행
-        this.messageCallbacks.forEach(callback => callback(chatMessage))
-        
+        this.messageCallbacks.forEach((cb) => cb(chatMessage))
       } catch (error) {
         console.error('Error parsing message:', error)
       }
@@ -134,20 +117,20 @@ class WebSocketService {
     console.log(`Subscribed to community ${communityId}`)
   }
 
-  // 메시지 전송
-  sendMessage(communityId, userId, message) {
+  // 메시지 전송 (시그니처 원래대로: communityId, message, userId)
+  sendMessage(communityId, message, userId) {
     if (!this.client || !this.client.connected) {
       throw new Error('WebSocket is not connected')
     }
 
     const messageData = {
       userId: parseInt(userId),
-      message: message.trim()
+      message: String(message || '').trim(),
     }
 
     this.client.publish({
       destination: `/app/community/${communityId}`,
-      body: JSON.stringify(messageData)
+      body: JSON.stringify(messageData),
     })
 
     console.log('Message sent:', messageData)
@@ -168,32 +151,22 @@ class WebSocketService {
     this.messages.length = 0
   }
 
-  // 메시지 설정 (히스토리 로드 시 사용)
-  setMessages(messages, currentUserId = null) {
-    if (currentUserId !== null) {
-      this.currentUserId.value = currentUserId
-    }
-    
+  // 메시지 설정 (히스토리 로드 시 사용) — ✅ 원래 시그니처로 복구
+  setMessages(messages) {
     this.messages.length = 0
-    messages.forEach(msg => {
+    messages.forEach((msg) => {
       this.messages.push({
         id: msg.id,
-        message: msg.message, // ChatWindow 컴포넌트 형식에 맞춤
+        text: msg.message,      // ← text
         userId: msg.userId,
         userName: msg.userName,
-        sentAt: msg.sentAt, // ChatWindow 컴포넌트 형식에 맞춤
-        isMine: msg.userId === this.currentUserId.value
+        timestamp: msg.sentAt,  // ← timestamp
+        isMine: false,
       })
     })
   }
-
-  // 현재 사용자 ID 설정
-  setCurrentUserId(userId) {
-    this.currentUserId.value = userId
-  }
 }
 
-// 싱글톤 인스턴스 생성
+// 싱글톤 인스턴스
 const websocketService = new WebSocketService()
-
 export default websocketService

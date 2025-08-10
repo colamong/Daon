@@ -1,32 +1,42 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import communityService from '@/services/communityService.js'
 import websocketService from '@/services/websocketService.js'
 
 export const useCommunityStore = defineStore('community', () => {
-  // 상태
+  // ---------- 기본 상태 ----------
   const communities = ref([])
   const activeCommunities = ref([])
   const currentCommunity = ref(null)
   const participants = ref([])
-  const messages = ref([])
+  const messages = ref([]) // (기존 유지: 호환용)
   const loading = ref(false)
   const error = ref(null)
 
-  // 현재 사용자 ID (임시로 1로 설정, 나중에 auth store에서 가져올 예정)
+  // 임시 사용자 ID (추후 auth 연동)
   const currentUserId = ref(1)
 
-  // Getters
-  const isWebSocketConnected = computed(() => websocketService.isConnected.value)
-  const websocketMessages = computed(() => websocketService.messages)
-  const joinedCommunities = computed(() => activeCommunities.value)
-  
-  // 사용자가 특정 커뮤니티에 참여 중인지 확인
-  const isJoined = (communityId) => {
-    return activeCommunities.value.some(community => community.id === communityId)
-  }
+  // ---------- 실시간용 상태 ----------
+  const currentRoomId = ref(null)
+  // 방별 메시지 저장소: { [roomId]: Array<msg> }
+  const messagesByRoom = reactive({})
+  // 방별 중복 방지용 Set: { [roomId]: Set<id> }
+  const knownIdsByRoom = reactive({})
 
-  // Actions - 커뮤니티 목록 관련
+  // ---------- Getters ----------
+  const isWebSocketConnected = computed(() => websocketService.isConnected.value)
+  // 화면에서 바로 바인딩할 수 있게 현재 방 메시지를 노출
+  const websocketMessages = computed(() => {
+    const rid = currentRoomId.value
+    return rid ? (messagesByRoom[rid] || []) : []
+  })
+  const joinedCommunities = computed(() => activeCommunities.value)
+
+  // 사용자가 특정 커뮤니티에 참여 중인지 확인
+  const isJoined = (communityId) =>
+    activeCommunities.value.some((c) => c.id === communityId)
+
+  // ---------- 커뮤니티 목록 ----------
   const fetchAllCommunities = async () => {
     try {
       loading.value = true
@@ -69,20 +79,16 @@ export const useCommunityStore = defineStore('community', () => {
       loading.value = false
     }
   }
-  
-  // fetchJoinedCommunities 별칭 추가 (CommunityChat에서 사용)
+  // 별칭
   const fetchJoinedCommunities = fetchActiveCommunities
 
-  // Actions - 커뮤니티 참여 관련
+  // ---------- 참여/나가기 ----------
   const joinCommunity = async (communityId, userId = currentUserId.value) => {
     try {
       loading.value = true
       error.value = null
       const data = await communityService.joinCommunity(communityId, userId)
-      
-      // 성공하면 활성 커뮤니티 목록 새로고침
-      await fetchActiveCommunities(userId)
-      
+      await fetchActiveCommunities(userId) // 목록 갱신
       return data
     } catch (err) {
       if (err.response?.data?.message?.includes('already participating')) {
@@ -102,15 +108,14 @@ export const useCommunityStore = defineStore('community', () => {
       loading.value = true
       error.value = null
       await communityService.leaveCommunity(communityId, userId)
-      
-      // 성공하면 활성 커뮤니티 목록 새로고침
       await fetchActiveCommunities(userId)
-      
-      // 현재 보고 있던 커뮤니티에서 나간 경우 초기화
+
       if (currentCommunity.value?.id === communityId) {
         currentCommunity.value = null
         participants.value = []
         messages.value = []
+        messagesByRoom[communityId] = []
+        knownIdsByRoom[communityId] = new Set()
       }
     } catch (err) {
       if (err.response?.data?.message?.includes('not participating')) {
@@ -125,7 +130,7 @@ export const useCommunityStore = defineStore('community', () => {
     }
   }
 
-  // Actions - 커뮤니티 정보 관련
+  // ---------- 정보 ----------
   const fetchParticipants = async (communityId) => {
     try {
       loading.value = true
@@ -145,10 +150,14 @@ export const useCommunityStore = defineStore('community', () => {
       loading.value = true
       error.value = null
       const data = await communityService.getMessages(communityId)
-      messages.value = data || []
-      
-      // WebSocket 서비스에 메시지 히스토리 설정
-      websocketService.setMessages(data || [], currentUserId.value)
+      messages.value = data || [] // 호환용
+      // 방별 저장소 채우기 + 중복세트 초기화
+      messagesByRoom[communityId] = data || []
+      knownIdsByRoom[communityId] = new Set((data || []).map((m) => m.id))
+
+      // (참고) 이전에 websocketService.setMessages(data, currentUserId) 쓰던 것 제거
+      // 현재 websocketService.setMessages는 (messages)만 받는 시그니처입니다.
+      websocketService.setMessages(data || [])
     } catch (err) {
       error.value = '메시지 히스토리를 불러오는데 실패했습니다.'
       console.error('Failed to fetch messages:', err)
@@ -157,11 +166,13 @@ export const useCommunityStore = defineStore('community', () => {
     }
   }
 
-  // Actions - WebSocket 관련
+  // ---------- WebSocket ----------
   const connectWebSocket = async () => {
     try {
       await websocketService.connect()
       console.log('WebSocket connected successfully')
+      bindReconnectAutoResubscribe() // 연결되면 재구독 바인딩
+      bindOnMessageOnce()            // 수신 콜백 1회 바인딩
     } catch (err) {
       error.value = 'WebSocket 연결에 실패했습니다.'
       console.error('Failed to connect WebSocket:', err)
@@ -176,6 +187,10 @@ export const useCommunityStore = defineStore('community', () => {
 
   const subscribeToCommunity = (communityId) => {
     try {
+      currentRoomId.value = communityId
+      // 저장소 준비
+      if (!messagesByRoom[communityId]) messagesByRoom[communityId] = []
+      if (!knownIdsByRoom[communityId]) knownIdsByRoom[communityId] = new Set()
       websocketService.subscribeToCommunity(communityId)
       console.log(`Subscribed to community ${communityId}`)
     } catch (err) {
@@ -185,9 +200,11 @@ export const useCommunityStore = defineStore('community', () => {
     }
   }
 
+  // 새 메시지 전송 (WS 사용 시)
   const sendMessage = (communityId, message, userId = currentUserId.value) => {
     try {
-      websocketService.sendMessage(communityId, userId, message)
+      // ⚠️ 인자 순서 복구: (communityId, message, userId)
+      websocketService.sendMessage(communityId, message, userId)
     } catch (err) {
       error.value = '메시지 전송에 실패했습니다.'
       console.error('Failed to send message:', err)
@@ -195,7 +212,46 @@ export const useCommunityStore = defineStore('community', () => {
     }
   }
 
-  // Actions - 현재 커뮤니티 설정
+  // ---------- 내부 헬퍼 ----------
+  // 재연결 시 자동 재구독
+  const bindReconnectAutoResubscribe = () => {
+    if (bindReconnectAutoResubscribe._bound) return
+    websocketService.onConnect((ok) => {
+      if (ok && currentRoomId.value) {
+        try {
+          websocketService.subscribeToCommunity(currentRoomId.value)
+        } catch (e) {
+          console.error('Auto-resubscribe failed:', e)
+        }
+      }
+    })
+    bindReconnectAutoResubscribe._bound = true
+  }
+
+  // 수신 콜백을 한 번만 바인딩해서 현재 방 메시지에 즉시 반영
+  const bindOnMessageOnce = () => {
+    if (bindOnMessageOnce._bound) return
+    websocketService.onMessage((raw) => {
+      const rid = currentRoomId.value
+      if (!rid) return
+      if (!messagesByRoom[rid]) messagesByRoom[rid] = []
+      if (!knownIdsByRoom[rid]) knownIdsByRoom[rid] = new Set()
+
+      const msg = {
+        id: raw.id,
+        userId: raw.userId,
+        message: raw.message ?? raw.text,
+        sentAt: raw.sentAt ?? raw.timestamp,
+      }
+      if (!knownIdsByRoom[rid].has(msg.id)) {
+        messagesByRoom[rid].push(msg)
+        knownIdsByRoom[rid].add(msg.id)
+      }
+    })
+    bindOnMessageOnce._bound = true
+  }
+
+  // ---------- 기타 ----------
   const setCurrentCommunity = (community) => {
     currentCommunity.value = community
   }
@@ -206,29 +262,36 @@ export const useCommunityStore = defineStore('community', () => {
 
   const clearMessages = () => {
     messages.value = []
+    const rid = currentRoomId.value
+    if (rid) {
+      messagesByRoom[rid] = []
+      knownIdsByRoom[rid] = new Set()
+    }
     websocketService.clearMessages()
   }
 
-  // 현재 사용자 ID 설정 (나중에 auth와 연동 시 사용)
   const setCurrentUserId = (userId) => {
     currentUserId.value = userId
-    websocketService.setCurrentUserId(userId)
   }
 
+  // ---------- 노출 ----------
   return {
     // State
     communities,
     activeCommunities,
     currentCommunity,
     participants,
-    messages,
+    messages, // (호환용)
     loading,
     error,
     currentUserId,
 
+    // Realtime State
+    currentRoomId,
+    websocketMessages, // 화면에서 바로 바인딩 가능
+
     // Getters
     isWebSocketConnected,
-    websocketMessages,
     joinedCommunities,
     isJoined,
 
@@ -241,13 +304,15 @@ export const useCommunityStore = defineStore('community', () => {
     leaveCommunity,
     fetchParticipants,
     fetchMessages,
+
     connectWebSocket,
     disconnectWebSocket,
     subscribeToCommunity,
     sendMessage,
+
     setCurrentCommunity,
     clearError,
     clearMessages,
-    setCurrentUserId
+    setCurrentUserId,
   }
 })
