@@ -14,15 +14,12 @@ import java.util.Optional;
 @Repository
 public interface CommunityParticipationRepository extends JpaRepository<CommunityParticipation, Long> {
     
-    @Query("SELECT cp FROM CommunityParticipation cp WHERE cp.user.id = :userId AND cp.leftAt IS NULL")
-    List<CommunityParticipation> findActiveParticipationsByUserId(@Param("userId") Long userId);
+    // Spring Data JPA 네이밍 컨벤션 사용 (쿼리 자동 생성)
+    List<CommunityParticipation> findByUserIdAndLeftAtIsNull(Long userId);
     
-    @Query("SELECT cp FROM CommunityParticipation cp WHERE cp.community.id = :communityId AND cp.leftAt IS NULL")
-    List<CommunityParticipation> findActiveParticipationsByCommunityId(@Param("communityId") Long communityId);
+    List<CommunityParticipation> findByCommunityIdAndLeftAtIsNull(Long communityId);
     
-    @Query("SELECT cp FROM CommunityParticipation cp WHERE cp.community = :community AND cp.user = :user AND cp.leftAt IS NULL")
-    Optional<CommunityParticipation> findActiveParticipation(@Param("community") Community community, @Param("user") User user);
+    Optional<CommunityParticipation> findByCommunityAndUserAndLeftAtIsNull(Community community, User user);
     
-    @Query("SELECT COUNT(cp) FROM CommunityParticipation cp WHERE cp.community.id = :communityId AND cp.leftAt IS NULL")
-    Long countActiveParticipantsByCommunityId(@Param("communityId") Long communityId);
+    Long countByCommunityIdAndLeftAtIsNull(Long communityId);
 }

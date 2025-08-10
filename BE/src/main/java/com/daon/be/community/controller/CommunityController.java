@@ -2,6 +2,7 @@ package com.daon.be.community.controller;
 
 import com.daon.be.community.dto.request.CommunityJoinRequestDto;
 import com.daon.be.community.dto.request.CommunityLeaveRequestDto;
+import com.daon.be.community.dto.request.ChatMessageRequestDto;
 import com.daon.be.community.dto.response.ChatMessageResponseDto;
 import com.daon.be.community.dto.response.CommunityListResponseDto;
 import com.daon.be.community.dto.response.CommunityResponseDto;
@@ -64,6 +65,14 @@ public class CommunityController {
     public ResponseEntity<ApiResponse<List<ChatMessageResponseDto>>> getMessages(
             @PathVariable Long communityId) {
         List<ChatMessageResponseDto> response = chatMessageService.getMessagesByCommunityId(communityId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+    
+    @PostMapping("/{communityId}/messages")
+    public ResponseEntity<ApiResponse<ChatMessageResponseDto>> sendMessage(
+            @PathVariable Long communityId,
+            @RequestBody ChatMessageRequestDto requestDto) {
+        ChatMessageResponseDto response = chatMessageService.sendMessage(communityId, requestDto);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
     

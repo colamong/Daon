@@ -7,9 +7,9 @@
       <ChatBubble
         v-for="msg in messages"
         :key="msg.id"
-        :isMine="msg.isMine"
-        :message="msg.text"
-        :timestamp="msg.time"
+        :isMine="msg.userId === currentUserId"
+        :message="msg.message"
+        :timestamp="msg.sentAt"
       />
     </div>
 
@@ -19,36 +19,35 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted } from "vue";
+import { ref, nextTick, onMounted, watch } from "vue";
 import ChatBubble from "./ChatBubble.vue";
 import ChatInput from "./ChatInput.vue";
+
+// Props 정의
+const props = defineProps({
+  messages: {
+    type: Array,
+    default: () => []
+  },
+  currentUserId: {
+    type: Number,
+    required: true
+  }
+});
+
+// Emit 정의
+const emit = defineEmits(['sendMessage']);
 
 const newMessage = ref("");
 const messageContainer = ref(null);
 
-const messages = ref([
-  { id: 1, text: "오늘 마트 쉰대요", isMine: false, time: "오전 10:00" },
-  {
-    id: 2,
-    text: "그러면 오늘 시장 가야겠네요",
-    isMine: true,
-    time: "오전 10:01",
-  },
-  { id: 3, text: "내일 장 봐야겠어요", isMine: false, time: "오전 10:02" },
-  { id: 4, text: "다들 그거 들으셨어요?", isMine: false, time: "오전 10:03" },
-]);
-
+// 메시지 전송 핸들러
 function handleSend(text) {
-  messages.value.push({
-    id: Date.now(),
-    text,
-    isMine: true,
-    time: "오전 10:10",
-  });
-
-  scrollToBottom();
+  emit('sendMessage', text);
+  newMessage.value = "";
 }
 
+// 스크롤을 맨 아래로 이동
 function scrollToBottom() {
   nextTick(() => {
     const el = messageContainer.value;
@@ -57,6 +56,11 @@ function scrollToBottom() {
     }
   });
 }
+
+// 메시지가 변경될 때마다 스크롤을 맨 아래로 이동
+watch(() => props.messages, () => {
+  scrollToBottom();
+}, { deep: true });
 
 onMounted(() => {
   scrollToBottom();

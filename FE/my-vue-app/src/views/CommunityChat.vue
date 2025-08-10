@@ -10,18 +10,6 @@
         >
           <h1 class="text-2xl font-bold">{{ currentRoom.location }}</h1>
           <div class="flex items-center space-x-3">
-            <button @click="toggleFavorite" class="flex items-center space-x-1">
-              <!-- userFavorited가 true면 노랑색 채워진 별, 아니면 회색 빈 별 -->
-              <span
-                class="text-2xl"
-                :class="
-                  currentRoom.userFavorited ? 'text-yellow-400' : 'text-gray-400'
-                "
-              >
-                {{ currentRoom.userFavorited ? "★" : "☆" }}
-              </span>
-              <span class="text-lg">{{ currentRoom.favorites }}</span>
-            </button>
             <button
               v-if="currentRoom.userJoined"
               @click="showLeaveConfirm(currentRoom)"
@@ -33,7 +21,12 @@
         </div>
 
         <!-- ChatWindow -->
-        <ChatWindow class="w-full" />
+        <ChatWindow 
+          class="w-full" 
+          :messages="chatMessages"
+          :currentUserId="authStore.user?.id || 0"
+          @sendMessage="handleSendMessage"
+        />
       </div>
 
       <!-- 오른쪽: 참가중인 채팅방 목록 -->
@@ -77,49 +70,48 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ChatWindow from "@/components/widget/ChatWindow.vue";
 import ChatListCard from "@/components/card/ChatListCard.vue";
 import ConfirmModal from "@/components/modal/ConfirmModal.vue";
-import { communities as dummyData } from "@/data/communities.js";
+import { useCommunityStore } from "@/store/community.js";
+import { useAuthStore } from "@/store/auth.js";
+import axiosInstance from "@/utils/axios.js";
 
 // 1) 라우트 파라미터 및 라우터
 const route = useRoute();
 const $router = useRouter();
+const communityStore = useCommunityStore();
+const authStore = useAuthStore();
 
-// 2) 방 목록 (reactive)
-const rooms = ref(dummyData);
+// 2) 현재 커뮤니티 정보
+const currentCommunity = ref(null);
+const chatMessages = ref([]);
 
 // 3) 현재 방 객체
 const currentRoom = computed(() => {
-  const id = Number(route.params.id);
-  const room = rooms.value.find((r) => r.id === id);
+  if (!currentCommunity.value) return null;
   
-  // 채팅방에 입장할 때 자동으로 참가 상태로 설정
-  if (room && !room.userJoined) {
-    room.userJoined = true;
-  }
-  
-  return room;
+  return {
+    id: currentCommunity.value.id,
+    location: currentCommunity.value.title,
+    userJoined: true // 임시로 모든 채팅방에서 나가기 버튼 표시
+  };
 });
 
-// rooms 배열의 userFavorited 를 직접 토글
-function toggleFavorite() {
-  if (!currentRoom.value) return;
-  // 1) 즐겨찾기 여부에 따라 숫자 증감
-  if (currentRoom.value.userFavorited) {
-    currentRoom.value.favorites--;
-  } else {
-    currentRoom.value.favorites++;
-  }
-  // 2) userFavorited 플래그 토글
-  currentRoom.value.userFavorited = !currentRoom.value.userFavorited;
-}
-// 6) 참가중인 방들 (userJoined 속성 기반으로 필터링)
-const joinedRooms = computed(() =>
-  rooms.value.filter((r) => r.userJoined)
-);
+
+// 6) 참가중인 방들
+const joinedRooms = computed(() => {
+  console.log('joinedCommunities:', communityStore.joinedCommunities);
+  const rooms = communityStore.joinedCommunities.map(community => ({
+    id: community.id,
+    location: community.title,
+    image: '', // 기본 이미지 사용
+  }));
+  console.log('joinedRooms with IDs:', rooms);
+  return rooms;
+});
 
 // 기본 이미지
 const defaultImage = new URL("@/assets/icons/image-placeholder.svg", import.meta.url).href;
@@ -143,18 +135,107 @@ const confirmLeave = () => {
 };
 
 // 채팅방 나가기 함수
-const leaveRoom = (roomId) => {
-  const roomIndex = rooms.value.findIndex(r => r.id === roomId);
-  if (roomIndex !== -1) {
-    // userJoined를 false로 변경
-    rooms.value[roomIndex].userJoined = false;
+const leaveRoom = async (roomId) => {
+  try {
+    await communityStore.leaveCommunity(roomId, authStore.user.id);
     
     // 현재 보고 있던 방에서 나간 경우 커뮤니티 목록으로 이동
     if (currentRoom.value && currentRoom.value.id === roomId) {
       $router.push('/dashboard/community');
     }
+  } catch (error) {
+    console.error('채팅방 나가기 실패:', error);
+    alert('채팅방 나가기에 실패했습니다.');
   }
 };
+
+// 메시지 전송 핸들러
+const handleSendMessage = async (message) => {
+  if (!currentCommunity.value || !authStore.user?.id) {
+    console.error('커뮤니티 또는 사용자 정보가 없습니다.');
+    return;
+  }
+
+  try {
+    const requestDto = {
+      userId: authStore.user.id,
+      message: message
+    };
+
+    const response = await axiosInstance.post(`/api/community/${currentCommunity.value.id}/messages`, requestDto);
+    
+    // 성공적으로 전송되면 메시지 목록 새로고침
+    await loadMessages();
+    
+  } catch (error) {
+    console.error('메시지 전송 실패:', error);
+    alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
+  }
+};
+
+// 메시지 목록 로드 함수
+const loadMessages = async () => {
+  if (!currentCommunity.value) return;
+  
+  try {
+    const response = await axiosInstance.get(`/api/community/${currentCommunity.value.id}/messages`);
+    chatMessages.value = response.data.data || [];
+    console.log('메시지 목록 로드 완료:', chatMessages.value.length, '개');
+  } catch (error) {
+    console.error('메시지 목록 로드 실패:', error);
+  }
+};
+
+// 데이터 로드 함수
+const loadCommunityData = async () => {
+  const communityId = Number(route.params.id);
+  if (!communityId) {
+    $router.push('/dashboard/community');
+    return;
+  }
+  
+  try {
+    // 커뮤니티 정보 조회
+    await communityStore.fetchAllCommunities();
+    currentCommunity.value = communityStore.communities.find(c => c.id === communityId);
+    
+    if (!currentCommunity.value) {
+      console.error('해당 커뮤니티를 찾을 수 없습니다.');
+      $router.push('/dashboard/community');
+      return;
+    }
+    
+    // 자동으로 채팅방에 참가
+    if (!communityStore.isJoined(communityId)) {
+      console.log('커뮤니티 참가 시도:', communityId, 'userId:', authStore.user.id);
+      await communityStore.joinCommunity(communityId, authStore.user.id);
+    }
+    
+    // 참가중인 커뮤니티 목록 조회
+    await communityStore.fetchJoinedCommunities(authStore.user.id);
+    
+    // 메시지 목록 로드
+    await loadMessages();
+    
+  } catch (error) {
+    console.error('채팅방 로드 실패:', error);
+    alert('채팅방을 불러오는데 실패했습니다.');
+    $router.push('/dashboard/community');
+  }
+};
+
+// 컴포넌트 마운트 시 데이터 로드
+onMounted(() => {
+  loadCommunityData();
+});
+
+// 라우트 파라미터 변경 감지
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    console.log('채팅방 변경:', oldId, '→', newId);
+    loadCommunityData();
+  }
+});
 </script>
 
 <style scoped>
