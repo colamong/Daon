@@ -1,14 +1,13 @@
 package com.daon.be.child.controller;
 
+import com.daon.be.child.dto.InterestAnalysisResponseDto;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.daon.be.child.dto.ChildExpressionRequestDto;
 import com.daon.be.child.dto.ChildExpressionResponseDto;
 import com.daon.be.child.service.ChildExpressionService;
 
@@ -30,4 +29,15 @@ public class ChildExpressionController {
 		ChildExpressionResponseDto response = childExpressionService.analyzeAndSave(childId, conversationResultId);
 		return ResponseEntity.ok(response);
 	}
+
+    // 아이 관심사 분석 (이미 저장된 ConversationResult 기반)
+    @PostMapping("/{childId}/interests/{conversationResultId}")
+    public ResponseEntity<InterestAnalysisResponseDto> analyzeInterests(
+            @PathVariable Long childId,
+            @PathVariable Long conversationResultId
+    ) {
+        InterestAnalysisResponseDto response = childExpressionService.analyzeInterests(childId, conversationResultId);
+        return ResponseEntity.ok(response);
+    }
+
 }
