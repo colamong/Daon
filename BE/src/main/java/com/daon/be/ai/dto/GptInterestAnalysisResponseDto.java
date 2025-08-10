@@ -10,5 +10,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class GptInterestAnalysisResponseDto {
     private List<String> keywords;
+    private String summary;
     private String report;
 }
