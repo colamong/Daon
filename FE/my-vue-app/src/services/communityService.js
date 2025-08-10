@@ -56,7 +56,7 @@ export const communityService = {
       const response = await axiosInstance.delete(`${BASE_URL}/${communityId}/leave`, {
         data: { userId }
       })
-      return response.data
+      return response.data.data
     } catch (error) {
       console.error('Failed to leave community:', error)
       throw error

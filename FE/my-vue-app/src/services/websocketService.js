@@ -7,6 +7,7 @@ class WebSocketService {
     this.client = null
     this.isConnected = ref(false)
     this.currentCommunityId = ref(null)
+    this.currentUserId = ref(null)
     this.messages = reactive([])
     this.connectionCallbacks = []
     this.messageCallbacks = []
@@ -112,14 +113,14 @@ class WebSocketService {
       try {
         const chatMessage = JSON.parse(message.body)
         
-        // 메시지를 reactive 배열에 추가
+        // 메시지를 reactive 배열에 추가 (ChatWindow 컴포넌트 형식에 맞춤)
         this.messages.push({
           id: chatMessage.id,
-          text: chatMessage.message,
+          message: chatMessage.message, // ChatWindow는 'message' 속성 사용
           userId: chatMessage.userId,
           userName: chatMessage.userName,
-          timestamp: chatMessage.sentAt,
-          isMine: false // 나중에 현재 유저와 비교해서 설정
+          sentAt: chatMessage.sentAt, // ChatWindow는 'sentAt' 속성 사용
+          isMine: chatMessage.userId === this.currentUserId.value
         })
 
         // 메시지 콜백 실행
@@ -168,18 +169,27 @@ class WebSocketService {
   }
 
   // 메시지 설정 (히스토리 로드 시 사용)
-  setMessages(messages, currentUserId) {
+  setMessages(messages, currentUserId = null) {
+    if (currentUserId !== null) {
+      this.currentUserId.value = currentUserId
+    }
+    
     this.messages.length = 0
     messages.forEach(msg => {
       this.messages.push({
         id: msg.id,
-        text: msg.message,
+        message: msg.message, // ChatWindow 컴포넌트 형식에 맞춤
         userId: msg.userId,
         userName: msg.userName,
-        timestamp: msg.sentAt,
-        isMine: msg.userId === currentUserId
+        sentAt: msg.sentAt, // ChatWindow 컴포넌트 형식에 맞춤
+        isMine: msg.userId === this.currentUserId.value
       })
     })
+  }
+
+  // 현재 사용자 ID 설정
+  setCurrentUserId(userId) {
+    this.currentUserId.value = userId
   }
 }
 
