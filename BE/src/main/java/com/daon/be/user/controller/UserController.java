@@ -10,6 +10,7 @@ import com.daon.be.user.entity.User;
 import com.daon.be.user.repository.NationRepository;
 import com.daon.be.user.repository.UserRepository;
 import com.daon.be.user.service.UserService;
+import com.daon.be.global.infra.S3Uploader;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class UserController {
 	private final UserService userService;
 	private final UserRepository userRepository;
 	private final NationRepository nationRepository;
+	private final S3Uploader s3Uploader;
 
 	@PostMapping("/signup")
 	public ResponseEntity<Void> signup(@RequestBody UserSignupRequestDto dto) {
@@ -72,7 +74,7 @@ public class UserController {
 	public ResponseEntity<UserResponseDto> me(@SigninUser Long userId) {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
-		return ResponseEntity.ok(UserResponseDto.fromEntity(user));
+		return ResponseEntity.ok(UserResponseDto.fromEntity(user, s3Uploader));
 	}
 
 	@PostMapping("/signout")
