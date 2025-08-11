@@ -66,7 +66,9 @@ public class ChildServiceImpl implements ChildService {
         List<ChildInterest> interests = requestDTO.getInterests().stream()
                 .map(name -> ChildInterest.builder()
                         .childProfile(savedChild)
-                        .interestType(name)
+                        .name(name)
+                        .author(InterestAuthor.PARENT)
+                        .interestType("")
                         .build())
                 .collect(Collectors.toList());
         childInterestRepository.saveAll(interests);
