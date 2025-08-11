@@ -2,7 +2,9 @@
   <div class="font-paper">
     <!-- 1. Hero 섹션 -->
     <section class="relative overflow-hidden py-16">
-      <div class="max-w-6xl container mx-auto px-6 flex flex-col-reverse md:flex-row items-center">
+      <div
+        class="max-w-6xl container mx-auto px-6 flex flex-col-reverse md:flex-row items-center"
+      >
         <!-- 텍스트 -->
         <div class="md:w-1/2 mt-8 md:mt-0 px-4">
           <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
@@ -26,11 +28,15 @@
     </section>
 
     <!-- 2. 캘린더 + 일정 목록 -->
-    <section class="max-w-6xl container mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <section
+      class="max-w-6xl container mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8"
+    >
       <!-- 달력 -->
       <div class="lg:col-span-2 bg-white rounded-xl shadow p-6 h-[530px]">
         <CalendarWidget
-          :events="events.map(ev => ({ ...ev, date: ev.eventDate || ev.date }))"
+          :events="
+            events.map((ev) => ({ ...ev, date: ev.eventDate || ev.date }))
+          "
           @update-month="onMonthChange"
         />
       </div>
@@ -39,7 +45,12 @@
       <div class="bg-white rounded-xl shadow p-6 flex flex-col h-[530px]">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-semibold">일정 목록</h3>
-          <button @click="openModal" class="text-sm text-blue-600 hover:underline">+ 일정 추가</button>
+          <button
+            @click="openModal"
+            class="text-sm text-blue-600 hover:underline"
+          >
+            + 일정 추가
+          </button>
           <AddEventModal v-model="modalVisible" @add-event="handleAddEvent" />
         </div>
         <div class="flex-1 overflow-y-auto pr-2">
@@ -69,8 +80,12 @@
 
     <!-- 3. 기능 카드 -->
     <section class="max-w-6xl container mx-auto px-6 py-12 bg-white mb-20">
-      <h3 class="text-2xl font-semibold text-center mb-2">다온과 함께하는 특별한 여정</h3>
-      <p class="text-center text-gray-600 mb-8">다문화 가정의 행복한 내일을 위해 다온이 함께합니다.</p>
+      <h3 class="text-2xl font-semibold text-center mb-2">
+        다온과 함께하는 특별한 여정
+      </h3>
+      <p class="text-center text-gray-600 mb-8">
+        다문화 가정의 행복한 내일을 위해 다온이 함께합니다.
+      </p>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
         <BaseCard variant="schedule" @click="openScheduleModal" />
         <BaseCard variant="growth" :to="{ name: 'Growth' }" />
@@ -80,7 +95,9 @@
     </section>
 
     <!-- 4. 오늘의 활동 -->
-    <section class="max-w-6xl container mx-auto px-6 py-5 bg-white rounded-xl shadow mb-20 h-[520px]">
+    <section
+      class="max-w-6xl container mx-auto px-6 py-5 bg-white rounded-xl shadow mb-20 h-[520px]"
+    >
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-2xl font-semibold">오늘의 활동</h3>
         <button
@@ -93,10 +110,12 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         <div class="md:col-span-2">
           <div
-            class="bg-gray-500 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
+            class="bg-blue-100 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
           >
             <template v-if="isLoadingActivity">
-              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              <div
+                class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"
+              ></div>
               <p class="text-white mt-4">활동 데이터를 불러오는 중...</p>
             </template>
             <template v-else-if="hasActivity && todayActivity">
@@ -107,11 +126,11 @@
               />
             </template>
             <template v-else>
-              <p class="text-white mb-4">
+              <p class="text-black mb-4">
                 {{
                   hasChild && selectedChild && selectedChild.name
                     ? getSubjectSentence(selectedChild.name)
-                    : "아직 활동하지 않았습니다."
+                    : "오늘의 활동을 기다리고 있어요."
                 }}
               </p>
               <button
@@ -138,10 +157,14 @@
                 <div
                   class="px-4 py-2 rounded-t-lg cursor-pointer transition-colors mr-1"
                   :class="{
-                    'bg-yellow-200 text-black font-bold': selectedChildIndex === index,
+                    'bg-yellow-200 text-black font-bold':
+                      selectedChildIndex === index,
                     'bg-yellow-200 text-gray-700': selectedChildIndex !== index,
                   }"
-                  style="background-color: #fef08a !important; margin-bottom: -1px;"
+                  style="
+                    background-color: #fef08a !important;
+                    margin-bottom: -1px;
+                  "
                 >
                   {{ child.name }}
                 </div>
@@ -159,15 +182,24 @@
             <!-- 선택된 아이의 프로필 카드 -->
             <div
               class="bg-yellow-200 rounded-lg flex-1 p-6 flex flex-col items-center relative"
-              style="background-color: #fef08a !important; border-top-left-radius: 0; border-top-right-radius: 0.5rem;"
+              style="
+                background-color: #fef08a !important;
+                border-top-left-radius: 0;
+                border-top-right-radius: 0.5rem;
+              "
             >
               <!-- 중앙 프로필 이미지 -->
               <div class="flex-1 flex items-center justify-center">
                 <img
-                  :src="selectedChild?.profileImage || 'https://placehold.co/200x200'"
+                  :src="
+                    selectedChild?.profileImage ||
+                    'https://placehold.co/200x200'
+                  "
                   alt="아이 프로필"
                   class="w-48 h-48 rounded-full object-cover border-4 border-white shadow-lg"
-                  @error="(e) => (e.target.src = 'https://placehold.co/200x200')"
+                  @error="
+                    (e) => (e.target.src = 'https://placehold.co/200x200')
+                  "
                 />
               </div>
 
@@ -175,8 +207,14 @@
               <div class="w-full text-center space-y-2">
                 <p class="text-lg font-bold text-black">
                   나이 :
-                  {{ selectedChild ? calculateAge(selectedChild.birthDate) : 0 }}세(만
-                  {{ selectedChild ? calculateAge(selectedChild.birthDate) - 1 : 0 }}세)
+                  {{
+                    selectedChild ? calculateAge(selectedChild.birthDate) : 0
+                  }}세(만
+                  {{
+                    selectedChild
+                      ? calculateAge(selectedChild.birthDate) - 1
+                      : 0
+                  }}세)
                 </p>
                 <p class="text-lg font-bold text-black">
                   관심사 :
@@ -185,7 +223,8 @@
                       ? selectedChild.interests.slice(0, 2).join(", ")
                       : "없음"
                   }}{{
-                    selectedChild?.interests && selectedChild.interests.length > 2
+                    selectedChild?.interests &&
+                    selectedChild.interests.length > 2
                       ? " ..."
                       : ""
                   }}
@@ -194,7 +233,10 @@
             </div>
           </div>
 
-          <div v-else class="bg-yellow-100 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center">
+          <div
+            v-else
+            class="bg-yellow-100 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
+          >
             <p class="text-black-700 mb-4">아직 등록된 아이가 없습니다.</p>
             <button
               @click="goToChildRegister"
@@ -211,7 +253,9 @@
     <EmotionReportModal
       v-if="hasActivity"
       v-model="showEmotionReportModal"
-      :child-name="selectedChild && selectedChild.name ? selectedChild.name : ''"
+      :child-name="
+        selectedChild && selectedChild.name ? selectedChild.name : ''
+      "
       :report-date="dayjs().format('YYYY-MM-DD')"
       :report-data="todayActivity"
       :show-navigation="false"
@@ -234,12 +278,17 @@ import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
 
 import { useNotification } from "@/composables/useNotification.js";
-import { fetchMonthlyEvents, createEvent, updateEvent, deleteEvent } from "@/store/calendar";
+import {
+  fetchMonthlyEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+} from "@/store/calendar";
 
 const router = useRouter();
 const auth = useAuthStore();
 const childStore = useChildStore();
-const { showWarning } = useNotification();
+const { showWarning, showInfo } = useNotification();
 
 /* 일정 상태 */
 const events = ref([]);
@@ -255,8 +304,12 @@ async function loadEvents(year, month) {
 
 const filteredEvents = computed(() =>
   events.value
-    .map(ev => ({ ...ev, id: ev.id || ev.calendarId, date: ev.eventDate || ev.date }))
-    .filter(ev => dayjs(ev.date).format("YYYY-MM") === selectedMonth.value)
+    .map((ev) => ({
+      ...ev,
+      id: ev.id || ev.calendarId,
+      date: ev.eventDate || ev.date,
+    }))
+    .filter((ev) => dayjs(ev.date).format("YYYY-MM") === selectedMonth.value)
     .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix())
 );
 
@@ -306,7 +359,10 @@ onMounted(async () => {
     console.warn("직접 자녀 목록 로드 실패:", e?.message || e);
   }
 
-  if (childrenList.value.length > 0 && selectedChildIndex.value >= childrenList.value.length) {
+  if (
+    childrenList.value.length > 0 &&
+    selectedChildIndex.value >= childrenList.value.length
+  ) {
     selectedChildIndex.value = 0;
   }
 
@@ -323,6 +379,16 @@ watch(
   }
 );
 
+/* 선택된 아이가 변경되면 오늘 활동 다시 로드 */
+watch(
+  () => selectedChild.value?.id,
+  async (newChildId) => {
+    if (newChildId) {
+      await loadTodayActivity();
+    }
+  }
+);
+
 /* 달 변경 */
 function onMonthChange(newYm) {
   selectedMonth.value = newYm;
@@ -332,8 +398,12 @@ function onMonthChange(newYm) {
 
 /* 일정 모달/CRUD */
 const modalVisible = ref(false);
-function openModal() { modalVisible.value = true; }
-function openScheduleModal() { modalVisible.value = true; }
+function openModal() {
+  modalVisible.value = true;
+}
+function openScheduleModal() {
+  modalVisible.value = true;
+}
 
 async function handleAddEvent({ title, date, description }) {
   try {
@@ -348,7 +418,11 @@ async function handleAddEvent({ title, date, description }) {
 
 async function handleUpdate({ id, newDate, newTitle, newDescription }) {
   try {
-    await updateEvent(id, { eventDate: newDate, title: newTitle, description: newDescription });
+    await updateEvent(id, {
+      eventDate: newDate,
+      title: newTitle,
+      description: newDescription,
+    });
     const [y, m] = selectedMonth.value.split("-").map(Number);
     await loadEvents(y, m);
   } catch (e) {
@@ -382,7 +456,11 @@ async function loadTodayActivity() {
     const year = today.year();
     const month = today.month() + 1;
 
-    const response = await childService.getMonthlyDiaries(selectedChild.value.id, year, month);
+    const response = await childService.getMonthlyDiaries(
+      selectedChild.value.id,
+      year,
+      month
+    );
     const arr = Array.isArray(response) ? response : response ? [response] : [];
     const todayStr = today.format("YYYY-MM-DD");
 
@@ -407,11 +485,11 @@ function openTodayReport() {
   if (hasActivity.value && todayActivity.value) {
     showEmotionReportModal.value = true;
   } else {
-    showWarning(
+    showInfo(
       selectedChild.value && selectedChild.value.name
-        ? getObjectSentence(selectedChild.value.name)
-        : "아직 활동하지 않았습니다!",
-      "아직 활동하지 않았습니다!"
+        ? `${selectedChild.value.name}의 멋진 하루가 시작됐어요! ✨<br>오늘 하루를 기록해주세요`
+        : "멋진 하루가 시작됐어요! ✨<br>오늘 하루를 기록해주세요",
+      "오늘의 활동"
     );
   }
 }
@@ -420,7 +498,11 @@ function openTodayReport() {
 function formatDate(dateString) {
   if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 function getParticle(name, particles) {
   if (!name) return particles[0];
@@ -431,8 +513,7 @@ function getParticle(name, particles) {
   return hasJongseong ? particles[0] : particles[1];
 }
 function getSubjectSentence(name) {
-  const p = getParticle(name, ["은", "는"]);
-  return `${name}${p} 아직 활동하지 않았습니다.`;
+  return `${name}의 오늘의 활동을 기다리고 있어요`;
 }
 function getObjectSentence(name) {
   const p = getParticle(name, ["이", "가"]);
@@ -440,11 +521,18 @@ function getObjectSentence(name) {
 }
 
 /* 라우팅 */
-function goToChildRegister() { router.push({ name: "RegisterChild" }); }
-function goToChildEdit() { router.push({ name: "EditChild" }); }
+function goToChildRegister() {
+  router.push({ name: "RegisterChild" });
+}
+function goToChildEdit() {
+  router.push({ name: "EditChild" });
+}
 function goToActivity() {
   if (hasChild.value && selectedChild.value) {
-    router.push({ name: "ChildMain", params: { childId: selectedChild.value.id } });
+    router.push({
+      name: "ChildMain",
+      params: { childId: selectedChild.value.id },
+    });
   } else {
     router.push({ name: "RegisterChild" });
   }
@@ -464,7 +552,11 @@ function calculateAge(birthDate) {
 
 <style scoped>
 .fade-enter-active,
-.fade-leave-active { transition: opacity 0.2s ease; }
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
 .fade-enter-from,
-.fade-leave-to { opacity: 0; }
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

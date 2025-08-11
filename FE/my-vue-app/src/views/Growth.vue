@@ -62,7 +62,7 @@
             </div>
           </div>
           <div class="bg-white rounded-xl shadow-lg p-6">
-            <FullCalendar :options="calendarOptions" ref="calendar" />
+            <FullCalendar :options="calendarOptions" ref="calendar" :key="calendarKey" />
           </div>
         </div>
 
@@ -94,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -111,6 +111,8 @@ const router = useRouter();
 const childStore = useChildStore();
 
 const selectedChildIndex = ref(0);
+const calendar = ref(null);
+const calendarKey = ref(0);
 
 // 감정 리포트 모달 관련
 const showEmotionReportModal = ref(false);
@@ -344,20 +346,9 @@ const calendarOptions = computed(() => ({
                 });
                 
                 if (todayDiary) {
-                  // 해당 아이의 색상 찾기
-                  const childInfo = childrenList.value.find(child => child.name === clickedChildName);
-                  const childColor = childInfo?.color || getChildColor(clickedChildName);
-                  
                   selectedReportDate.value = key;
-                  selectedReportData.value = {
-                    date: key,
-                    childName: clickedChildName,
-                    childId: parseInt(clickedChildId),
-                    color: childColor,
-                    imageUrl: todayDiary.imageUrl,
-                    diaryText: todayDiary.diaryText || todayDiary.text || todayDiary.content || '',
-                    diaryImage: todayDiary.imageUrl
-                  };
+                  // Dashboard와 같이 원본 데이터를 그대로 전달
+                  selectedReportData.value = todayDiary;
                   showEmotionReportModal.value = true;
                 }
               } catch (error) {
@@ -392,20 +383,32 @@ const calendarOptions = computed(() => ({
           });
           
           // 첫 번째 추가 리포트로 모달 열기 (원본 순서에서)
-          moreButton.addEventListener("click", (e) => {
+          moreButton.addEventListener("click", async (e) => {
             e.stopPropagation();
             const additionalReport = reportsForDate[3];
-            selectedReportDate.value = key;
-            selectedReportData.value = {
-              date: additionalReport.date,
-              childName: additionalReport.childName,
-              childId: additionalReport.childId,
-              color: additionalReport.color,
-              imageUrl: additionalReport.imageUrl,
-              diaryText: additionalReport.diaryText,
-              diaryImage: additionalReport.imageUrl
-            };
-            showEmotionReportModal.value = true;
+            
+            try {
+              // 해당 아이의 원본 데이터를 다시 API에서 가져오기
+              const clickedDate = new Date(key);
+              const year = clickedDate.getFullYear();
+              const month = clickedDate.getMonth() + 1;
+              
+              const response = await childService.getMonthlyDiaries(additionalReport.childId, year, month);
+              const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
+              
+              const todayDiary = responseArray.find(diary => {
+                const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+                return diaryDate === key;
+              });
+              
+              if (todayDiary) {
+                selectedReportDate.value = key;
+                selectedReportData.value = todayDiary;
+                showEmotionReportModal.value = true;
+              }
+            } catch (error) {
+              console.error('추가 리포트 조회 실패:', error);
+            }
           });
           
           container.appendChild(moreButton);
@@ -451,43 +454,75 @@ function handleEventClick(info) {
   openEmotionReport(info.event.startStr);
 }
 
-function openEmotionReport(dateStr) {
+async function openEmotionReport(dateStr) {
   const reportsForDate = diariesByDate.value[dateStr] || [];
   if (reportsForDate.length > 0) {
     // 정렬 없이 첫 번째 리포트 사용
     const report = reportsForDate[0];
 
-    selectedReportDate.value = dateStr;
-    selectedReportData.value = {
-      date: report.date,
-      childName: report.childName,
-      childId: report.childId,
-      color: report.color,
-      imageUrl: report.imageUrl,
-      diaryText: report.diaryText,
-      // EmotionReportModal에서 필요한 필드들 추가
-      diaryImage: report.imageUrl
-    };
-    showEmotionReportModal.value = true;
+    try {
+      // 해당 아이의 원본 데이터를 API에서 다시 가져오기
+      const clickedDate = new Date(dateStr);
+      const year = clickedDate.getFullYear();
+      const month = clickedDate.getMonth() + 1;
+      
+      const response = await childService.getMonthlyDiaries(report.childId, year, month);
+      const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
+      
+      const todayDiary = responseArray.find(diary => {
+        const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+        return diaryDate === dateStr;
+      });
+      
+      if (todayDiary) {
+        selectedReportDate.value = dateStr;
+        selectedReportData.value = todayDiary;
+        showEmotionReportModal.value = true;
+      }
+    } catch (error) {
+      console.error('감정 리포트 조회 실패:', error);
+    }
   }
 }
 
 // 이전/다음 리포트 네비게이션
-function goToPreviousReport() {
+async function goToPreviousReport() {
   if (hasPreviousReport.value) {
     const prevIndex = currentReportGlobalIndex.value - 1;
     const report = allReportsForNavigation.value[prevIndex];
-    selectedReportDate.value = report.date;
-    selectedReportData.value = { ...report };
+    await loadReportData(report);
   }
 }
 
-function goToNextReport() {
+async function goToNextReport() {
   if (hasNextReport.value) {
     const nextIndex = currentReportGlobalIndex.value + 1;
     const report = allReportsForNavigation.value[nextIndex];
-    selectedReportDate.value = report.date;
-    selectedReportData.value = { ...report };
+    await loadReportData(report);
+  }
+}
+
+// 리포트 데이터 로드 헬퍼 함수
+async function loadReportData(report) {
+  try {
+    const clickedDate = new Date(report.date);
+    const year = clickedDate.getFullYear();
+    const month = clickedDate.getMonth() + 1;
+    
+    const response = await childService.getMonthlyDiaries(report.childId, year, month);
+    const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
+    
+    const todayDiary = responseArray.find(diary => {
+      const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+      return diaryDate === report.date;
+    });
+    
+    if (todayDiary) {
+      selectedReportDate.value = report.date;
+      selectedReportData.value = todayDiary;
+    }
+  } catch (error) {
+    console.error('리포트 데이터 로드 실패:', error);
   }
 }
 
@@ -500,10 +535,14 @@ function goBack() {
   router.push({ name: "Dashboard" });
 }
 
-// selectedChildrenForReport 변경 시 다이어리 재조회
-watch(selectedChildrenForReport, () => {
-  fetchMonthlyDiaries();
-});
+// selectedChildrenForReport 변경 시 다이어리 재조회 및 달력 완전 재렌더링
+watch(selectedChildrenForReport, async () => {
+  console.log('선택된 아이들 변경됨:', selectedChildrenForReport.value);
+  await fetchMonthlyDiaries();
+  
+  // 달력 완전 재마운트를 위해 키를 변경
+  calendarKey.value += 1;
+}, { deep: true, immediate: false });
 
 // 컴포넌트 마운트 시 실행
 onMounted(async () => {
@@ -514,11 +553,12 @@ onMounted(async () => {
   // 전역 함수로 등록 (달력의 HTML 버튼에서 호출하기 위해)
   window.openEmotionReport = openEmotionReport;
 
-  // 기본적으로 모든 아이 선택
+  // Dashboard에서 선택된 아이를 기본으로 선택
   setTimeout(() => {
-    selectedChildrenForReport.value = childrenList.value.map(
-      (child) => child.name
-    );
+    const currentSelectedChild = childStore.selectedChild;
+    if (currentSelectedChild && currentSelectedChild.name) {
+      selectedChildrenForReport.value = [currentSelectedChild.name];
+    }
     // 초기 다이어리 조회
     fetchMonthlyDiaries();
   }, 100);

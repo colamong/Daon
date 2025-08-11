@@ -16,7 +16,7 @@
         <!-- 내용 -->
         <div class="flex-1">
           <p v-if="title" class="font-paperBold text-lg mb-1">{{ title }}</p>
-          <p class="text-sm" :class="title ? '' : 'font-paperBold'">{{ message }}</p>
+          <p class="text-sm" :class="title ? '' : 'font-paperBold'" v-html="message"></p>
         </div>
         
         <!-- 닫기 버튼 (선택적) -->
