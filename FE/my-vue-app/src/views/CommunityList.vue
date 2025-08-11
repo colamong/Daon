@@ -273,6 +273,11 @@ watch(searchQuery, async (v) => {
     showDropdown.value = false;
   }
 });
+
+// 필터링/정렬 변경 시 페이지 리셋
+watch([selectedRegion, sortOption], () => {
+  page.value = 0;
+});
 async function openDropdown() {
   if (searchQuery.value) {
     showDropdown.value = true;
