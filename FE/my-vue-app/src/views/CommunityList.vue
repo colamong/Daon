@@ -246,7 +246,7 @@ const processed = computed(() => {
 
 // 페이징
 const page = ref(0);
-const itemsPerPage = 6;
+const itemsPerPage = 12;
 const totalPages = computed(() =>
   Math.ceil(processed.value.length / itemsPerPage)
 );
@@ -272,6 +272,11 @@ watch(searchQuery, async (v) => {
   } else {
     showDropdown.value = false;
   }
+});
+
+// 필터링/정렬 변경 시 페이지 리셋
+watch([selectedRegion, sortOption], () => {
+  page.value = 0;
 });
 async function openDropdown() {
   if (searchQuery.value) {

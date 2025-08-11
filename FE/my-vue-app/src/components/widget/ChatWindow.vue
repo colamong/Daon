@@ -10,6 +10,7 @@
         :isMine="msg.userId === currentUserId"
         :message="msg.message"
         :timestamp="msg.sentAt"
+        :userName="msg.userName"
       />
     </div>
 

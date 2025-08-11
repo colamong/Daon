@@ -16,7 +16,7 @@
     <!-- 텍스트 영역 -->
     <div class="bg-gray-50 px-4 py-3 rounded-b-xl">
       <div class="text-xs text-gray-400 flex justify-between mb-1">
-        <span>{{ formattedDate }}</span>
+        <span>{{ participantText }}</span>
       </div>
       <div class="text-sm text-gray-800 font-paper">{{ location }}</div>
     </div>
@@ -30,18 +30,14 @@ import { useAttrs } from 'vue'
 const attrs = useAttrs()
 
 const location = attrs.location || ''
-const date = attrs.date || ''
+const favorites = attrs.favorites || 0
 const resolvedImage = computed(() =>
   attrs.image || new URL('@/assets/icons/image-placeholder.svg', import.meta.url).href
 )
 const link = computed(() => attrs.link || '#')
 
-const formattedDate = computed(() => {
-  const d = new Date(date)
-  return d.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit'
-  })
+// 참여자 수 텍스트
+const participantText = computed(() => {
+  return `${favorites}명 참여중`
 })
 </script>
