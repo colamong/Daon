@@ -246,7 +246,7 @@ const processed = computed(() => {
 
 // 페이징
 const page = ref(0);
-const itemsPerPage = 6;
+const itemsPerPage = 12;
 const totalPages = computed(() =>
   Math.ceil(processed.value.length / itemsPerPage)
 );
