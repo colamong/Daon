@@ -228,6 +228,15 @@
         </div>
       </div>
     </div>
+
+    <!-- Confetti 축하 효과 -->
+    <ConfettiEffect :show="showConfetti" />
+
+    <!-- 오답 모달 -->
+    <IncorrectAnswerModal 
+      :show="showIncorrectModal" 
+      @close="closeIncorrectModal" 
+    />
   </div>
 </template>
 
@@ -238,6 +247,8 @@ import { useNotification } from '@/composables/useNotification'
 import IconButton from '@/components/button/IconButton.vue'
 import AnswerCard from '@/components/card/AnswerCard.vue'
 import PronunciationModal from '@/components/modal/PronunciationModal.vue'
+import ConfettiEffect from '@/components/effect/ConfettiEffect.vue'
+import IncorrectAnswerModal from '@/components/modal/IncorrectAnswerModal.vue'
 import learningService from '@/services/learningService'
 import ttsService from '@/services/ttsService'
 
@@ -278,6 +289,8 @@ const selectedCorrectAnswer = ref(null)
 const showNavigationConfirm = ref(false)
 const showExitConfirm = ref(false)
 const pendingNavigation = ref(null)
+const showConfetti = ref(false)
+const showIncorrectModal = ref(false)
 
 // ---------- API 로딩 ----------
 const loadThemes = async () => {
@@ -320,11 +333,41 @@ watch(() => questionId.value, () => {
 const handleCorrectAnswer = (answer) => {
   selectedAnswer.value = answer.id
   selectedCorrectAnswer.value = answer
+  
+  // Confetti 효과 시작
+  showConfetti.value = true
+  setTimeout(() => {
+    showConfetti.value = false
+  }, 3000)
+  
+  // 성공 효과음 재생
+  playSuccessSound()
+  
   showPronunciationConfirm.value = true
 }
 
+// 성공 효과음 재생
+const playSuccessSound = () => {
+  try {
+    const audio = new Audio('/src/assets/effects/answer.mp3')
+    audio.volume = 0.7
+    audio.play().catch(error => {
+      console.warn('효과음 재생 실패:', error)
+    })
+  } catch (error) {
+    console.warn('효과음 로드 실패:', error)
+  }
+}
+
 const handleIncorrectAnswer = () => {
-  showWarning('틀렸습니다. 다시 시도해보세요.', '오답', { duration: 2000 })
+  // 오답 모달 표시
+  showIncorrectModal.value = true
+}
+
+// 오답 모달 닫기
+const closeIncorrectModal = () => {
+  showIncorrectModal.value = false
+  selectedAnswer.value = null
 }
 
 const startPronunciationPractice = () => {
@@ -334,8 +377,7 @@ const startPronunciationPractice = () => {
 
 const skipPronunciationPractice = () => {
   showPronunciationConfirm.value = false
-  showInfo('정답입니다!', '성공', { duration: 2000 })
-  setTimeout(() => nextQuestion(), 1500)
+  setTimeout(() => nextQuestion(), 500)
 }
 
 const completePronunciationPractice = (score) => {
@@ -349,7 +391,6 @@ const submitAnswer = () => {
   if (!answer) return
   // 서버 DTO에 isCorrect가 이미 있음 (DB is_correct)
   if (answer.isCorrect) {
-    showInfo('정답입니다!', '성공', { duration: 2000 })
     nextQuestion()
   } else {
     showWarning('틀렸습니다. 다시 시도해보세요.', '오답', { duration: 2000 })
