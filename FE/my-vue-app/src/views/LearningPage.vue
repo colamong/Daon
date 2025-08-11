@@ -230,6 +230,12 @@
 
     <!-- Confetti 축하 효과 -->
     <ConfettiEffect :show="showConfetti" />
+
+    <!-- 오답 모달 -->
+    <IncorrectAnswerModal 
+      :show="showIncorrectModal" 
+      @close="closeIncorrectModal" 
+    />
   </div>
 </template>
 
@@ -241,6 +247,7 @@ import IconButton from '@/components/button/IconButton.vue'
 import AnswerCard from '@/components/card/AnswerCard.vue'
 import PronunciationModal from '@/components/modal/PronunciationModal.vue'
 import ConfettiEffect from '@/components/effect/ConfettiEffect.vue'
+import IncorrectAnswerModal from '@/components/modal/IncorrectAnswerModal.vue'
 import learningService from '@/services/learningService'
 import ttsService from '@/services/ttsService'
 
@@ -282,6 +289,7 @@ const showNavigationConfirm = ref(false)
 const showExitConfirm = ref(false)
 const pendingNavigation = ref(null)
 const showConfetti = ref(false)
+const showIncorrectModal = ref(false)
 
 // ---------- API 로딩 ----------
 const loadThemes = async () => {
@@ -351,7 +359,14 @@ const playSuccessSound = () => {
 }
 
 const handleIncorrectAnswer = () => {
-  showWarning('틀렸습니다. 다시 시도해보세요.', '오답', { duration: 2000 })
+  // 오답 모달 표시
+  showIncorrectModal.value = true
+}
+
+// 오답 모달 닫기
+const closeIncorrectModal = () => {
+  showIncorrectModal.value = false
+  selectedAnswer.value = null
 }
 
 const startPronunciationPractice = () => {
