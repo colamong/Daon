@@ -24,4 +24,8 @@ public interface ChildService {
     void addChildInterests(Long userId, Long childId, ChildInterestCreateRequestDTO dto);
 
     void deleteChildInterests(Long userId, Long childId, ChildInterestDeleteRequestDTO dto);
+
+    List<String> getParentInterests(Long userId, Long childId);
+
+    List<String> getAiInterests(Long userId, Long childId);
 }
