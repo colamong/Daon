@@ -110,7 +110,7 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         <div class="md:col-span-2">
           <div
-            class="bg-gray-500 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
+            class="bg-blue-100 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
           >
             <template v-if="isLoadingActivity">
               <div
@@ -126,7 +126,7 @@
               />
             </template>
             <template v-else>
-              <p class="text-white mb-4">
+              <p class="text-black mb-4">
                 {{
                   hasChild && selectedChild && selectedChild.name
                     ? getSubjectSentence(selectedChild.name)
