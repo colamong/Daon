@@ -69,4 +69,4 @@ frontend:
   origin: http://localhost:5173
 
 tesseract:
-  path: "C:/Program Files/Tesseract-OCR/tessdata"
+  path: "/usr/share/tesseract-ocr/5/tessdata"
