@@ -100,10 +100,10 @@
           @click="goChat(post.id)"
         >
           <CommunityCard
-            :location="post.location"
-            :date="post.date"
-            :image="post.image"
-            :favorites="post.favorites"
+            :location="post.title"
+            :date="''" 
+            :image="''"
+            :favorites="post.currentParticipants"
           />
         </div>
       </div>
@@ -148,9 +148,11 @@ import SearchBar from "@/components/widget/SearchBar.vue";
 import SuggestionList from "@/components/widget/SuggestionList.vue";
 import CommunityCard from "@/components/card/CommunityCard.vue";
 import communityHero from "@/assets/images/community-hero.png";
-import { communities } from "@/data/communities.js";
+import { useCommunityStore } from "@/store/community.js";
 
 const router = useRouter();
+const communityStore = useCommunityStore();
+
 const searchQuery = ref("");
 const showDropdown = ref(false);
 const wrapper = ref(null);
@@ -160,13 +162,22 @@ let popperInstance = null;
 
 // 검색 제안용
 const filteredSuggestions = computed(() =>
-  communities
-    .map((c) => ({ title: c.location, subtitle: "", image: "", link: "#" }))
+  communityStore.communities
+    .map((c) => ({ 
+      title: c.title, 
+      subtitle: "", 
+      image: "", 
+      link: `/dashboard/community/${c.id}` // 실제 채팅방 링크로 변경
+    }))
     .filter((r) => r.title.includes(searchQuery.value))
+    .slice(0, 50) // 최대 50개까지 표시
 );
 
-// Popper 인스턴스 생성
+// Popper 인스턴스 생성 및 데이터 로드
 onMounted(async () => {
+  // 커뮤니티 데이터 로드
+  await communityStore.fetchAllCommunities();
+  
   await nextTick();
   popperInstance = createPopper(
     searchInput.value.$el || searchInput.value,
@@ -216,19 +227,19 @@ const selectedRegion = ref("");
 
 // 지역 선택 드롭다운
 const regionOptions = computed(() =>
-  Array.from(new Set(communities.map((c) => c.location.split(" ")[0])))
+  Array.from(new Set(communityStore.communities.map((c) => c.title.split(" ")[0])))
 );
 
 // 필터 & 정렬된 리스트
 const processed = computed(() => {
-  let list = communities.slice();
+  let list = communityStore.communities.slice();
   if (selectedRegion.value) {
-    list = list.filter((c) => c.location.startsWith(selectedRegion.value));
+    list = list.filter((c) => c.title.startsWith(selectedRegion.value));
   }
   if (sortOption.value === "popularity") {
-    list.sort((a, b) => b.favorites - a.favorites);
+    list.sort((a, b) => b.currentParticipants - a.currentParticipants);
   } else if (sortOption.value === "alpha") {
-    list.sort((a, b) => a.location.localeCompare(b.location, "ko"));
+    list.sort((a, b) => a.title.localeCompare(b.title, "ko"));
   }
   return list;
 });
@@ -269,11 +280,14 @@ async function openDropdown() {
     popperInstance.update();
   }
 }
-function handleSelect(item) {
+async function handleSelect(item) {
   searchQuery.value = item.title;
   showDropdown.value = false;
-  // 선택된 지역으로 필터
-  selectedRegion.value = item.title.split(" ")[0];
+  
+  // 선택된 채팅방으로 직접 이동
+  if (item.link && item.link !== '#') {
+    router.push(item.link);
+  }
 }
 function goChat(id) {
   router.push({

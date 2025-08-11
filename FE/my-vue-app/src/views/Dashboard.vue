@@ -72,8 +72,8 @@
       <h3 class="text-2xl font-semibold text-center mb-2">다온과 함께하는 특별한 여정</h3>
       <p class="text-center text-gray-600 mb-8">다문화 가정의 행복한 내일을 위해 다온이 함께합니다.</p>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <BaseCard variant="schedule" link="/schedule" />
-        <BaseCard variant="growth" link="/growth" />
+        <BaseCard variant="schedule" @click="openScheduleModal" />
+        <BaseCard variant="growth" :to="{ name: 'Growth' }" />
         <BaseCard variant="community" :to="{ name: 'Community' }" />
         <BaseCard variant="language" :to="{ name: 'OCRTool' }" />
       </div>
@@ -83,29 +83,42 @@
     <section class="max-w-6xl container mx-auto px-6 py-5 bg-white rounded-xl shadow mb-20 h-[520px]">
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-2xl font-semibold">오늘의 활동</h3>
-        <button @click="openTodayReport" class="text-sm text-gray-600 hover:underline">
+        <button
+          @click="openTodayReport"
+          class="text-sm text-gray-600 hover:underline"
+        >
           자세히 보기 →
         </button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         <div class="md:col-span-2">
-          <div class="bg-gray-500 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center">
-            <template v-if="hasActivity">
+          <div
+            class="bg-gray-500 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
+          >
+            <template v-if="isLoadingActivity">
+              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              <p class="text-white mt-4">활동 데이터를 불러오는 중...</p>
+            </template>
+            <template v-else-if="hasActivity && todayActivity">
               <img
-                :src="todayActivity.diaryImage"
+                :src="todayActivity.imageUrl"
                 alt="오늘의 그림일기"
                 class="w-full h-full object-cover rounded-lg shadow"
               />
             </template>
             <template v-else>
               <p class="text-white mb-4">
-                {{ hasChild && currentChild && currentChild.name ? getSubjectSentence(currentChild.name) : '아직 활동하지 않았습니다.' }}
+                {{
+                  hasChild && selectedChild && selectedChild.name
+                    ? getSubjectSentence(selectedChild.name)
+                    : "아직 활동하지 않았습니다."
+                }}
               </p>
               <button
                 @click="goToActivity"
                 class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-paper"
               >
-                {{ hasChild ? '활동하러 가기' : '아이 등록하러 가기' }}
+                {{ hasChild ? "활동하러 가기" : "아이 등록하러 가기" }}
               </button>
             </template>
           </div>
@@ -126,7 +139,7 @@
                   class="px-4 py-2 rounded-t-lg cursor-pointer transition-colors mr-1"
                   :class="{
                     'bg-yellow-200 text-black font-bold': selectedChildIndex === index,
-                    'bg-yellow-200 text-gray-700': selectedChildIndex !== index
+                    'bg-yellow-200 text-gray-700': selectedChildIndex !== index,
                   }"
                   style="background-color: #fef08a !important; margin-bottom: -1px;"
                 >
@@ -151,7 +164,7 @@
               <!-- 중앙 프로필 이미지 -->
               <div class="flex-1 flex items-center justify-center">
                 <img
-                  :src="currentChild?.imageUrl || 'https://placehold.co/200x200'"
+                  :src="selectedChild?.profileImage || 'https://placehold.co/200x200'"
                   alt="아이 프로필"
                   class="w-48 h-48 rounded-full object-cover border-4 border-white shadow-lg"
                   @error="(e) => (e.target.src = 'https://placehold.co/200x200')"
@@ -161,20 +174,27 @@
               <!-- 하단 정보 -->
               <div class="w-full text-center space-y-2">
                 <p class="text-lg font-bold text-black">
-                  나이 : {{ currentChild ? calculateAge(currentChild.birthDate) : 0 }}세(만 {{ currentChild ? calculateAge(currentChild.birthDate) - 1 : 0 }}세)
+                  나이 :
+                  {{ selectedChild ? calculateAge(selectedChild.birthDate) : 0 }}세(만
+                  {{ selectedChild ? calculateAge(selectedChild.birthDate) - 1 : 0 }}세)
                 </p>
                 <p class="text-lg font-bold text-black">
-                  관심사 : {{ currentChild?.interests?.length ? currentChild.interests.slice(0, 2).join(', ') : '없음' }}
-                  {{ currentChild?.interests?.length > 2 ? ' ...' : '' }}
+                  관심사 :
+                  {{
+                    selectedChild?.interests
+                      ? selectedChild.interests.slice(0, 2).join(", ")
+                      : "없음"
+                  }}{{
+                    selectedChild?.interests && selectedChild.interests.length > 2
+                      ? " ..."
+                      : ""
+                  }}
                 </p>
               </div>
             </div>
           </div>
 
-          <div
-            v-else
-            class="bg-yellow-100 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
-          >
+          <div v-else class="bg-yellow-100 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center">
             <p class="text-black-700 mb-4">아직 등록된 아이가 없습니다.</p>
             <button
               @click="goToChildRegister"
@@ -191,7 +211,7 @@
     <EmotionReportModal
       v-if="hasActivity"
       v-model="showEmotionReportModal"
-      :child-name="currentChild && currentChild.name ? currentChild.name : ''"
+      :child-name="selectedChild && selectedChild.name ? selectedChild.name : ''"
       :report-date="dayjs().format('YYYY-MM-DD')"
       :report-data="todayActivity"
       :show-navigation="false"
@@ -201,19 +221,20 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 import dayjs from "dayjs";
 
 import AddEventModal from "@/components/modal/AddEventModal.vue";
 import CalendarWidget from "@/components/widget/CalendarWidget.vue";
 import ScheduleCard from "@/components/card/ScheduleCard.vue";
 import BaseCard from "@/components/card/BaseCard.vue";
-import EmotionReportModal from '@/components/modal/EmotionReportModal.vue';
+import EmotionReportModal from "@/components/modal/EmotionReportModal.vue";
 import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
-import { useNotification } from '@/composables/useNotification.js';
+import { childService } from "@/services/childService.js";
+
+import { useNotification } from "@/composables/useNotification.js";
 import { fetchMonthlyEvents, createEvent, updateEvent, deleteEvent } from "@/store/calendar";
-import { childService } from "@/services/childService"; // 로컬 보정용 직접 호출
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -239,60 +260,60 @@ const filteredEvents = computed(() =>
     .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix())
 );
 
-/* 자녀 목록: 로컬 우선 → 스토어 후순위 */
-const localChildren = ref([]);
-const sourceChildren = computed(() =>
-  (localChildren.value?.length ? localChildren.value : (childStore.children ?? childStore.items ?? []))
-);
-
-/* 필드 정규화 */
-const childrenList = computed(() =>
-  (sourceChildren.value || []).map(c => ({
-    id: c.id ?? c.childId,
-    childId: c.childId ?? c.id,
-    name: c.name,
-    birthDate: c.birthDate,
-    imageUrl: c.imageUrl ?? c.profileImage ?? c.profileImg ?? null,
-    interests: c.registeredInterests ?? c.interests ?? [],
-    raw: c,
-  }))
-);
-
-const selectedChildIndex = ref(0);
-const hasChild = computed(() => childrenList.value.length > 0);
-const currentChild = computed(() => childrenList.value[selectedChildIndex.value] || null);
+/* childStore 연동 */
+const hasChild = computed(() => childStore.hasChildren);
+const selectedChild = computed(() => childStore.selectedChild);
+const childrenList = computed(() => childStore.children);
+const selectedChildIndex = computed({
+  get: () => childStore.selectedChildIndex,
+  set: (index) => {
+    if (childrenList.value[index]) {
+      childStore.selectChild(childrenList.value[index].id);
+    }
+  },
+});
 
 /* 마운트 시 로딩 */
 onMounted(async () => {
   const [year, month] = selectedMonth.value.split("-").map(Number);
   await loadEvents(year, month);
 
-  // 스토어 초기화/로딩
-  if (typeof childStore.initialize === 'function') {
+  if (typeof childStore.initialize === "function") {
     await childStore.initialize();
-  } else if (typeof childStore.loadChildren === 'function') {
+  } else if (typeof childStore.loadChildren === "function") {
     const userId = auth.user?.id;
     if (userId) await childStore.loadChildren(userId);
   }
 
-  // 로컬 보정: 스토어가 비어있어도 직접 호출해서 채움
+  // 스토어가 비어있을 때 직접 로드 보정
   try {
     const userId = auth.user?.id;
-    if (userId) {
-      const list = await childService.getAllChildren(userId); // payload 배열
+    if (userId && (!childrenList.value || childrenList.value.length === 0)) {
+      const list = await childService.getAllChildren(userId);
       if (Array.isArray(list) && list.length) {
-        localChildren.value = list;
+        childStore.setChildren(
+          list.map((c) => ({
+            id: c.childId,
+            name: c.name,
+            birthDate: c.birthDate,
+            profileImage: c.imageUrl || c.profileImg || null,
+            interests: c.registeredInterests || c.interests || [],
+          }))
+        );
       }
     }
   } catch (e) {
     console.warn("직접 자녀 목록 로드 실패:", e?.message || e);
   }
 
-  // 첫 아이 자동 선택
-  if (childrenList.value.length > 0) selectedChildIndex.value = 0;
+  if (childrenList.value.length > 0 && selectedChildIndex.value >= childrenList.value.length) {
+    selectedChildIndex.value = 0;
+  }
+
+  await loadTodayActivity();
 });
 
-/* 목록이 늦게 도착할 때 탭 자동 보정 */
+/* 목록 길이 변하면 선택 인덱스 보정 */
 watch(
   () => childrenList.value.length,
   (len) => {
@@ -312,11 +333,12 @@ function onMonthChange(newYm) {
 /* 일정 모달/CRUD */
 const modalVisible = ref(false);
 function openModal() { modalVisible.value = true; }
+function openScheduleModal() { modalVisible.value = true; }
 
 async function handleAddEvent({ title, date, description }) {
   try {
     await createEvent({ title, eventDate: date, description });
-    const [y, m] = selectedMonth.value.split('-').map(Number);
+    const [y, m] = selectedMonth.value.split("-").map(Number);
     await loadEvents(y, m);
     modalVisible.value = false;
   } catch (e) {
@@ -327,7 +349,7 @@ async function handleAddEvent({ title, date, description }) {
 async function handleUpdate({ id, newDate, newTitle, newDescription }) {
   try {
     await updateEvent(id, { eventDate: newDate, title: newTitle, description: newDescription });
-    const [y, m] = selectedMonth.value.split('-').map(Number);
+    const [y, m] = selectedMonth.value.split("-").map(Number);
     await loadEvents(y, m);
   } catch (e) {
     showWarning("일정 수정 실패", e.message);
@@ -337,61 +359,94 @@ async function handleUpdate({ id, newDate, newTitle, newDescription }) {
 async function handleDelete(id) {
   try {
     await deleteEvent(id);
-    const [y, m] = selectedMonth.value.split('-').map(Number);
+    const [y, m] = selectedMonth.value.split("-").map(Number);
     await loadEvents(y, m);
   } catch (e) {
     showWarning("일정 삭제 실패", e.message);
   }
 }
 
-/* 오늘의 활동 (향후 API 연동) */
-const todayActivity = computed(() => null);
+/* 오늘의 활동 */
+const todayActivity = ref(null);
+const isLoadingActivity = ref(false);
 const hasActivity = computed(() => !!todayActivity.value);
+
+async function loadTodayActivity() {
+  if (!selectedChild.value) {
+    todayActivity.value = null;
+    return;
+  }
+  try {
+    isLoadingActivity.value = true;
+    const today = dayjs();
+    const year = today.year();
+    const month = today.month() + 1;
+
+    const response = await childService.getMonthlyDiaries(selectedChild.value.id, year, month);
+    const arr = Array.isArray(response) ? response : response ? [response] : [];
+    const todayStr = today.format("YYYY-MM-DD");
+
+    const found = arr.find((d) => {
+      const diaryDate = d.createdAt ? d.createdAt.split("T")[0] : d.date;
+      return diaryDate === todayStr;
+    });
+
+    todayActivity.value = found || null;
+  } catch (e) {
+    console.error("월별 다이어리 조회 실패:", e);
+    todayActivity.value = null;
+  } finally {
+    isLoadingActivity.value = false;
+  }
+}
 
 /* 감정 리포트 모달 */
 const showEmotionReportModal = ref(false);
+
 function openTodayReport() {
-  if (hasActivity.value) {
+  if (hasActivity.value && todayActivity.value) {
     showEmotionReportModal.value = true;
   } else {
     showWarning(
-      currentChild.value && currentChild.value.name ? getObjectSentence(currentChild.value.name) : '아직 활동하지 않았습니다!',
-      '아직 활동하지 않았습니다!'
+      selectedChild.value && selectedChild.value.name
+        ? getObjectSentence(selectedChild.value.name)
+        : "아직 활동하지 않았습니다!",
+      "아직 활동하지 않았습니다!"
     );
   }
 }
 
 /* 날짜/조사 유틸 */
 function formatDate(dateString) {
-  if (!dateString) return '';
+  if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+  return date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
 }
 function getParticle(name, particles) {
   if (!name) return particles[0];
   const lastChar = name[name.length - 1];
   const code = lastChar.charCodeAt(0);
-  if (code < 0xAC00 || code > 0xD7A3) return particles[0];
-  const hasJongseong = (code - 0xAC00) % 28 !== 0;
+  if (code < 0xac00 || code > 0xd7a3) return particles[0];
+  const hasJongseong = (code - 0xac00) % 28 !== 0;
   return hasJongseong ? particles[0] : particles[1];
 }
 function getSubjectSentence(name) {
-  const p = getParticle(name, ['은', '는']);
+  const p = getParticle(name, ["은", "는"]);
   return `${name}${p} 아직 활동하지 않았습니다.`;
 }
 function getObjectSentence(name) {
-  const p = getParticle(name, ['이', '가']);
+  const p = getParticle(name, ["이", "가"]);
   return `${name}${p} 활동하게 해주세요.`;
 }
 
 /* 라우팅 */
-function goToChildRegister() { router.push({ name: 'RegisterChild' }); }
-function goToChildEdit() { router.push({ name: 'EditChild' }); }
+function goToChildRegister() { router.push({ name: "RegisterChild" }); }
+function goToChildEdit() { router.push({ name: "EditChild" }); }
 function goToActivity() {
-  if (hasChild.value && currentChild.value) {
-    router.push({ name: 'ChildMain', params: { childId: currentChild.value.childId } });
+  if (hasChild.value && selectedChild.value) {
+    router.push({ name: "ChildMain", params: { childId: selectedChild.value.id } });
   } else {
-    router.push({ name: 'RegisterChild' });
+    router.push({ name: "RegisterChild" });
   }
 }
 

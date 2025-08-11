@@ -1,7 +1,7 @@
 <template>
   <div class="m-10 mb-20 max-w-5xl mx-auto px-4 py-8 font-paper bg-white rounded-xl">
     <!-- 헤더 -->
-    <div v-if="currentTheme">      
+    <div v-if="currentTheme">
       <div class="text-center mb-8">
         <h1 class="text-4xl font-paperBold text-gray-800 mb-4">
           {{ currentTheme.title }}에서
@@ -26,7 +26,6 @@
             />
           </div>
         </div>
-        <!-- 구분선 -->
         <hr class="border-gray-300 max-w-4xl mx-auto">
       </div>
     </div>
@@ -42,10 +41,10 @@
         />
       </div>
 
-      <!-- 오른쪽: 챕터 목록 -->
+      <!-- 오른쪽: 챕터 목록 (API 데이터) -->
       <div class="space-y-4">
-        <div 
-          v-for="chapter in currentTheme.chapters" 
+        <div
+          v-for="chapter in chapters"
           :key="chapter.id"
           class="bg-blue-100 rounded-lg p-4 hover:bg-blue-200 transition-colors cursor-pointer relative max-w-md"
           @click="startChapter(chapter)"
@@ -60,10 +59,13 @@
               </p>
             </div>
             <div class="flex-shrink-0 text-gray-500 text-2xl font-bold flex items-center justify-center">
-              >
+              &gt;
             </div>
           </div>
         </div>
+
+        <!-- 챕터 없음 처리 -->
+        <p v-if="!chapters.length" class="text-gray-500">이 테마에 등록된 챕터가 없습니다.</p>
       </div>
     </div>
 
@@ -72,7 +74,7 @@
       <h2 class="text-2xl font-paperBold text-gray-600 mb-4">
         테마를 찾을 수 없습니다
       </h2>
-      <button 
+      <button
         @click="$router.push('/dashboard/learning')"
         class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors"
       >
@@ -83,59 +85,70 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNotification } from '@/composables/useNotification'
-import { learningThemes } from '@/data/learningThemes.js'
 import IconButton from '@/components/button/IconButton.vue'
+import learningService from '@/services/learningService' // ✅ 서비스 사용
 
 const route = useRoute()
 const router = useRouter()
 const { showInfo } = useNotification()
 
-// 현재 테마 찾기
-const currentTheme = computed(() => {
-  const themeId = route.params.id
-  return learningThemes.find(theme => theme.id === themeId)
-})
+// 상태
+const themes = ref([])      // 전체 테마 (API)
+const chapters = ref([])    // 현재 테마의 챕터 목록 (API)
 
-// 현재 테마의 인덱스
+// 현재 테마
+const themeId = computed(() => Number(route.params.id))
+const currentTheme = computed(() => themes.value.find(t => t.id === themeId.value))
+
+// 현재 테마의 인덱스 (좌우 이동용)
 const currentThemeIndex = computed(() => {
   if (!currentTheme.value) return -1
-  return learningThemes.findIndex(theme => theme.id === currentTheme.value.id)
+  return themes.value.findIndex(t => t.id === currentTheme.value.id)
+})
+
+// 데이터 로딩
+const loadThemes = async () => {
+  const list = await learningService.getThemes()
+  themes.value = list
+}
+
+const loadChapters = async () => {
+  if (!themeId.value) return
+  const list = await learningService.getChaptersByTheme(themeId.value)
+  chapters.value = list
+}
+
+onMounted(async () => {
+  await loadThemes()
+  await loadChapters()
+})
+
+// 테마 변경 시 챕터 재로딩
+watch(() => themeId.value, async () => {
+  await loadChapters()
 })
 
 // 테마 간 이동 (순환)
 const navigateTheme = (direction) => {
-  let newIndex
-  if (direction === 'prev') {
-    // 첫 번째 테마에서 이전 버튼을 누르면 마지막 테마로
-    newIndex = currentThemeIndex.value === 0 
-      ? learningThemes.length - 1 
-      : currentThemeIndex.value - 1
-  } else if (direction === 'next') {
-    // 마지막 테마에서 다음 버튼을 누르면 첫 번째 테마로
-    newIndex = currentThemeIndex.value === learningThemes.length - 1 
-      ? 0 
-      : currentThemeIndex.value + 1
-  } else {
-    return
-  }
-  
-  const newTheme = learningThemes[newIndex]
+  if (!themes.value.length || currentThemeIndex.value < 0) return
+  const last = themes.value.length - 1
+  let idx = currentThemeIndex.value
+  idx = direction === 'prev'
+    ? (idx === 0 ? last : idx - 1)
+    : (idx === last ? 0 : idx + 1)
+
+  const newTheme = themes.value[idx]
   router.push(`/dashboard/learning/theme/${newTheme.id}`)
 }
 
 // 챕터 시작하기
 const startChapter = (chapter) => {
-  showInfo(
-    `Ch.${chapter.id} ${chapter.title} 학습을 시작합니다!`,
-    '학습 시작',
-    { duration: 2000 }
-  )
-  // 학습 페이지로 이동 (첫 번째 질문부터 시작)
+  showInfo(`Ch.${chapter.id} ${chapter.title} 학습을 시작합니다!`, '학습 시작', { duration: 2000 })
   setTimeout(() => {
-    router.push(`/dashboard/learning/theme/${route.params.id}/chapter/${chapter.id}/question/1`)
+    router.push(`/dashboard/learning/theme/${themeId.value}/chapter/${chapter.id}/question/1`)
   }, 1000)
 }
 </script>

@@ -34,8 +34,8 @@ public class UserPetController {
 	 * - 필요 시 성장 처리
 	 */
 	@PostMapping("/reward/{childId}")
-	public ResponseEntity<Void> rewardAfterConversation(@PathVariable Long childId) {
-		userPetService.rewardAfterConversation(childId);
-		return ResponseEntity.ok().build();
+	public ResponseEntity<UserPetStatusDto> rewardAfterConversation(@PathVariable Long childId) {
+		UserPetStatusDto status = userPetService.rewardAfterConversation(childId);
+		return ResponseEntity.ok(status);
 	}
 }

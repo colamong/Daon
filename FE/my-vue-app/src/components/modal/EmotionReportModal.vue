@@ -37,50 +37,19 @@
               <h4 class="text-lg font-paperBold text-gray-800 mb-3">그림일기</h4>
               <div class="bg-gray-50 rounded-lg p-4">
                 <img 
-                  :src="reportData.diaryImage" 
+                  :src="reportData.imageUrl || reportData.diaryImage" 
                   :alt="`${formatDate(reportDate)} 그림일기`"
-                  class="w-full h-48 object-cover rounded-lg mb-3"
+                  class="w-full h-80 object-cover rounded-lg"
                 />
-                <p class="text-gray-700 font-paper leading-relaxed">
-                  {{ reportData.diaryText }}
-                </p>
               </div>
             </div>
 
-            <!-- 감정 상태 -->
+            <!-- 그림일기 내용 -->
             <div>
-              <h4 class="text-lg font-paperBold text-gray-800 mb-3">오늘의 감정</h4>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="emotion in reportData.emotions"
-                  :key="emotion"
-                  class="bg-purple-100 text-purple-800 px-3 py-2 rounded-full text-sm font-paper"
-                >
-                  {{ emotion }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 활동 내용 -->
-            <div>
-              <h4 class="text-lg font-paperBold text-gray-800 mb-3">주요 활동</h4>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="activity in reportData.activities"
-                  :key="activity"
-                  class="bg-blue-100 text-blue-800 px-3 py-2 rounded-full text-sm font-paper"
-                >
-                  {{ activity }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 요약 -->
-            <div>
-              <h4 class="text-lg font-paperBold text-gray-800 mb-3">하루 요약</h4>
+              <h4 class="text-lg font-paperBold text-gray-800 mb-3">오늘의 이야기</h4>
               <div class="bg-gray-50 rounded-lg p-4">
                 <p class="text-gray-700 font-paper leading-relaxed">
-                  {{ reportData.summary }}
+                  {{ reportData.diaryText || reportData.text || '젤리를 좋아해 친구와 나누었어나, 친구가 다 가져가 속상함을 표현하였습니다.' }}
                 </p>
               </div>
             </div>

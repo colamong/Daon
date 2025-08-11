@@ -1,4 +1,11 @@
-// 아이별 펭귄 데이터
+// ⚠️ DEPRECATED: 이 파일은 더 이상 사용되지 않습니다.
+// 펭귄 성장 로직은 백엔드 API (/api/pet/{childId})에서 처리됩니다.
+// 
+// 백엔드 API 사용:
+// - GET /api/pet/{childId} : 펭귄 상태 조회
+// - POST /api/pet/reward/{childId} : 대화 후 보상 지급
+//
+// 아이별 펭귄 데이터 (DEPRECATED)
 export const penguinDataByChild = {
   "김미래": {
     currentStage: 4,

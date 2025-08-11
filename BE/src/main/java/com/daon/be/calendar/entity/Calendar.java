@@ -31,4 +31,11 @@ public class Calendar {
 
 	@OneToOne(mappedBy = "calendar")
 	private ImageDiary imageDiary;
+
+	public static Calendar of(ChildProfile child, LocalDate date) {
+		Calendar c = new Calendar();
+		c.setChild(child);
+		c.setDate(date);
+		return c;
+	}
 }

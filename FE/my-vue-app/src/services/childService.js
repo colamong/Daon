@@ -1,4 +1,3 @@
-// src/services/childService.js
 import axios from 'axios';
 
 // Vite 프록시(/api → 8080) 전제. 프록시가 없다면 baseURL을 'http://localhost:8080/api' 로 바꿔주세요.
@@ -7,7 +6,7 @@ const API_BASE_URL = '/api';
 // 임시 인증 토큰 (개발용)
 const TEMP_AUTH_TOKEN = 'Bearer temp-token-for-development';
 
-// ✅ 전역 axios 기본값으로 Content-Type을 고정하지 않습니다 (멀티파트 깨짐 방지)
+// 전역 axios 기본값으로 Content-Type을 고정하지 않습니다 (멀티파트 깨짐 방지)
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -89,7 +88,7 @@ export const childService = {
     }
   },
 
-  // ✅ 자녀 등록 API (이미지 제외: JSON만 전송) → payload만 반환
+  // 자녀 등록 API (이미지 제외: JSON만 전송) → payload만 반환
   async registerChild(userId, childData) {
     try {
       const body = {
@@ -107,7 +106,7 @@ export const childService = {
     }
   },
 
-  // ✅ 프로필 이미지 업로드 API (멀티파트) — Content-Type을 수동 지정하지 않습니다
+  // 프로필 이미지 업로드 API (멀티파트) — Content-Type을 수동 지정하지 않습니다
   async uploadChildImage(userId, childId, file) {
     try {
       const form = new FormData();
@@ -129,7 +128,7 @@ export const childService = {
     }
   },
 
-  // ✅ 사용자의 모든 자녀 조회 API → payload만 반환 (imageUrl 포함)
+  // 사용자의 모든 자녀 조회 API → payload만 반환 (imageUrl 포함)
   async getAllChildren(userId) {
     try {
       const { data } = await api.get(`/users/${userId}/children`);
@@ -139,7 +138,7 @@ export const childService = {
     }
   },
 
-  // ✅ 특정 자녀 정보 조회 API → payload만 반환 (imageUrl 포함)
+  // 특정 자녀 정보 조회 API → payload만 반환 (imageUrl 포함)
   async getChild(userId, childId) {
     try {
       const { data } = await api.get(`/users/${userId}/children/${childId}`);
@@ -149,7 +148,7 @@ export const childService = {
     }
   },
 
-  // 자녀 정보 수정 API (⚠ 서버 DTO가 profileImg를 갖고 있으므로, 이미지 유지가 필요하면 현재 키를 함께 넘기세요)
+  // 자녀 정보 수정 API (서버 DTO가 profileImg를 갖고 있으므로, 이미지 유지가 필요하면 현재 키를 함께 넘기세요)
   async updateChild(userId, childId, childData) {
     try {
       const body = {
@@ -202,4 +201,52 @@ export const childService = {
       handleError(error, '관심사 삭제 중 오류가 발생했습니다.');
     }
   },
+
+  // 펭귄 상태 조회 API
+  async getPetStatus(childId) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/pet/${childId}`, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '펭귄 상태 조회 중 오류가 발생했습니다.');
+    }
+  },
+
+  // 대화 후 보상 지급 API
+  async givePetReward(childId) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/pet/reward/${childId}`, {}, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '펭귄 보상 지급 중 오류가 발생했습니다.');
+    }
+  },
+
+  // conversationId로 다이어리 조회 API
+  async getDiaryByConversationId(conversationId) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/diaries/${conversationId}`, {
+        timeout: 30000
+      });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      throw new Error(error.response?.data?.message || '다이어리 조회 중 오류가 발생했습니다.');
+    }
+  }
 };

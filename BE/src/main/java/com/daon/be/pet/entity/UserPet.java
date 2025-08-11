@@ -51,4 +51,17 @@ public class UserPet {
 
 	@Column(name = "last_interaction")
 	private LocalDateTime lastInteraction = LocalDateTime.now();
+
+	public static UserPet create(ChildProfile child, Pet pet, String name) {
+		UserPet up = new UserPet();
+		up.setChild(child);
+		up.setPet(pet);
+		up.setName(name);
+		up.setCurrentStage(1);
+		up.setExperience(0);
+		up.setCreatedAt(LocalDateTime.now());
+		up.setLastInteraction(LocalDateTime.now());
+		return up;
+	}
+
 }

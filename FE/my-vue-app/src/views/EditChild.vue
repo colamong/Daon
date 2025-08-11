@@ -40,8 +40,8 @@
           <!-- 좌측: 이미지 업로드 -->
           <div class="flex flex-col space-y-6">
             <BaseImageUpload
-              @upload:image="handleImageUpload"        
-              :initial-image="previewImage"            
+              @upload:image="handleImageUpload"
+              :initial-image="previewImage"
             />
           </div>
 
@@ -78,16 +78,6 @@
                     <option v-for="day in daysInMonth" :key="day" :value="day">{{ day }}일</option>
                   </select>
                 </div>
-              </div>
-
-              <!-- 성별 -->
-              <div>
-                <BaseRadioGroup
-                  v-model="childData.gender"
-                  label="성별"
-                  name="gender"
-                  :options="genderOptions"
-                />
               </div>
 
               <!-- 관심사 -->
@@ -165,7 +155,6 @@ import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
 import { useNotification } from '@/composables/useNotification.js';
 import BaseImageUpload from "@/components/form/BaseImageUpload.vue";
-import BaseRadioGroup from "@/components/form/BaseRadioGroup.vue";
 import BaseCheckboxGroup from "@/components/form/BaseCheckboxGroup.vue";
 
 const router = useRouter();
@@ -217,12 +206,6 @@ watch([selectedYear, selectedMonth, selectedDay], () => {
     childData.birthDate = `${selectedYear.value}-${month}-${day}`;
   }
 });
-
-// 성별 옵션
-const genderOptions = [
-  { label: "남자", value: "MALE" },
-  { label: "여자", value: "FEMALE" },
-];
 
 // 관심사 옵션 (동적으로 생성)
 const interestOptions = ref([]);
@@ -276,11 +259,11 @@ function selectChild(index) {
   loadChildData(selectedChild.value);
 }
 
-// 이미지 업로드 처리: File 그대로 보관 + 미리보기 생성
+// 이미지 업로드 처리
 function handleImageUpload(file) {
   if (!file) return;
-  childData.profileFile = file;                         // ✅ File 저장
-  childData.profileImagePreview = URL.createObjectURL(file); // 미리보기
+  childData.profileFile = file;
+  childData.profileImagePreview = URL.createObjectURL(file);
 }
 
 // 새로운 관심사 추가
@@ -334,10 +317,6 @@ async function handleUpdateChild() {
     showError("생년월일을 선택해주세요.", "입력 오류");
     return;
   }
-  if (!childData.gender) {
-    showError("성별을 선택해주세요.", "입력 오류");
-    return;
-  }
 
   loading.value = true;
 
@@ -348,21 +327,21 @@ async function handleUpdateChild() {
       return;
     }
 
-    // 1) 텍스트 업데이트: profileImg에는 "기존 S3 key"만 유지해 보냄
+    // 1) 텍스트 업데이트: profileImg에는 기존 S3 key만 유지
     const requestData = {
       name: childData.name.trim(),
       birthDate: childData.birthDate,
-      gender: childData.gender,             // 서버 DTO가 무시해도 무방
-      profileImg: childData.profileKey || null, // ❗ Base64/Presigned 금지
+      gender: childData.gender,                // 서버에서 무시 가능
+      profileImg: childData.profileKey || null // Base64/Presigned 금지
     };
     await childService.updateChild(userId, childData.id, requestData);
 
-    // 2) 새 파일이 있으면 멀티파트로 업로드 (서버가 새 key로 갱신)
+    // 2) 새 파일이 있으면 멀티파트 업로드
     if (childData.profileFile && typeof childService.uploadChildImage === 'function') {
       await childService.uploadChildImage(userId, childData.id, childData.profileFile);
     }
 
-    // 3) 관심사 변경(해제만 처리; 추가는 addNewInterest에서 즉시 반영)
+    // 3) 관심사 변경(해제된 것 삭제)
     await updateInterests(userId, childData.id);
 
     // 4) 상태 갱신
@@ -389,7 +368,7 @@ async function updateInterests(userId, childId) {
   }
 }
 
-// 페이지 이동 / 삭제
+// 삭제 확인 및 삭제
 function confirmDelete() {
   if (!showDeleteConfirm.value) {
     showDeleteConfirm.value = true;
@@ -410,8 +389,14 @@ async function deleteChild() {
       showError("로그인이 필요합니다.", "인증 오류");
       return;
     }
+    if (!childData.id) {
+      showError("아이 정보를 찾을 수 없습니다.", "삭제 실패");
+      return;
+    }
+
     await childService.deleteChild(userId, childData.id);
     childStore.removeChild(childData.id);
+
     showInfo(`${childData.name}의 정보가 삭제되었습니다.`, "삭제 완료");
     if (childStore.hasChildren) {
       router.push({ name: "ChildProfile" });
@@ -419,29 +404,30 @@ async function deleteChild() {
       router.push({ name: "Dashboard" });
     }
   } catch (error) {
-    console.error("아이 삭제 실패:", error);
-    showError("아이 삭제에 실패했습니다. 다시 시도해주세요.", "삭제 실패");
+    console.error("아이 삭제 실패 상세:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      error
+    });
+    showError(`아이 삭제에 실패했습니다: ${error.message}`, "삭제 실패");
   }
 }
 
 function goToRegister() { router.push({ name: "RegisterChild" }); }
 function goBack() { router.push({ name: "ChildProfile" }); }
 
-// 프리사인/공개 URL 에서 S3 key 추출 (없으면 그대로 반환)
+// 프리사인/공개 URL에서 S3 key 추출
 function extractS3Key(urlOrKey) {
   if (!urlOrKey) return null;
   if (!/^https?:\/\//i.test(urlOrKey)) return urlOrKey;
 
   try {
     const u = new URL(urlOrKey);
-    // 경로에서 맨 앞 '/' 제거
     let key = u.pathname.startsWith('/') ? u.pathname.slice(1) : u.pathname;
-    // 쿼리스트링 제거 (URL객체의 pathname은 이미 쿼리 미포함)
-    // 혹시 도메인이 s3에서 리디렉션된 특수 케이스만 대비
     key = key.replace(/^\/+/, '');
     return key || null;
   } catch {
-    // URL 파싱 실패 시 수동 처리
     const idx = urlOrKey.indexOf('.amazonaws.com/');
     if (idx > -1) {
       const rest = urlOrKey.substring(idx + '.amazonaws.com/'.length);

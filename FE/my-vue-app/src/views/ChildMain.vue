@@ -5,7 +5,7 @@
   >
     <header class="px-4 py-4 flex items-center justify-between">
       <button
-        @click="goBack"
+        @click="goDashboard"
         aria-label="뒤로가기"
         class="w-20 h-20 flex items-center justify-center bg-white rounded-lg shadow"
       >
@@ -108,15 +108,16 @@ onMounted(() => {
   }
 });
 
-function goBack() {
-  router.back();
-}
+const goDashboard = () => router.push({ name: "Dashboard" });
 
 // 펭귀과 대화하기 클릭 시 바로 이동 (이미 선택된 아이 정보가 있음)
 function goToPenguin() {
   // 현재 선택된 아이가 있으면 바로 펭귄 페이지로
   if (currentChild.value) {
-    router.push({ name: "ChildPet" });
+    router.push({
+      name: "ChildPet",
+      params: { childId: currentChild.value.id },
+    });
   }
 }
 
@@ -124,9 +125,9 @@ function goToPenguin() {
 function goToDrawing() {
   // 현재 선택된 아이가 있으면 바로 그림일기 페이지로
   if (currentChild.value) {
-    router.push({ 
-      name: "ChildDrawing", 
-      params: { childId: currentChild.value.id }
+    router.push({
+      name: "ChildDrawing",
+      params: { childId: currentChild.value.id },
     });
   }
 }

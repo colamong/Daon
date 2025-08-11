@@ -76,7 +76,7 @@
 
 <script setup>
 import { ref, computed, reactive, onMounted, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
 
@@ -102,10 +102,25 @@ const props = defineProps({
 });
 
 const router = useRouter();
+const route = useRoute();
 const childStore = useChildStore();
 
 // 선택된 아이 정보
 const selectedChild = computed(() => childStore.selectedChild);
+
+// route params에서 childId 받아오기 (fallback으로 selectedChild 사용)
+const currentChildId = computed(() => {
+  const routeChildId = route.params.childId;
+  if (routeChildId) {
+    return parseInt(routeChildId);
+  }
+  // props에서 받은 childId 사용
+  if (props.childId) {
+    return parseInt(props.childId);
+  }
+  // selectedChild에서 id 사용
+  return selectedChild.value?.id || null;
+});
 
 // 컴포넌트 마운트 시 실행
 onMounted(() => {
@@ -121,15 +136,13 @@ onMounted(() => {
   
   // 초기 다이어리 조회
   fetchMonthlyDiaries();
-  
-  // diaries 데이터 변경 시 FullCalendar 리렌더링 (datesSet에서 처리하므로 제거)
-  // watch(diaries, () => {
-  //   if (calendarRef.value) {
-  //     setTimeout(() => {
-  //       calendarRef.value.getApi().render();
-  //     }, 500);
-  //   }
-  // }, { deep: true });
+});
+
+// childId가 변경될 때마다 다이어리 재조회
+watch(currentChildId, (newChildId) => {
+  if (newChildId) {
+    fetchMonthlyDiaries();
+  }
 });
 
 // 뒤로가기
@@ -144,12 +157,19 @@ const calendarRef = ref(null);
 
 // 다이어리 데이터 상태
 const diaries = ref([]);
-const childId = 3; // 고정 childId
 const currentDate = ref(new Date());
 
 // 월별 다이어리 조회
 async function fetchMonthlyDiaries() {
   try {
+    const childId = currentChildId.value;
+    
+    if (!childId) {
+      console.warn('childId가 없어서 다이어리 조회를 건너뜁니다.');
+      diaries.value = [];
+      return;
+    }
+    
     const year = currentDate.value.getFullYear();
     const month = currentDate.value.getMonth() + 1;
     
