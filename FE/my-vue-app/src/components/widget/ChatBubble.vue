@@ -11,16 +11,27 @@
       class="w-10 h-10 rounded-full object-cover"
     />
 
-    <!-- 말풍선 -->
-    <div
-      :class="[
-        'px-4 py-2 max-w-xs text-sm rounded-xl',
-        isMine
-          ? 'bg-[#F2F5FD] text-right rounded-br-none'
-          : 'border border-black text-left',
-      ]"
-    >
-      {{ message }}
+    <!-- 메시지 영역 -->
+    <div :class="isMine ? 'flex flex-col items-end' : 'flex flex-col items-start'">
+      <!-- 사용자 이름: 내 메시지는 안 보임 -->
+      <div
+        v-if="!isMine && userName"
+        class="text-xs text-gray-500 mb-1 px-1"
+      >
+        {{ userName }}
+      </div>
+      
+      <!-- 말풍선 -->
+      <div
+        :class="[
+          'px-4 py-2 max-w-xs text-sm rounded-xl',
+          isMine
+            ? 'bg-[#F2F5FD] text-right rounded-br-none'
+            : 'border border-black text-left',
+        ]"
+      >
+        {{ message }}
+      </div>
     </div>
   </div>
 </template>
@@ -33,5 +44,6 @@ defineProps({
   isMine: Boolean,
   message: String,
   timestamp: String,
+  userName: String,
 })
 </script>
