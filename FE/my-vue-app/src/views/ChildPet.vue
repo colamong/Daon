@@ -11,6 +11,27 @@
     <header
       class="fixed top-4 left-4 right-4 z-20 flex items-center justify-between"
     >
+      <!-- 첫 상호작용 유도 오버레이 -->
+      <div
+        v-if="!audioUnlocked"
+        class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-6"
+      >
+        <div class="bg-white rounded-2xl px-8 py-6 shadow-xl text-center">
+          <p class="text-xl font-shark mb-2">
+            펭구가 말을 시작할 준비가 됐어요!
+          </p>
+          <p class="text-gray-600 font-shark mb-4">
+            버튼을 눌러 오디오를 활성화해 주세요.
+          </p>
+          <button
+            @click="handleFirstTap"
+            class="px-6 py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition"
+          >
+            대화 시작
+          </button>
+        </div>
+      </div>
+
       <button
         @click="goBack"
         :disabled="isLoading"
@@ -143,6 +164,9 @@
       </div>
     </main>
 
+    <!-- 재생용(hidden) 오디오: GMS TTS가 여기로 흘러들어감 -->
+    <audio ref="ttsPlayer" class="hidden"></audio>
+
     <!-- 그림일기 생성 중 로딩 모달 -->
     <div
       v-if="isLoading"
@@ -173,12 +197,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
-import { speechService } from "@/services/speechService.js";
 import HamsterLoading from "@/components/common/HamsterLoading.vue";
+
+/** ✅ GMS TTS 서비스(default export) */
+import ttsService from "@/services/ttsService_gms.js";
+
+const recognitionRef = ref(null);
+const isRecSupported =
+  "webkitSpeechRecognition" in window || "SpeechRecognition" in window;
 
 // 이미지
 import HomeIcon from "../assets/images/Home.png";
@@ -191,48 +221,40 @@ import lvl5 from "../assets/images/lv_5.png";
 import lvl6 from "../assets/images/lv_6.png";
 import lvl7 from "../assets/images/lv_7.png";
 
-// props 정의
+// props
 const props = defineProps({
-  childId: {
-    type: [String, Number],
-    default: null,
-  },
+  childId: { type: [String, Number], default: null },
 });
 
 const router = useRouter();
 const route = useRoute();
 const childStore = useChildStore();
 
-// route params 또는 props에서 childId 받아오기 (fallback으로 selectedChild 사용)
+// 오디오 엘리먼트
+const ttsPlayer = ref(null);
+
+// childId 계산
+const selectedChild = computed(() => childStore.selectedChild);
 const childId = computed(() => {
-  // 1순위: props로 전달된 childId
-  if (props.childId) {
-    return parseInt(props.childId);
-  }
-
-  // 2순위: route params의 childId
+  if (props.childId) return parseInt(props.childId);
   const routeChildId = route.params.childId;
-  if (routeChildId) {
-    return parseInt(routeChildId);
-  }
-
-  // 3순위: 현재 선택된 아이의 ID
+  if (routeChildId) return parseInt(routeChildId);
   return selectedChild.value?.id || null;
 });
 
-// 선택된 아이 정보
-const selectedChild = computed(() => childStore.selectedChild);
-
-// 펭귄 데이터 상태
+// 펭귄 상태
 const penguinData = ref({
   currentStage: 1,
   conversationCount: 0,
   totalConversations: 0,
   expRatio: 0,
 });
-const isLoading = ref(false); // 로딩 상태
+const isLoading = ref(false);
 
-// 대화 상태 관리
+// 사용자 첫 클릭으로 오디오 재생 허용 여부
+const audioUnlocked = ref(false);
+
+// 대화 상태
 const conversationState = ref({
   isActive: false,
   currentStep: 0,
@@ -245,13 +267,10 @@ const conversationState = ref({
   answers: [],
 });
 
-// 백엔드에서 펭귄 데이터 로드
+// 펭귄 데이터 로드
 async function loadPenguinData() {
   const currentChildId = childId.value;
-  if (!currentChildId) {
-    console.warn("childId가 없어서 펭귄 데이터를 로드할 수 없습니다.");
-    return;
-  }
+  if (!currentChildId) return;
 
   try {
     const response = await childService.getPetStatus(currentChildId);
@@ -262,121 +281,107 @@ async function loadPenguinData() {
       progressPercent: response.progressPercent || 0,
       imageUrl: response.imageUrl || "/images/lv_1.png",
     };
-    console.log("펭귄 데이터 로드됨:", penguinData.value);
-  } catch (error) {
-    console.error("펭귄 데이터 로드 실패:", error);
-    // 실패 시 기본값 설정
-    penguinData.value = {
-      name: "펭구",
-      currentStage: 1,
-      totalExperience: 0,
-      progressPercent: 0,
-      imageUrl: "/images/lv_1.png",
-    };
+  } catch (e) {
+    console.error("펭귄 데이터 로드 실패:", e);
   }
 }
 
+// 뒤로가기
 async function goBack() {
-  if (isLoading.value) return; // 이미 로딩 중이면 중복 실행 방지
-
+  if (isLoading.value) return;
   const currentChildId = childId.value;
 
-  // 가장 먼저 당일 그림일기 상태를 확인
   const hasTodayDiary = childStore.getChildTodayDiary(currentChildId);
-
-  console.log("🏠 goBack 호출됨");
-  console.log("📅 currentChildId:", currentChildId);
-  console.log("📖 hasTodayDiary:", hasTodayDiary);
-  console.log(
-    "🗣️ conversationResultId:",
-    conversationState.value.conversationResultId
-  );
-
   if (hasTodayDiary) {
-    console.log(
-      "✅ 이미 당일 다이어리가 있어서 API 호출 없이 펭귄 메뉴로 이동"
-    );
     router.push({ name: "ChildMain", params: { childId: currentChildId } });
     return;
   }
 
   try {
     isLoading.value = true;
-
     const conversationResultId = conversationState.value.conversationResultId;
-
-    // childId와 conversationResultId가 있을 때만 API 호출
     if (currentChildId && conversationResultId) {
-      // 1. 아이 표정 기록 API 호출
       await childService.recordExpression(currentChildId, conversationResultId);
-
-      // 2. 다이어리 생성 API 호출
       await childService.createDiary(conversationResultId);
-
-      // 3. 다이어리 생성 성공 시 해당 아이의 당일 그림일기 상태를 true로 설정하고 conversationResultId 저장
-      console.log("📝 다이어리 생성 완료, 상태 업데이트 중...");
       childStore.setChildTodayDiary(currentChildId, true, conversationResultId);
-      console.log("✅ 당일 다이어리 상태가 true로 설정되고 conversationResultId가 저장됨");
     }
-
-    // 4. 모든 API 호출이 완료되면 펭귄 메뉴로 이동
     router.push({ name: "ChildMain", params: { childId: currentChildId } });
-  } catch (error) {
-    console.error("펭귄 메뉴로 가기 중 오류:", error);
-    // 에러가 발생해도 페이지는 이동 (alert 제거)
+  } catch (e) {
+    console.error("펭귄 메뉴로 가기 중 오류:", e);
     router.push({ name: "ChildMain", params: { childId: currentChildId } });
   } finally {
     isLoading.value = false;
   }
 }
 
-// 대화 시작 함수
+async function unlockAudio() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (Ctx) {
+      const ctx = new Ctx();
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.02);
+    }
+
+    const silent = new Audio(
+      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    );
+    silent.muted = true;
+    await silent.play().catch(() => {});
+    silent.pause();
+  } catch (e) {
+    console.warn("unlockAudio warn:", e);
+  }
+}
+
+async function handleFirstTap() {
+  await unlockAudio();
+  audioUnlocked.value = true;
+  await startConversation();
+}
+
+// 대화 시작
 async function startConversation() {
   try {
     const currentChildId = childId.value;
+    if (!currentChildId) throw new Error("아이 ID를 찾을 수 없습니다.");
 
-    if (!currentChildId) {
-      throw new Error("아이 ID를 찾을 수 없습니다.");
-    }
-
-    // 1. 대화 시작 API 호출하여 주제 받기
     const conversationStart = await childService.startConversation(
       currentChildId
     );
 
-    console.log("대화 시작 API 응답:", conversationStart);
-
-    // 대화 상태 초기화 - API 응답의 topic ID 활용
     conversationState.value = {
       isActive: true,
       currentStep: 1,
       totalSteps: 5,
-      topicId: conversationStart.id || conversationStart.data?.id || 1, // API에서 받은 올바른 topic ID (fallback: 1)
+      topicId: conversationStart.id || conversationStart.data?.id || 1,
       currentQuestion: "",
       isListening: false,
       isSpeaking: false,
       answers: [],
     };
 
-    // 첫 번째 질문 받기
     await getFirstQuestion();
-  } catch (error) {
-    console.error("대화 시작 오류:", error);
-    alert("대화를 시작할 수 없습니다: " + error.message);
+  } catch (e) {
+    console.error("대화 시작 오류:", e);
+    alert("대화를 시작할 수 없습니다: " + e.message);
   }
 }
 
-// 첫 번째 질문 받기
+// 첫 질문
 async function getFirstQuestion() {
   try {
     const currentChildId = childId.value;
     const { topicId } = conversationState.value;
+    if (!currentChildId) throw new Error("아이 ID를 찾을 수 없습니다.");
 
-    if (!currentChildId) {
-      throw new Error("아이 ID를 찾을 수 없습니다.");
-    }
-
-    // 첫 번째 질문은 answer를 빈 문자열로 보내기
     const response = await childService.sendConversationAnswer(
       currentChildId,
       topicId,
@@ -384,138 +389,153 @@ async function getFirstQuestion() {
       ""
     );
 
-    // 응답에서 질문 추출
     conversationState.value.currentQuestion =
       response.question ||
       response.text ||
       response.prompt ||
       "질문을 받지 못했습니다.";
 
-    // TTS로 질문 읽기
-    await speakQuestion(conversationState.value.currentQuestion);
-  } catch (error) {
-    console.error("첫 번째 질문 받기 오류:", error);
-    alert("첫 번째 질문을 받을 수 없습니다: " + error.message);
+    await speakQuestion(
+      conversationState.value.currentQuestion,
+      response.audioUrl
+    );
+  } catch (e) {
+    console.error("첫 번째 질문 받기 오류:", e);
+    alert("첫 번째 질문을 받을 수 없습니다: " + e.message);
   }
 }
 
-// 다음 질문 받기 (답변 제출 후)
+// 다음 질문
 async function getNextQuestion(previousAnswer) {
   try {
     const currentChildId = childId.value;
     const { topicId, currentStep } = conversationState.value;
-
-    if (!currentChildId) {
-      throw new Error("아이 ID를 찾을 수 없습니다.");
-    }
+    if (!currentChildId) throw new Error("아이 ID를 찾을 수 없습니다.");
 
     const response = await childService.sendConversationAnswer(
       currentChildId,
       topicId,
-      currentStep, // 현재 단계의 답변 제출
+      currentStep,
       previousAnswer,
       conversationState.value.currentQuestion
     );
 
-    // 응답에서 다음 질문 추출
     conversationState.value.currentQuestion =
       response.question ||
       response.text ||
       response.prompt ||
       "질문을 받지 못했습니다.";
 
-    // TTS로 질문 읽기
-    await speakQuestion(conversationState.value.currentQuestion);
-  } catch (error) {
-    console.error("다음 질문 받기 오류:", error);
-
-    // API 오류 시에도 대화를 계속 진행할 수 있도록 기본 질문으로 처리
-    conversationState.value.currentQuestion =
-      "서버 연결에 문제가 있어요. 다음 질문으로 넘어갈게요.";
-
+    await speakQuestion(
+      conversationState.value.currentQuestion,
+      response.audioUrl
+    );
+  } catch (e) {
+    console.error("다음 질문 받기 오류:", e);
+    const fallback = "서버 연결에 문제가 있어요. 다음 질문으로 넘어갈게요.";
+    conversationState.value.currentQuestion = fallback;
     try {
-      await speakQuestion(conversationState.value.currentQuestion);
-    } catch (ttsError) {
-      console.error("TTS 오류:", ttsError);
+      await speakQuestion(fallback);
+    } catch (err) {
+      console.error("TTS 오류:", err);
     }
   }
 }
 
-// 질문을 음성으로 출력
-async function speakQuestion(question) {
+/** ✅ 질문을 음성으로 출력 (audioUrl 있으면 바로 재생, 없으면 텍스트로 스트리밍 호출) */
+async function speakQuestion(question, audioUrl = null) {
+  conversationState.value.isSpeaking = true;
   try {
-    conversationState.value.isSpeaking = true;
+    if (audioUrl) {
+      await ttsService.playByUrl(audioUrl, ttsPlayer.value);
+    } else {
+      await ttsService.playText(
+        question,
+        { voice: "nova", speed: 1.0 },
+        ttsPlayer.value
+      );
+    }
+  } catch (e) {
+    console.error("TTS 오류:", e);
+  } finally {
+    conversationState.value.isSpeaking = false;
+  }
+}
 
-    // 아이를 위한 친근한 음성 설정
-    const voiceOptions = {
-      rate: 0.7, // 천천히
-      pitch: 1.2, // 조금 높게 (아이 친화적)
-      volume: 0.9, // 적당한 볼륨
-      // voiceName: 'Google 한국의'  // 특정 음성 지정 (선택사항)
+// 음성 인식(필요시 확장)
+// 음성 인식: 스페이스바로 시작 -> 한 문장 후 자동 종료
+async function listenForAnswer() {
+  if (!isRecSupported || !recognitionRef.value) {
+    alert(
+      "이 브라우저에서는 음성 인식을 지원하지 않아요. 크롬/엣지(데스크톱)에서 시도해 주세요."
+    );
+    return "";
+  }
+
+  // 권한 팝업은 브라우저가 알아서 띄움(최초 1회)
+  conversationState.value.isListening = true;
+
+  const rec = recognitionRef.value;
+
+  return new Promise((resolve, reject) => {
+    let resolved = false;
+
+    rec.onresult = (e) => {
+      const result = Array.from(e.results)
+        .map((r) => r[0]?.transcript || "")
+        .join(" ")
+        .trim();
+      if (!resolved) {
+        resolved = true;
+        resolve(result);
+      }
     };
 
-    await speechService.speak(question, voiceOptions);
-    conversationState.value.isSpeaking = false;
-  } catch (error) {
-    console.error("TTS 오류:", error);
-    conversationState.value.isSpeaking = false;
-  }
+    rec.onerror = (e) => {
+      console.error("STT error:", e.error);
+      if (!resolved) reject(new Error(e.error || "stt_error"));
+    };
+
+    rec.onend = () => {
+      conversationState.value.isListening = false;
+      // onresult 없이 onend만 온 경우(아무 말 안 함)
+      if (!resolved) resolve("");
+    };
+
+    try {
+      rec.start(); // ⏺️ 녹음 시작
+    } catch (err) {
+      // 연속 호출 방지
+      console.warn("rec.start() blocked:", err);
+      conversationState.value.isListening = false;
+      reject(err);
+    }
+  });
 }
 
-// 사용자 답변 듣기
-async function listenForAnswer() {
-  try {
-    conversationState.value.isListening = true;
-    const answer = await speechService.listen({
-      continuous: false,
-      interimResults: false,
-    });
-
-    conversationState.value.isListening = false;
-
-    // 답변 저장
-    conversationState.value.answers[conversationState.value.currentStep - 1] =
-      answer;
-
-    // 다음 단계로 진행
-    await processAnswer();
-  } catch (error) {
-    console.error("음성 인식 오류:", error);
-    conversationState.value.isListening = false;
-    alert("음성 인식에 실패했습니다. 다시 시도해주세요.");
-  }
-}
-
-// 답변 처리 및 다음 단계 진행
+// 단계 처리
 async function processAnswer() {
   const { currentStep, totalSteps, answers } = conversationState.value;
-  const currentAnswer = answers[currentStep - 1]; // 현재 단계의 답변
-
+  const currentAnswer = answers[currentStep - 1];
   if (currentStep < totalSteps) {
-    // 현재 답변을 제출하고 다음 질문을 받은 후 단계 증가
     await getNextQuestion(currentAnswer);
     conversationState.value.currentStep++;
   } else {
-    // 마지막 답변 제출 및 마무리
     await finishConversation(currentAnswer);
   }
 }
 
-// 대화 마무리
+// 마무리
 async function finishConversation(finalAnswer) {
   try {
     const currentChildId = childId.value;
     const { topicId } = conversationState.value;
-
-    if (!currentChildId) {
-      throw new Error("아이 ID를 찾을 수 없습니다.");
-    }
+    if (!currentChildId) throw new Error("아이 ID를 찾을 수 없습니다.");
 
     let closingMessage = "대화가 완료되었습니다. 수고했어요!";
     let response = null;
 
     try {
-      // 마지막 답변 제출
       response = await childService.sendConversationAnswer(
         currentChildId,
         topicId,
@@ -523,70 +543,39 @@ async function finishConversation(finalAnswer) {
         finalAnswer,
         conversationState.value.currentQuestion
       );
-
-      // 서버에서 받은 마무리 멘트 사용
       closingMessage =
         response.closingMessage ||
         response.text ||
         response.prompt ||
         closingMessage;
-    } catch (apiError) {
-      console.error("마지막 답변 제출 오류:", apiError);
+    } catch (e) {
+      console.error("마지막 답변 제출 오류:", e);
       closingMessage =
         "서버 연결에 문제가 있었지만 대화가 완료되었어요. 수고했어요!";
     }
 
-    // 마무리 멘트 TTS로 출력
-    try {
-      await speechService.speak(closingMessage);
-    } catch (ttsError) {
-      console.error("TTS 오류:", ttsError);
-    }
+    // 마무리 멘트 재생
+    await speakQuestion(closingMessage, response?.audioUrl);
 
-    // 마지막 답변 제출 시 응답에서 conversationResultIds 추출
-    if (response && response.conversationResultIds) {
+    if (response?.conversationResultIds) {
       conversationState.value.conversationResultId =
         response.conversationResultIds;
-      console.log(
-        "conversationResultId 저장됨:",
-        response.conversationResultIds
-      );
-    } else {
-      console.warn("응답에서 conversationResultIds를 찾을 수 없음");
     }
 
-    // 대화 완료 후 펭귄에게 보상 지급
-    try {
-      await childService.givePetReward(currentChildId);
-      console.log("펭귄 보상 지급 완료");
-
-      // 보상 후 펭귄 상태 업데이트
-      await loadPenguinData();
-    } catch (rewardError) {
-      console.error("펭귄 보상 지급 실패:", rewardError);
-      // 보상 실패해도 대화는 정상 종료
-    }
-
-    // 대화 상태 초기화
+    await childService.givePetReward(currentChildId);
+    await loadPenguinData();
     conversationState.value.isActive = false;
-  } catch (error) {
-    console.error("대화 마무리 오류:", error);
-
-    // 어떤 오류가 발생해도 대화는 종료시킴
+  } catch (e) {
+    console.error("대화 마무리 오류:", e);
     conversationState.value.isActive = false;
-
-    // 기본 마무리 멘트 출력
     try {
-      await speechService.speak("대화가 완료되었습니다. 수고했어요!");
-    } catch (ttsError) {
-      console.error("TTS 오류:", ttsError);
-    }
+      await speakQuestion("대화가 완료되었습니다. 수고했어요!");
+    } catch {}
   }
 }
 
-// 키보드 이벤트 핸들러
-function handleKeyPress(event) {
-  // 스페이스바 (코드 32)
+// 키 입력
+async function handleKeyPress(event) {
   if (
     event.code === "Space" &&
     conversationState.value.isActive &&
@@ -594,42 +583,64 @@ function handleKeyPress(event) {
     !conversationState.value.isSpeaking
   ) {
     event.preventDefault();
-    listenForAnswer();
+
+    try {
+      const transcript = await listenForAnswer(); // 🎤 말하기
+      // 공백이면(말 안 했으면) 그냥 무시
+      if (!transcript || !transcript.trim()) return;
+
+      // 답변 저장
+      conversationState.value.answers[conversationState.value.currentStep - 1] =
+        transcript.trim();
+
+      // 다음 단계로 진행
+      await processAnswer();
+    } catch (e) {
+      console.error("음성 인식 실패:", e);
+      alert("음성 인식에 실패했어요. 다시 시도해 주세요.");
+    }
   }
 }
 
-// 컴포넌트 마운트 시 초기화
+// 라이프사이클
 onMounted(async () => {
   await childStore.initialize();
-
-  // URL에서 childId가 전달된 경우 해당 아이를 선택
   const currentChildId = childId.value;
   if (
     currentChildId &&
-    childStore.children.find((child) => child.id === currentChildId)
+    childStore.children.find((c) => c.id === currentChildId)
   ) {
     childStore.selectChild(currentChildId);
   }
 
+  // STT 준비
+  if (isRecSupported) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.lang = "ko-KR"; // 한국어 인식
+    rec.interimResults = false; // 중간 결과 꺼두기(원하면 true)
+    rec.maxAlternatives = 1;
+    rec.continuous = false; // 한 문장 말하면 자동 종료
+    recognitionRef.value = rec;
+  } else {
+    console.warn(
+      "이 브라우저는 Web Speech API(SpeechRecognition)를 지원하지 않습니다."
+    );
+  }
+
   await loadPenguinData();
-
-  // 키보드 이벤트 리스너 등록
   window.addEventListener("keydown", handleKeyPress);
-
-  // 페이지 진입 시 대화 시작
-  await startConversation();
 });
 
-// 컴포넌트 언마운트 시 정리
 onUnmounted(() => {
-  // 키보드 이벤트 리스너 제거
   window.removeEventListener("keydown", handleKeyPress);
-
-  // 스피치 서비스 정리
-  speechService.cleanup();
+  ttsService.stop(ttsPlayer.value);
+  try {
+    recognitionRef.value?.stop?.();
+  } catch {}
 });
 
-// 펭귄 이미지 매핑 함수
+// 유틸
 function getPenguinImage(stage) {
   const penguinImgs = {
     1: lvl1,
@@ -640,7 +651,6 @@ function getPenguinImage(stage) {
     6: lvl6,
     7: lvl7,
   };
-
   return penguinImgs[stage] || lvl1;
 }
 </script>

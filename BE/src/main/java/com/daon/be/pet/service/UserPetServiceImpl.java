@@ -30,7 +30,7 @@ public class UserPetServiceImpl implements UserPetService {
 	private final PetRepository petRepository;
 
 	@Override
-	@Transactional(readOnly = true)
+	@Transactional(readOnly = false) // 저장 허용
 	public UserPetStatusDto getPetStatus(Long childId) {
 		ChildProfile child = childRepository.findById(childId)
 			.orElseThrow(() -> new IllegalArgumentException("자녀 없음"));
