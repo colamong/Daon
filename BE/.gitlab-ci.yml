@@ -1,11 +1,18 @@
+# /.gitlab-ci.yml  (deploy 브랜치 전용: 빌드 → 푸시 → 배포)
+
+# 파이프라인 자체를 deploy 브랜치에서만 생성
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "deploy"'
+    - when: never
+
+# 이 레포의 잡은 EC2 러너(daon 태그)에서만 실행
 default:
   tags: ["daon"]
 
-stages:
-  - build
-  - deploy
+stages: [build, deploy]
 
-# 1) 이미지 빌드 + 푸시 (Docker Hub)
+# 1) Docker 이미지 빌드 + Docker Hub 푸시
 build-and-push:
   stage: build
   rules:
@@ -13,16 +20,15 @@ build-and-push:
   script:
     - echo "=== Docker Hub Login ==="
     - docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_TOKEN"
-
     - echo "=== Docker Build ==="
     - docker build -t "$IMAGE_NAME:latest" "$BACKEND_DIR"
-
     - echo "=== Docker Push ==="
     - docker push "$IMAGE_NAME:latest"
 
-# 2) EC2(현재 러너가 있는 곳)에서 컨테이너 교체
+# 2) EC2(러너가 설치된 서버)에서 컨테이너 교체
 deploy-backend:
   stage: deploy
+  needs: ["build-and-push"]   # build 성공 후에만 실행
   rules:
     - if: '$CI_COMMIT_BRANCH == "deploy"'
   script:
@@ -31,14 +37,12 @@ deploy-backend:
     - echo "=== Stop & Remove existing container (if any) ==="
     - docker stop "$CONTAINER_NAME" || true
     - docker rm "$CONTAINER_NAME" || true
-
     - echo "=== Pull latest image ==="
     - docker pull "$IMAGE_NAME:latest"
-
-    - echo "=== Run new container ==="
-    - docker run -d --name "$CONTAINER_NAME" \
-      --env-file "$ENV_FILE" \
-      -p "$HOST_PORT:$CONTAINER_PORT" \
-      "$IMAGE_NAME:latest"
-
+    - |
+      echo "=== Run new container ==="
+      docker run -d --name "$CONTAINER_NAME" \
+        --env-file "$ENV_FILE" \
+        -p "$HOST_PORT:$CONTAINER_PORT" \
+        "$IMAGE_NAME:latest"
     - echo "=== Deployment Finished ==="
