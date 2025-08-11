@@ -57,6 +57,6 @@ public class ChildProfile {
 	}
 
 	public void removeInterest(String interestName) {
-		this.interests.removeIf(i -> i.getName().equals(interestName));
+		this.interests.removeIf(i -> i.getInterestType().equals(interestName));
 	}
 }
