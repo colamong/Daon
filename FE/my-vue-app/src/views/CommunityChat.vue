@@ -77,7 +77,8 @@ import ChatListCard from "@/components/card/ChatListCard.vue";
 import ConfirmModal from "@/components/modal/ConfirmModal.vue";
 import { useCommunityStore } from "@/store/community.js";
 import { useAuthStore } from "@/store/auth.js";
-import axiosInstance from "@/utils/axios.js";
+import websocketService from "@/services/websocketService.js";
+import { communityService } from "@/services/communityService.js";
 
 // 라우터 & 스토어
 const route = useRoute();
@@ -88,10 +89,7 @@ const authStore = useAuthStore();
 // 상태
 const currentCommunity = ref(null);
 const chatMessages = ref([]);
-
-// 폴링 타이머 & 중복 방지
-let pollTimer = null;
-const knownIds = new Set();
+const isConnected = ref(false);
 
 // 현재 방 정보
 const currentRoom = computed(() => {
@@ -143,7 +141,7 @@ const leaveRoom = async (roomId) => {
   }
 };
 
-// 메시지 전송(REST)
+// 메시지 전송(WebSocket)
 const handleSendMessage = async (message) => {
   if (!currentCommunity.value || !authStore.user?.id) {
     console.error("커뮤니티 또는 사용자 정보가 없습니다.");
@@ -151,76 +149,72 @@ const handleSendMessage = async (message) => {
   }
 
   try {
-    const requestDto = {
-      userId: authStore.user.id,
-      message,
-    };
-    await axiosInstance.post(
-      `/api/community/${currentCommunity.value.id}/messages`,
-      requestDto
-    );
-    // 브로드캐스트가 없다면 폴링 간격 전에 반영하려면 즉시 한번 갱신
-    await loadMessages();
+    if (isConnected.value) {
+      websocketService.sendMessage(
+        currentCommunity.value.id,
+        message,
+        authStore.user.id
+      );
+    } else {
+      console.error("WebSocket이 연결되지 않았습니다.");
+      alert("연결이 끊어졌습니다. 페이지를 새로고침해주세요.");
+    }
   } catch (error) {
     console.error("메시지 전송 실패:", error);
     alert("메시지 전송에 실패했습니다. 다시 시도해주세요.");
   }
 };
 
-// 메시지 목록 조회(REST) - 새로운 것만 append (깜빡임/스크롤 튐 방지)
+// 메시지 히스토리 로드 (초기 로딩용)
 const loadMessages = async () => {
   if (!currentCommunity.value) return;
   try {
-    const res = await axiosInstance.get(
-      `/api/community/${currentCommunity.value.id}/messages`
-    );
-    const list = res.data.data || [];
-
-    if (chatMessages.value.length === 0) {
-      chatMessages.value = list;
-      knownIds.clear();
-      list.forEach((m) => knownIds.add(m.id));
-    } else {
-      for (const m of list) {
-        if (!knownIds.has(m.id)) {
-          chatMessages.value.push(m);
-          knownIds.add(m.id);
-        }
-      }
-    }
-    // console.log("메시지 목록 로드 완료:", chatMessages.value.length, "개");
+    const messages = await communityService.getMessages(currentCommunity.value.id);
+    chatMessages.value = messages || [];
+    // WebSocket 서비스에도 메시지 설정
+    websocketService.setMessages(messages || []);
+    console.log("메시지 히스토리 로드 완료:", chatMessages.value.length, "개");
   } catch (error) {
     console.error("메시지 목록 로드 실패:", error);
   }
 };
 
-// 폴링 제어
-const startPolling = (intervalMs = 2000) => {
-  stopPolling();
-  pollTimer = setInterval(async () => {
-    try {
-      await loadMessages();
-    } catch (e) {
-      console.error("폴링 중 오류:", e);
-    }
-  }, intervalMs);
-  document.addEventListener("visibilitychange", onVisibilityChange);
+// WebSocket 연결 및 구독
+const connectWebSocket = async () => {
+  try {
+    await websocketService.connect();
+    isConnected.value = true;
+    
+    // 연결 상태 모니터링
+    websocketService.onConnect((connected) => {
+      isConnected.value = connected;
+    });
+    
+    // 새 메시지 수신 처리
+    websocketService.onMessage((newMessage) => {
+      // 중복 체크
+      const exists = chatMessages.value.some(msg => msg.id === newMessage.id);
+      if (!exists) {
+        chatMessages.value.push({
+          id: newMessage.id,
+          message: newMessage.message,
+          userId: newMessage.userId,
+          userName: newMessage.userName,
+          sentAt: newMessage.sentAt
+        });
+      }
+    });
+    
+    console.log("WebSocket 연결 완료");
+  } catch (error) {
+    console.error("WebSocket 연결 실패:", error);
+    isConnected.value = false;
+  }
 };
 
-const stopPolling = () => {
-  if (pollTimer) {
-    clearInterval(pollTimer);
-    pollTimer = null;
-  }
-  document.removeEventListener("visibilitychange", onVisibilityChange);
-};
-
-const onVisibilityChange = () => {
-  if (document.hidden) {
-    stopPolling();
-  } else {
-    startPolling();
-  }
+const disconnectWebSocket = () => {
+  websocketService.disconnect();
+  isConnected.value = false;
 };
 
 // 초기 데이터 로드
@@ -244,18 +238,23 @@ const loadCommunityData = async () => {
       return;
     }
 
-    // ✅ 새로고침 시 500 방지: 참여 목록 먼저 → 필요 시 join
+    // 참여 목록 먼저 → 필요 시 join
     await communityStore.fetchJoinedCommunities(authStore.user.id);
     if (!communityStore.isJoined(communityId)) {
       await communityStore.joinCommunity(communityId, authStore.user.id);
       await communityStore.fetchJoinedCommunities(authStore.user.id);
     }
 
-    // 히스토리 로드 후 폴링 시작
-    knownIds.clear();
+    // WebSocket 연결 및 채팅방 구독
+    await connectWebSocket();
+    
+    // 히스토리 로드
     chatMessages.value = [];
     await loadMessages();
-    startPolling(2000); // 2초 간격 (원하면 1000~3000 조정)
+    
+    // 현재 커뮤니티 구독
+    websocketService.subscribeToCommunity(communityId);
+    console.log(`커뮤니티 ${communityId} 구독 완료`);
   } catch (error) {
     console.error("채팅방 로드 실패:", error);
     alert("채팅방을 불러오는데 실패했습니다.");
@@ -268,17 +267,15 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  stopPolling();
+  disconnectWebSocket();
 });
 
-// 라우트 변경 시 재로딩 + 폴링 재시작
+// 라우트 변경 시 재로딩 + WebSocket 재구독
 watch(
   () => route.params.id,
   async (newId, oldId) => {
     if (newId && newId !== oldId) {
-      // 방 이동 시 폴링 리셋
-      stopPolling();
-      knownIds.clear();
+      // 방 이동 시 WebSocket 리셋
       chatMessages.value = [];
       await loadCommunityData();
     }
