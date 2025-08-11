@@ -1,12 +1,14 @@
 package com.daon.be.child.service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.daon.be.ai.dto.GptChildConversationResponseDto;
+import com.daon.be.ai.dto.GptInterestAnalysisResponseDto;
 import com.daon.be.ai.service.ChildConversationGptService;
-import com.daon.be.calendar.entity.Calendar;
-import com.daon.be.calendar.repository.CalendarRepository;
 import com.daon.be.child.dto.ChildExpressionResponseDto;
+import com.daon.be.child.dto.FullAnalysisResponseDto;
+import com.daon.be.child.dto.InterestAnalysisResponseDto;
 import com.daon.be.child.entity.ChildProfile;
 import com.daon.be.child.repository.ChildProfileRepository;
 import com.daon.be.child.repository.ConversationResultRepository;
@@ -22,10 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ChildExpressionServiceImpl implements ChildExpressionService {
 
-	private final ChildProfileRepository childRepo;
-	private final ConversationTopicRepository topicRepo;
 	private final ConversationResultRepository resultRepo;
-	private final CalendarRepository calendarRepository;
 	private final ChildConversationGptService gptService;
 
 	@Override
@@ -48,11 +47,12 @@ public class ChildExpressionServiceImpl implements ChildExpressionService {
 		}
 
 		// GPT 분석 수행
-		GptChildConversationResponseDto gptResponse = gptService.analyzeText(sttText);
+		GptChildConversationResponseDto gptResponse = gptService.analyzeEmotionAndSummary(sttText);
 
 		// 분석 결과 적용
 		result.applyGptAnalysis(gptResponse);
 		return ChildExpressionResponseDto.fromEntity(result);
 	}
+
 
 }
