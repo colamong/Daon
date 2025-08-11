@@ -49,7 +49,7 @@ public class CommunityServiceImpl implements CommunityService {
     @Override
     @Transactional(readOnly = true)
     public CommunityListResponseDto getActiveCommunitiesByUserId(Long userId) {
-        List<CommunityParticipation> participations = participationRepository.findActiveParticipationsByUserId(userId);
+        List<CommunityParticipation> participations = participationRepository.findByUserIdAndLeftAtIsNull(userId);
         List<CommunityResponseDto> communityDtos = participations.stream()
                 .map(participation -> new CommunityResponseDto(participation.getCommunity()))
                 .collect(Collectors.toList());
@@ -65,7 +65,7 @@ public class CommunityServiceImpl implements CommunityService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
         Optional<CommunityParticipation> existingParticipation = 
-                participationRepository.findActiveParticipation(community, user);
+                participationRepository.findByCommunityAndUserAndLeftAtIsNull(community, user);
         
         if (existingParticipation.isPresent()) {
             throw new RuntimeException("User is already participating in this community");
@@ -86,7 +86,7 @@ public class CommunityServiceImpl implements CommunityService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        CommunityParticipation participation = participationRepository.findActiveParticipation(community, user)
+        CommunityParticipation participation = participationRepository.findByCommunityAndUserAndLeftAtIsNull(community, user)
                 .orElseThrow(() -> new RuntimeException("User is not participating in this community"));
         
         participation.setLeftAt(LocalDateTime.now());
@@ -100,7 +100,7 @@ public class CommunityServiceImpl implements CommunityService {
     @Transactional(readOnly = true)
     public List<ParticipantResponseDto> getParticipants(Long communityId) {
         List<CommunityParticipation> participations = 
-                participationRepository.findActiveParticipationsByCommunityId(communityId);
+                participationRepository.findByCommunityIdAndLeftAtIsNull(communityId);
         return participations.stream()
                 .map(participation -> new ParticipantResponseDto(participation.getUser()))
                 .collect(Collectors.toList());

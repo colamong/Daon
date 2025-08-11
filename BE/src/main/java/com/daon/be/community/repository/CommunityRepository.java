@@ -11,8 +11,8 @@ import java.util.List;
 @Repository
 public interface CommunityRepository extends JpaRepository<Community, Long> {
     
-    @Query("SELECT c FROM Community c WHERE c.title LIKE %:title%")
-    List<Community> findByTitleContaining(@Param("title") String title);
+    // Spring Data JPA 네이밍 컨벤션 사용 (쿼리 자동 생성)
+    List<Community> findByTitleContaining(String title);
     
     @Query("SELECT c FROM Community c ORDER BY c.currentParticipants DESC")
     List<Community> findAllOrderByCurrentParticipantsDesc();

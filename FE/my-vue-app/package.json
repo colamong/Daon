@@ -14,9 +14,11 @@
     "@fullcalendar/interaction": "^6.1.18",
     "@fullcalendar/vue3": "^6.1.18",
     "@popperjs/core": "^2.11.8",
+    "@stomp/stompjs": "^7.1.1",
     "axios": "^1.11.0",
     "dayjs": "^1.11.13",
     "pinia": "^3.0.3",
+    "sockjs-client": "^1.6.1",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"
   },

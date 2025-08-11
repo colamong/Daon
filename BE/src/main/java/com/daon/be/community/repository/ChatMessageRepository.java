@@ -11,12 +11,10 @@ import java.util.List;
 @Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
     
-    @Query("SELECT cm FROM ChatMessage cm WHERE cm.community.id = :communityId ORDER BY cm.sentAt ASC")
-    List<ChatMessage> findByCommunityIdOrderBySentAtAsc(@Param("communityId") Long communityId);
+    // Spring Data JPA 네이밍 컨벤션 사용 (쿼리 자동 생성)
+    List<ChatMessage> findByCommunityIdOrderBySentAtAsc(Long communityId);
     
-    @Query("SELECT cm FROM ChatMessage cm WHERE cm.community.id = :communityId ORDER BY cm.sentAt DESC")
-    List<ChatMessage> findByCommunityIdOrderBySentAtDesc(@Param("communityId") Long communityId);
+    List<ChatMessage> findByCommunityIdOrderBySentAtDesc(Long communityId);
     
-    @Query("SELECT cm FROM ChatMessage cm WHERE cm.user.id = :userId ORDER BY cm.sentAt DESC")
-    List<ChatMessage> findByUserIdOrderBySentAtDesc(@Param("userId") Long userId);
+    List<ChatMessage> findByUserIdOrderBySentAtDesc(Long userId);
 }

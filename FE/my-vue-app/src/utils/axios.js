@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// axios 인스턴스 생성 (프록시 사용을 위해 baseURL을 비워둠)
+// axios 인스턴스 생성
 const apiClient = axios.create({
-  baseURL: '',
-  withCredentials: true,
+  baseURL: 'http://localhost:8080',  // 백엔드 서버 URL
+  withCredentials: true,  // 쿠키 기반 인증을 위해 true로 설정
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

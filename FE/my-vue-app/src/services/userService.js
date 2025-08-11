@@ -8,6 +8,7 @@ export const userService = {
       // 먼저 응답 구조를 확인해보고 적절히 수정
       return response.data.data || response.data;
     } catch (error) {
+      console.log(error.code);
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
         throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
       }
