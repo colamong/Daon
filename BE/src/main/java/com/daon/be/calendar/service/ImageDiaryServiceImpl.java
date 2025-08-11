@@ -65,7 +65,7 @@ public class ImageDiaryServiceImpl implements ImageDiaryService {
         // 연관된 calendar 및 child까지 함께 조회하여 LazyInitializationException 방지
         ImageDiary diary = imageDiaryRepository.findWithCalendarAndChildById(diaryId)
             .orElseThrow(() -> new EntityNotFoundException("해당 그림일기를 찾을 수 없습니다."));
-        return ImageDiaryResponseDto.from(diary);
+        return ImageDiaryResponseDto.from(diary, s3Uploader);
     }
 
     @Override
@@ -79,7 +79,7 @@ public class ImageDiaryServiceImpl implements ImageDiaryService {
             .findWithCalendarAndChildByChildIdAndCreatedAtBetweenOrderByCreatedAtDesc(childId, start, end);
 
         return diaries.stream()
-            .map(ImageDiaryResponseDto::from)
+            .map(diary -> ImageDiaryResponseDto.from(diary, s3Uploader))
             .toList();
     }
 }
