@@ -331,7 +331,23 @@ const handleCorrectAnswer = (answer) => {
     showConfetti.value = false
   }, 3000)
   
+  // 성공 효과음 재생
+  playSuccessSound()
+  
   showPronunciationConfirm.value = true
+}
+
+// 성공 효과음 재생
+const playSuccessSound = () => {
+  try {
+    const audio = new Audio('/src/assets/effects/answer.mp3')
+    audio.volume = 0.7
+    audio.play().catch(error => {
+      console.warn('효과음 재생 실패:', error)
+    })
+  } catch (error) {
+    console.warn('효과음 로드 실패:', error)
+  }
 }
 
 const handleIncorrectAnswer = () => {
