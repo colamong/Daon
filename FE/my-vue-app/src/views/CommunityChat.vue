@@ -190,19 +190,22 @@ const connectWebSocket = async () => {
       isConnected.value = connected;
     });
     
-    // 새 메시지 수신 처리
-    websocketService.onMessage((newMessage) => {
-      // 중복 체크
-      const exists = chatMessages.value.some(msg => msg.id === newMessage.id);
-      if (!exists) {
-        chatMessages.value.push({
-          id: newMessage.id,
-          message: newMessage.message,
-          userId: newMessage.userId,
-          userName: newMessage.userName,
-          sentAt: newMessage.sentAt
-        });
-      }
+    // websocketService의 messages 배열 감시
+    watch(() => websocketService.messages.length, () => {
+      const wsMessages = websocketService.messages;
+      wsMessages.forEach(wsMsg => {
+        // 중복 체크
+        const exists = chatMessages.value.some(msg => msg.id === wsMsg.id);
+        if (!exists) {
+          chatMessages.value.push({
+            id: wsMsg.id,
+            message: wsMsg.text, // websocketService에서는 text 필드 사용
+            userId: wsMsg.userId,
+            userName: wsMsg.userName,
+            sentAt: wsMsg.timestamp // websocketService에서는 timestamp 필드 사용
+          });
+        }
+      });
     });
     
     console.log("WebSocket 연결 완료");
