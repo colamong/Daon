@@ -10,6 +10,7 @@ import com.daon.be.child.entity.ChildProfile;
 import com.daon.be.child.entity.InterestAuthor;
 import com.daon.be.child.repository.ChildInterestRepository;
 import com.daon.be.child.repository.ChildProfileRepository;
+import com.daon.be.global.infra.S3Uploader;
 import com.daon.be.user.entity.User;
 import com.daon.be.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
