@@ -27,4 +27,8 @@ public interface ChildService {
     void deleteChildInterests(Long userId, Long childId, ChildInterestDeleteRequestDTO dto);
 
     void updateChildImage(Long userId, Long childId, MultipartFile file);
+
+    List<String> getParentInterests(Long userId, Long childId);
+
+    List<String> getAiInterests(Long userId, Long childId);
 }

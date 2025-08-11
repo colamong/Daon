@@ -28,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -114,7 +115,7 @@ public class ChildServiceImpl implements ChildService {
     @Override
     public ChildProfileResponseDTO getChildProfile(Long userId, Long childId) {
         ChildProfile child = childProfileRepository.findById(childId)
-                .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
+            .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
         // 소유권 검증
         if (!child.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("권한이 없습니다.");
@@ -241,7 +242,40 @@ public class ChildServiceImpl implements ChildService {
         return s.trim().toLowerCase();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getParentInterests(Long userId, Long childId) {
+        return getInterestsByAuthor(userId, childId, InterestAuthor.PARENT);
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getAiInterests(Long userId, Long childId) {
+        return getInterestsByAuthor(userId, childId, InterestAuthor.AI);
+    }
+
+    private List<String> getInterestsByAuthor(Long userId, Long childId, InterestAuthor author) {
+        ChildProfile child = childProfileRepository.findById(childId)
+            .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
+
+        if (!child.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("권한이 없습니다.");
+        }
+
+        // name 우선, 없으면 interest_type 폴백
+        Function<ChildInterest, String> label = ci -> {
+            String v = ci.getName();
+            if (v == null || v.isBlank()) v = ci.getInterestType();
+            return v == null ? "" : v.trim();
+        };
+
+        return childInterestRepository.findByChildProfileIdAndAuthor(childId, author).stream()
+            .map(label)
+            .filter(s -> s != null) // 비어있는 값은 제외 (필요하면 제거)
+            .distinct()
+            .sorted(String.CASE_INSENSITIVE_ORDER)
+            .toList();
+    }
 
 
     // 이미지 업로드 교체
