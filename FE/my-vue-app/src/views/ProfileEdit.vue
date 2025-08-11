@@ -23,6 +23,7 @@
                 class="w-60 h-60 rounded-full object-cover border-4 border-gray-200"
               />
             </div>
+
             <input
               ref="fileInput"
               type="file"
@@ -34,9 +35,10 @@
             <button
               type="button"
               @click="triggerFileInput"
-              class="px-6 py-2 bg-blue-100 text-black rounded-lg hover:bg-blue-500 hover:text-white transition-colors font-paper border border-gray-300"
+              :disabled="uploadingImage"
+              class="px-6 py-2 bg-blue-100 text-black rounded-lg hover:bg-blue-500 hover:text-white transition-colors font-paper border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              사진 불러오기
+              {{ uploadingImage ? '사진 업로드 중...' : '사진 불러오기' }}
             </button>
           </div>
 
@@ -115,6 +117,7 @@ const auth = useAuthStore();
 const { showSuccess, showError, showWarning } = useNotification();
 
 const loading = ref(false);
+const uploadingImage = ref(false); // 🔹 이미지 업로드 상태
 const fileInput = ref(null);
 
 // 현재 프로필 정보 (원본)
@@ -135,12 +138,11 @@ const formData = reactive({
 // 국가 옵션 (백엔드에서 로드)
 const countryOptions = ref([]);
 
-// 변경사항이 있는지 확인
+// 🔹 이미지 변경은 서버에 즉시 업로드하므로, hasChanges는 텍스트만 비교
 const hasChanges = computed(() => {
   return (
     formData.nickname !== currentProfile.nickname ||
-    formData.nationCode !== currentProfile.nationCode ||
-    formData.profileImage !== currentProfile.profileImage
+    formData.nationCode !== currentProfile.nationCode
   );
 });
 
@@ -156,9 +158,10 @@ async function loadCurrentProfile() {
   try {
     // 사용자 정보가 없다면 먼저 가져오기
     if (!auth.user && auth.token) {
-      await auth.getCurrentUser();
+      await auth.getCurrentUser?.(); // 프로젝트 구현에 맞춰 사용
     }
-    
+    // auth에 me를 다시 불러오는 액션이 있다면 사용 (예: await auth.loadMe())
+
     if (auth.user) {
       // 현재 프로필 정보 설정
       currentProfile.nickname = auth.user.nickname || "";
@@ -191,26 +194,43 @@ function triggerFileInput() {
   fileInput.value?.click();
 }
 
-function handleImageChange(event) {
-  const file = event.target.files[0];
-  if (file) {
-    // 파일 크기 체크 (5MB 제한)
-    if (file.size > 5 * 1024 * 1024) {
-      showWarning("파일 크기는 5MB 이하로 선택해주세요.", "파일 크기 초과");
-      return;
-    }
+async function handleImageChange(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
 
-    // 이미지 파일인지 확인
-    if (!file.type.startsWith("image/")) {
-      showError("이미지 파일만 선택할 수 있습니다.", "파일 형식 오류");
-      return;
-    }
+  // 파일 크기 체크 (5MB 제한)
+  if (file.size > 5 * 1024 * 1024) {
+    showWarning("파일 크기는 5MB 이하로 선택해주세요.", "파일 크기 초과");
+    event.target.value = '';
+    return;
+  }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      formData.profileImage = e.target.result;
-    };
-    reader.readAsDataURL(file);
+  // 이미지 파일인지 확인
+  if (!file.type.startsWith("image/")) {
+    showError("이미지 파일만 선택할 수 있습니다.", "파일 형식 오류");
+    event.target.value = '';
+    return;
+  }
+
+  try {
+    uploadingImage.value = true;
+
+    // 서버에 즉시 업로드 (멀티파트)
+    // auth.uploadProfileImage는 서버 업로드 후 this.user.profileImage를 objectURL로 교체하도록 구현해둠
+    await auth.uploadProfileImage(file);
+
+    // 화면 미리보기 동기화
+    // store에서 user.profileImage를 objectURL로 바꿨다면 그 값을 폼에도 반영
+    formData.profileImage = auth.user?.profileImage || formData.profileImage;
+
+    showSuccess("프로필 사진이 변경되었습니다.", "업로드 완료");
+  } catch (err) {
+    console.error(err);
+    showError("이미지 업로드에 실패했습니다. 다시 시도해주세요.", "업로드 실패");
+  } finally {
+    uploadingImage.value = false;
+    // 같은 파일 다시 선택 가능하도록 초기화
+    event.target.value = '';
   }
 }
 
@@ -234,31 +254,23 @@ async function handleUpdateProfile() {
   loading.value = true;
 
   try {
-    // 실제 API 호출
-    await auth.updateProfile({
+    // 텍스트 정보만 업데이트 (이미지는 별도 업로드로 이미 반영됨)
+    await auth.updateProfile?.({
       nickname: formData.nickname,
       nationCode: formData.nationCode
-      // profileImage는 나중에 구현 (파일 업로드가 필요)
     });
 
-    // auth.updateProfile에서 이미 사용자 정보를 업데이트했으므로
-    // 여기서는 currentProfile만 업데이트
+    // 현재 상태 동기화
     currentProfile.nickname = formData.nickname;
     currentProfile.nationCode = formData.nationCode;
 
     showSuccess("프로필이 성공적으로 업데이트되었습니다!", "수정 완료");
-
-    // 대시보드로 이동
     router.push({ name: "Dashboard" });
   } catch (error) {
     console.error("프로필 업데이트 실패:", error);
-    showError(error.message || "프로필 업데이트에 실패했습니다. 다시 시도해주세요.", "업데이트 실패");
+    showError(error?.message || "프로필 업데이트에 실패했습니다. 다시 시도해주세요.", "업데이트 실패");
   } finally {
     loading.value = false;
   }
 }
 </script>
-
-<style scoped>
-/* 필요시 추가 스타일 */
-</style>

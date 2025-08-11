@@ -18,10 +18,7 @@
           <form @submit.prevent="handleRegisterChild" class="space-y-8">
             <!-- 이름 -->
             <div>
-              <label
-                for="childName"
-                class="block text-lg font-paperBold text-black mb-3"
-              >
+              <label for="childName" class="block text-lg font-paperBold text-black mb-3">
                 이름
               </label>
               <input
@@ -36,10 +33,7 @@
 
             <!-- 생년월일 -->
             <div>
-              <label
-                for="birthDate"
-                class="block text-lg font-paperBold text-black mb-3"
-              >
+              <label for="birthDate" class="block text-lg font-paperBold text-black mb-3">
                 생년월일
               </label>
               <div class="flex gap-2">
@@ -94,10 +88,7 @@
 
             <!-- 추가하고 싶은 관심사 -->
             <div>
-              <label
-                for="newInterest"
-                class="block text-lg font-paperBold text-black mb-3"
-              >
+              <label for="newInterest" class="block text-lg font-paperBold text-black mb-3">
                 추가하고 싶은 관심사
               </label>
               <div class="flex gap-2">
@@ -142,7 +133,7 @@ import { useRouter } from "vue-router";
 import { useNotification } from '@/composables/useNotification.js';
 import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
-import { assignColorToChild } from '@/utils/colorManager.js';
+import { assignColorToChild } from '@/utils/colorManager.js'; // 사용 중이면 유지
 import { childService } from "@/services/childService.js";
 import BaseImageUpload from "@/components/form/BaseImageUpload.vue";
 import BaseRadioGroup from "@/components/form/BaseRadioGroup.vue";
@@ -159,13 +150,13 @@ const selectedMonth = ref("");
 const selectedDay = ref("");
 const newInterest = ref("");
 
-// 아이 데이터
+// 아이 데이터 (⚠ Base64 대신 File로 보관)
 const childData = reactive({
   name: "",
   birthDate: "",
   gender: "",
   interests: [],
-  profileImage: null,
+  profileFile: null, // File 객체
 });
 
 // 년도 옵션 (현재년도부터 20년 전까지)
@@ -193,7 +184,7 @@ const genderOptions = [
   { label: "여자", value: "FEMALE" },
 ];
 
-// 관심사 옵션 (아이들이 흔히 좋아하는 것들)
+// 관심사 옵션
 const interestOptions = ref([
   { label: "스포츠", value: "스포츠" },
   { label: "음식", value: "음식" },
@@ -206,37 +197,9 @@ const interestOptions = ref([
   { label: "요리", value: "요리" },
 ]);
 
-// 국가 옵션 (다문화 가정 중심)
-const countryOptions = [
-  { value: "대한민국", label: "🇰🇷 대한민국" },
-  { value: "베트남", label: "🇻🇳 베트남" },
-  { value: "필리핀", label: "🇵🇭 필리핀" },
-  { value: "태국", label: "🇹🇭 태국" },
-  { value: "캄보디아", label: "🇰🇭 캄보디아" },
-  { value: "몽골", label: "🇲🇳 몽골" },
-  { value: "우즈베키스탄", label: "🇺🇿 우즈베키스탄" },
-  { value: "미국", label: "🇺🇸 미국" },
-  { value: "일본", label: "🇯🇵 일본" },
-  { value: "중국", label: "🇨🇳 중국" },
-  { value: "영국", label: "🇬🇧 영국" },
-  { value: "프랑스", label: "🇫🇷 프랑스" },
-  { value: "독일", label: "🇩🇪 독일" },
-  { value: "캐나다", label: "🇨🇦 캐나다" },
-  { value: "호주", label: "🇦🇺 호주" },
-  { value: "스페인", label: "🇪🇸 스페인" },
-  { value: "이탈리아", label: "🇮🇹 이탈리아" },
-  { value: "브라질", label: "🇧🇷 브라질" },
-];
-
+// 이미지 업로드 콜백: File만 저장 (Base64 변환 금지)
 function handleImageUpload(file) {
-  // 파일을 base64로 변환해서 저장
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      childData.profileImage = e.target.result; // base64 문자열로 저장
-    };
-    reader.readAsDataURL(file);
-  }
+  childData.profileFile = file || null;
 }
 
 // 새로운 관심사 추가
@@ -245,48 +208,34 @@ function addNewInterest() {
     showWarning("관심사를 입력해주세요.", "입력 오류");
     return;
   }
-
-  // 이미 존재하는 관심사인지 확인
   const exists = interestOptions.value.find(
-    (option) =>
-      option.value.toLowerCase() === newInterest.value.trim().toLowerCase()
+    (option) => option.value.toLowerCase() === newInterest.value.trim().toLowerCase()
   );
-
   if (exists) {
     showWarning("이미 존재하는 관심사입니다.", "중복된 관심사");
     newInterest.value = "";
     return;
   }
-
-  // 새로운 관심사 추가
   const newInterestOption = {
     label: newInterest.value.trim(),
     value: newInterest.value.trim(),
   };
-
   interestOptions.value.push(newInterestOption);
-
-  // 추가된 관심사를 자동으로 선택
   if (!childData.interests.includes(newInterestOption.value)) {
     childData.interests.push(newInterestOption.value);
   }
-
-  // 입력 필드 초기화
   newInterest.value = "";
 }
 
 async function handleRegisterChild() {
-  // 필수 필드 검증
   if (!childData.name.trim()) {
     showError("아이의 이름을 입력해주세요.", "입력 오류");
     return;
   }
-
   if (!childData.birthDate) {
     showError("생년월일을 선택해주세요.", "입력 오류");
     return;
   }
-
   if (!childData.gender) {
     showError("성별을 선택해주세요.", "입력 오류");
     return;
@@ -295,34 +244,29 @@ async function handleRegisterChild() {
   loading.value = true;
 
   try {
-    // 로그인된 사용자 ID 사용
     const userId = auth.user?.id || 1;
-    
-    // API 요청 데이터 준비
-    const requestData = {
+
+    // 1) JSON 등록 (Base64/URL 없이)
+    const registerRes = await childService.registerChild(userId, {
       name: childData.name.trim(),
       birthDate: childData.birthDate,
       gender: childData.gender,
-      profileImg: childData.profileImage || "https://example.com/images/default_child_profile.png",
-      interests: [...childData.interests] // Proxy Array를 일반 배열로 변환
-    };
+      interests: [...childData.interests],
+    });
+    const childId = registerRes?.childId;
 
-    console.log('자녀 등록 요청 데이터:', requestData);
-    
-    // 실제 API 호출
-    const response = await childService.registerChild(userId, requestData);
-    console.log('자녀 등록 응답:', response);
+    // 2) 이미지가 있으면 멀티파트 업로드
+    if (childId && childData.profileFile) {
+      await childService.uploadChildImage(userId, childId, childData.profileFile);
+    }
 
-    showSuccess(`${childData.name}의 정보가 성공적으로 등록되었습니다!`, "등록 완료");
-
-    // childStore 새로고침
+    // 3) 목록 새로고침 & 이동
     await childStore.loadChildren();
-
-    // 대시보드로 이동
+    showSuccess(`${childData.name}의 정보가 성공적으로 등록되었습니다!`, "등록 완료");
     router.push({ name: "Dashboard" });
   } catch (error) {
     console.error("아이 등록 실패:", error);
-    showError(error.message || "아이 등록에 실패했습니다. 다시 시도해주세요.", "등록 실패");
+    showError(error?.response?.data?.error || error.message || "아이 등록에 실패했습니다. 다시 시도해주세요.", "등록 실패");
   } finally {
     loading.value = false;
   }

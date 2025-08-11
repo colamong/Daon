@@ -5,6 +5,7 @@ import com.daon.be.child.dto.ChildInterestDeleteRequestDTO;
 import com.daon.be.child.dto.ChildProfileResponseDTO;
 import com.daon.be.child.dto.ChildRequestDTO;
 import com.daon.be.child.dto.ChildResponseDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -24,4 +25,6 @@ public interface ChildService {
     void addChildInterests(Long userId, Long childId, ChildInterestCreateRequestDTO dto);
 
     void deleteChildInterests(Long userId, Long childId, ChildInterestDeleteRequestDTO dto);
+
+    void updateChildImage(Long userId, Long childId, MultipartFile file);
 }

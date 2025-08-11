@@ -13,6 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+
 import java.util.List;
 
 @RestController
@@ -114,5 +117,18 @@ public class ChildController {
         return ResponseEntity.ok(
                 new ApiResponse<>(200, "자녀 관심사 삭제 완료", null)
         );
+    }
+
+    @PutMapping(
+            value = "/{childId}/image",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<ApiResponse<Void>> updateChildImage(
+            @PathVariable Long userId,
+            @PathVariable Long childId,
+            @RequestPart("file") MultipartFile file
+    ) {
+        childService.updateChildImage(userId, childId, file);
+        return ResponseEntity.ok(new ApiResponse<>(200, "자녀 프로필 이미지 수정 완료", null));
     }
 }

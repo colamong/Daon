@@ -43,6 +43,9 @@ public class User {
 	@Column(name = "created_at")
 	private LocalDateTime createdAt = LocalDateTime.now();
 
+	@Column(name = "profile_img")
+	private String profileImg; // S3 key 또는 (과거) 공개 URL
+
 	private LocalDateTime deletedAt;
 
 	public enum Provider {

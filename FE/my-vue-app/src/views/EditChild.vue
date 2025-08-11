@@ -20,10 +20,7 @@
       <!-- 아이가 있는 경우 -->
       <div v-else class="space-y-8">
         <!-- 아이 선택 탭 (여러 명인 경우) -->
-        <div
-          v-if="childrenList.length > 1"
-          class="flex justify-center space-x-4 mb-8"
-        >
+        <div v-if="childrenList.length > 1" class="flex justify-center space-x-4 mb-8">
           <button
             v-for="(child, index) in childrenList"
             :key="child.id"
@@ -31,8 +28,7 @@
             class="px-6 py-3 rounded-lg font-paperBold transition-colors"
             :class="{
               'bg-purple-500 text-white': selectedChildIndex === index,
-              'bg-gray-200 text-gray-700 hover:bg-gray-300':
-                selectedChildIndex !== index,
+              'bg-gray-200 text-gray-700 hover:bg-gray-300': selectedChildIndex !== index,
             }"
           >
             {{ child.name }}
@@ -45,7 +41,7 @@
           <div class="flex flex-col space-y-6">
             <BaseImageUpload
               @upload:image="handleImageUpload"
-              :initial-image="childData.profileImage"
+              :initial-image="previewImage"
             />
           </div>
 
@@ -54,12 +50,7 @@
             <form @submit.prevent="handleUpdateChild" class="space-y-8">
               <!-- 이름 -->
               <div>
-                <label
-                  for="childName"
-                  class="block text-lg font-paperBold text-black mb-3"
-                >
-                  이름
-                </label>
+                <label for="childName" class="block text-lg font-paperBold text-black mb-3">이름</label>
                 <input
                   id="childName"
                   v-model="childData.name"
@@ -72,43 +63,22 @@
 
               <!-- 생년월일 -->
               <div>
-                <label
-                  for="birthDate"
-                  class="block text-lg font-paperBold text-black mb-3"
-                >
-                  생년월일
-                </label>
+                <label for="birthDate" class="block text-lg font-paperBold text-black mb-3">생년월일</label>
                 <div class="flex gap-2">
-                  <select
-                    v-model="selectedYear"
-                    class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white"
-                  >
+                  <select v-model="selectedYear" class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white">
                     <option value="">년도</option>
-                    <option v-for="year in years" :key="year" :value="year">
-                      {{ year }}년
-                    </option>
+                    <option v-for="year in years" :key="year" :value="year">{{ year }}년</option>
                   </select>
-                  <select
-                    v-model="selectedMonth"
-                    class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white"
-                  >
+                  <select v-model="selectedMonth" class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white">
                     <option value="">월</option>
-                    <option v-for="month in 12" :key="month" :value="month">
-                      {{ month }}월
-                    </option>
+                    <option v-for="month in 12" :key="month" :value="month">{{ month }}월</option>
                   </select>
-                  <select
-                    v-model="selectedDay"
-                    class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white"
-                  >
+                  <select v-model="selectedDay" class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white">
                     <option value="">일</option>
-                    <option v-for="day in daysInMonth" :key="day" :value="day">
-                      {{ day }}일
-                    </option>
+                    <option v-for="day in daysInMonth" :key="day" :value="day">{{ day }}일</option>
                   </select>
                 </div>
               </div>
-
 
               <!-- 관심사 -->
               <div>
@@ -121,12 +91,7 @@
 
               <!-- 추가하고 싶은 관심사 -->
               <div>
-                <label
-                  for="newInterest"
-                  class="block text-lg font-paperBold text-black mb-3"
-                >
-                  추가하고 싶은 관심사
-                </label>
+                <label for="newInterest" class="block text-lg font-paperBold text-black mb-3">추가하고 싶은 관심사</label>
                 <div class="flex gap-2">
                   <input
                     id="newInterest"
@@ -212,10 +177,18 @@ const childData = reactive({
   birthDate: "",
   gender: "",
   interests: [],
-  profileImage: null,
+  imageUrl: null,            // 서버에서 내려준 presigned URL
+  profileKey: null,          // 서버에 저장된 S3 key (URL이 오면 프런트에서 추출)
+  profileFile: null,         // 새로 선택한 File (멀티파트 업로드용)
+  profileImagePreview: null, // 미리보기용 Object URL
 });
 
-// 년도 옵션 (현재년도부터 20년 전까지)
+// 미리보기 이미지 선택 로직
+const previewImage = computed(() =>
+  childData.profileImagePreview || childData.imageUrl || 'https://placehold.co/300x300'
+);
+
+// 년도 옵션
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 20 }, (_, i) => currentYear - i);
 
@@ -234,23 +207,18 @@ watch([selectedYear, selectedMonth, selectedDay], () => {
   }
 });
 
-
 // 관심사 옵션 (동적으로 생성)
 const interestOptions = ref([]);
 
-// childStore의 computed 속성 사용
+// store 연동
 const hasChild = computed(() => childStore.hasChildren);
 const childrenList = computed(() => childStore.children);
-const selectedChild = computed(() => {
-  return childrenList.value[selectedChildIndex.value] || childStore.selectedChild || {};
-});
+const selectedChild = computed(() => childrenList.value[selectedChildIndex.value] || childStore.selectedChild || {});
 
 // 아이 정보 로드
 async function loadChildren() {
   await childStore.initialize();
-  
   if (childStore.hasChildren) {
-    // 현재 선택된 아이나 첫 번째 아이의 데이터로 폼 초기화
     const child = childStore.selectedChild || childStore.children[0];
     selectedChildIndex.value = childStore.children.findIndex(c => c.id === child.id);
     loadChildData(child);
@@ -259,21 +227,30 @@ async function loadChildren() {
 
 // 특정 아이 데이터 로드
 function loadChildData(child) {
-  Object.assign(childData, child);
+  childData.id = child.id;
+  childData.name = child.name || '';
+  childData.birthDate = child.birthDate || '';
+  childData.gender = child.gender || '';
+  childData.interests = Array.isArray(child.interests) ? [...child.interests] : [];
+  childData.imageUrl = child.imageUrl || child.profileImage || null;
+
+  // 기존 S3 키 확보 (서버가 key 또는 URL을 줄 수 있음)
+  childData.profileKey = child.profileImg || extractS3Key(childData.imageUrl) || null;
 
   // 생년월일 파싱
-  if (child.birthDate) {
-    const [year, month, day] = child.birthDate.split("-");
-    selectedYear.value = parseInt(year);
-    selectedMonth.value = parseInt(month);
-    selectedDay.value = parseInt(day);
+  if (childData.birthDate) {
+    const [y, m, d] = childData.birthDate.split("-");
+    selectedYear.value = parseInt(y);
+    selectedMonth.value = parseInt(m);
+    selectedDay.value = parseInt(d);
   }
 
-  // 해당 아이의 실제 관심사만 옵션으로 설정
-  interestOptions.value = (child.interests || []).map(interest => ({
-    label: interest,
-    value: interest
-  }));
+  // 관심사 옵션
+  interestOptions.value = (childData.interests || []).map(v => ({ label: v, value: v }));
+
+  // 새 업로드 리셋
+  childData.profileFile = null;
+  childData.profileImagePreview = null;
 }
 
 // 아이 선택
@@ -284,13 +261,9 @@ function selectChild(index) {
 
 // 이미지 업로드 처리
 function handleImageUpload(file) {
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      childData.profileImage = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
+  if (!file) return;
+  childData.profileFile = file;
+  childData.profileImagePreview = URL.createObjectURL(file);
 }
 
 // 새로운 관심사 추가
@@ -299,14 +272,11 @@ async function addNewInterest() {
     showWarning("관심사를 입력해주세요.", "입력 오류");
     return;
   }
-
   const newInterestValue = newInterest.value.trim();
 
-  // 이미 존재하는 관심사인지 확인
   const exists = interestOptions.value.find(
     (option) => option.value.toLowerCase() === newInterestValue.toLowerCase()
   );
-
   if (exists) {
     showWarning("이미 존재하는 관심사입니다.", "중복된 관심사");
     newInterest.value = "";
@@ -315,32 +285,21 @@ async function addNewInterest() {
 
   try {
     const userId = auth.user?.id;
-    
     if (!userId) {
       showError("로그인이 필요합니다.", "인증 오류");
       return;
     }
 
-    // 즉시 DB에 추가
     await childService.addChildInterests(userId, childData.id, { interests: [newInterestValue] });
 
-    // 새로운 관심사 옵션 추가
-    const newInterestOption = {
-      label: newInterestValue,
-      value: newInterestValue,
-    };
-
-    interestOptions.value.push(newInterestOption);
-
-    // 자동으로 선택상태로 만들기
+    const opt = { label: newInterestValue, value: newInterestValue };
+    interestOptions.value.push(opt);
     if (!childData.interests.includes(newInterestValue)) {
       childData.interests.push(newInterestValue);
     }
-
     newInterest.value = "";
     showSuccess(`"${newInterestValue}" 관심사가 추가되었습니다.`, "관심사 추가");
-    
-    // childStore도 업데이트
+
     await childStore.loadChildren();
   } catch (error) {
     console.error("관심사 추가 실패:", error);
@@ -350,136 +309,98 @@ async function addNewInterest() {
 
 // 아이 정보 수정
 async function handleUpdateChild() {
-  // 필수 필드 검증
   if (!childData.name.trim()) {
     showError("아이의 이름을 입력해주세요.", "입력 오류");
     return;
   }
-
   if (!childData.birthDate) {
     showError("생년월일을 선택해주세요.", "입력 오류");
     return;
   }
 
-
   loading.value = true;
 
   try {
     const userId = auth.user?.id;
-    
     if (!userId) {
       showError("로그인이 필요합니다.", "인증 오류");
       return;
     }
 
-    // 1. 기본 정보 수정 (프로필 정보만)
+    // 1) 텍스트 업데이트: profileImg에는 기존 S3 key만 유지
     const requestData = {
       name: childData.name.trim(),
       birthDate: childData.birthDate,
-      gender: childData.gender,
-      profileImg: childData.profileImage || childData.profileImg
+      gender: childData.gender,                // 서버에서 무시 가능
+      profileImg: childData.profileKey || null // Base64/Presigned 금지
     };
-
     await childService.updateChild(userId, childData.id, requestData);
 
-    // 2. 관심사 변경 처리
+    // 2) 새 파일이 있으면 멀티파트 업로드
+    if (childData.profileFile && typeof childService.uploadChildImage === 'function') {
+      await childService.uploadChildImage(userId, childData.id, childData.profileFile);
+    }
+
+    // 3) 관심사 변경(해제된 것 삭제)
     await updateInterests(userId, childData.id);
 
-    // childStore 새로고침 (최신 데이터 로드)
+    // 4) 상태 갱신
     await childStore.loadChildren();
-
     showSuccess(`${childData.name}의 정보가 성공적으로 수정되었습니다!`, "수정 완료");
-    
-    // 프로필 페이지로 이동
     router.push({ name: "ChildProfile" });
   } catch (error) {
     console.error("아이 정보 수정 실패:", error);
-    showError("아이 정보 수정에 실패했습니다. 다시 시도해주세요.", "수정 실패");
+    showError(error?.message || "아이 정보 수정에 실패했습니다. 다시 시도해주세요.", "수정 실패");
   } finally {
     loading.value = false;
   }
 }
 
-// 관심사 변경 처리 - 체크된 것만 남기고 나머지 삭제
+// 관심사 변경 처리 - 체크 해제된 항목 삭제
 async function updateInterests(userId, childId) {
   const originalChild = childStore.children.find(c => c.id === childId);
   const originalInterests = originalChild?.interests || [];
   const currentInterests = childData.interests || [];
 
-  console.log('관심사 최종 정리:', {
-    original: originalInterests,
-    current: currentInterests
-  });
-
-  // 삭제할 관심사 (체크 해제된 것들)  
-  const interestsToDelete = originalInterests.filter(interest => 
-    !currentInterests.includes(interest)
-  );
-
-  console.log('삭제할 관심사:', interestsToDelete);
-
-  // 체크 해제된 관심사 삭제
+  const interestsToDelete = originalInterests.filter(i => !currentInterests.includes(i));
   if (interestsToDelete.length > 0) {
-    console.log('관심사 삭제 API 호출:', { userId, childId, interests: interestsToDelete });
     await childService.deleteChildInterests(userId, childId, { interests: interestsToDelete });
-    console.log('관심사 삭제 완료');
   }
 }
 
-// 아이 삭제 확인
+// 삭제 확인 및 삭제
 function confirmDelete() {
   if (!showDeleteConfirm.value) {
-    // 첫 번째 클릭: 확인 메시지 표시
     showDeleteConfirm.value = true;
     showWarning(
       `정말로 ${childData.name}의 정보를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다. 삭제하려면 '정말 삭제하기' 버튼을 다시 눌러주세요.`,
       "삭제 확인"
     );
-    
-    // 5초 후에 확인 상태 리셋
-    setTimeout(() => {
-      showDeleteConfirm.value = false;
-    }, 5000);
+    setTimeout(() => (showDeleteConfirm.value = false), 5000);
   } else {
-    // 두 번째 클릭: 실제 삭제 실행
     deleteChild();
   }
 }
 
-// 아이 삭제
 async function deleteChild() {
   try {
     const userId = auth.user?.id;
-    
-    console.log('삭제 시도:', { userId, childId: childData.id, childName: childData.name });
-    
     if (!userId) {
       showError("로그인이 필요합니다.", "인증 오류");
       return;
     }
-
     if (!childData.id) {
       showError("아이 정보를 찾을 수 없습니다.", "삭제 실패");
       return;
     }
 
-    console.log('API 호출 전');
-    // 실제 API 호출
-    const result = await childService.deleteChild(userId, childData.id);
-    console.log('API 호출 완료:', result);
-
-    // childStore에서도 제거
+    await childService.deleteChild(userId, childData.id);
     childStore.removeChild(childData.id);
-    console.log('childStore에서 제거 완료');
 
     showInfo(`${childData.name}의 정보가 삭제되었습니다.`, "삭제 완료");
-
-    // 남은 아이가 있으면 프로필 페이지로, 없으면 대시보드로
     if (childStore.hasChildren) {
-      console.log('다른 아이가 있음 - 프로필 페이지로 이동');
       router.push({ name: "ChildProfile" });
     } else {
-      console.log('아이가 없음 - 대시보드로 이동');
       router.push({ name: "Dashboard" });
     }
   } catch (error) {
@@ -493,13 +414,28 @@ async function deleteChild() {
   }
 }
 
-// 페이지 이동 함수들
-function goToRegister() {
-  router.push({ name: "RegisterChild" });
-}
+function goToRegister() { router.push({ name: "RegisterChild" }); }
+function goBack() { router.push({ name: "ChildProfile" }); }
 
-function goBack() {
-  router.push({ name: "ChildProfile" });
+// 프리사인/공개 URL에서 S3 key 추출
+function extractS3Key(urlOrKey) {
+  if (!urlOrKey) return null;
+  if (!/^https?:\/\//i.test(urlOrKey)) return urlOrKey;
+
+  try {
+    const u = new URL(urlOrKey);
+    let key = u.pathname.startsWith('/') ? u.pathname.slice(1) : u.pathname;
+    key = key.replace(/^\/+/, '');
+    return key || null;
+  } catch {
+    const idx = urlOrKey.indexOf('.amazonaws.com/');
+    if (idx > -1) {
+      const rest = urlOrKey.substring(idx + '.amazonaws.com/'.length);
+      return rest.split('?')[0];
+    }
+    const lastSlash = urlOrKey.lastIndexOf('/');
+    return lastSlash > -1 ? urlOrKey.substring(lastSlash + 1) : urlOrKey;
+  }
 }
 
 // 컴포넌트 마운트 시 실행
@@ -507,7 +443,3 @@ onMounted(async () => {
   await loadChildren();
 });
 </script>
-
-<style scoped>
-/* 필요시 추가 스타일 */
-</style>

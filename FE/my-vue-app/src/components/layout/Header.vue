@@ -85,8 +85,8 @@
       <div
         class="relative flex flex-col items-center p-8 pt-12 space-y-4 text-center h-full overflow-visible"
       >
-        <!-- 1) 프로필 사진 -->
-        <div class="\">
+        <!-- 1) 프로필 사진 (오타 수정: class="\" 제거) -->
+        <div class="">
           <img
             :src="auth.user?.profileImage || 'https://placehold.co/96x96'"
             alt="프로필"
@@ -173,38 +173,34 @@ function logout() {
 
 const goDashboard = () => router.push({ name: "Dashboard" });
 
-const goChildMain = () => {
-  // 아이 정보 확인
-  childStore.initialize();
-  
+//비동기 처리: initialize 완료 후 분기 
+const goChildMain = async () => {
+  await childStore.initialize();
+
   if (!childStore.hasChildren) {
-    // 아이가 없으면 등록 확인 모달 표시
     showChildRegistrationModal.value = true;
     return;
   }
-  
-  // 아이가 1명이면 바로 선택하고 이동
+
   if (childStore.children.length === 1) {
     childStore.selectChild(childStore.children[0].id);
-    router.push({ 
-      name: 'ChildMain',
-      params: { childId: childStore.children[0].id }
+    router.push({
+      name: "ChildMain",
+      params: { childId: childStore.children[0].id },
     });
     return;
   }
-  
-  // 여러 명이면 선택 모달 표시
+
   showPenguinChildSelectModal.value = true;
 };
 
-const goChildProfile = () => {
-  // 아이 정보 확인
-  childStore.initialize();
-  
+const goChildProfile = async () => {
+  await childStore.initialize();
   router.push({
     name: childStore.hasChildren ? "ChildProfile" : "RegisterChild",
   });
 };
+
 const goOCRTool = () => router.push({ name: "OCRTool" });
 const goCommunityChat = () => router.push({ name: "Community" });
 const goLearningHelper = () => router.push({ name: "LearningHelper" });
@@ -212,22 +208,21 @@ const goLearningHelper = () => router.push({ name: "LearningHelper" });
 // 펭구랑 놀자에서 아이 선택됐을 때
 function onPenguinChildSelected(child) {
   childStore.selectChild(child.id);
-  router.push({ 
-    name: 'ChildMain',
-    params: { childId: child.id }
+  router.push({
+    name: "ChildMain",
+    params: { childId: child.id },
   });
 }
 
 // 아이 등록하러 가기
 function goToChildRegister() {
-  router.push({ name: 'RegisterChild' });
+  router.push({ name: "RegisterChild" });
 }
 
 // 아이 등록 모달 핸들러
 function handleChildRegistrationConfirm() {
-  router.push({ name: 'RegisterChild' });
+  router.push({ name: "RegisterChild" });
 }
-
 function handleChildRegistrationCancel() {
   // 취소 시 아무것도 하지 않음
 }
