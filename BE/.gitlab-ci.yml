@@ -35,7 +35,8 @@ deploy-backend:
     - set -euxo pipefail
     - whoami && hostname
     - docker version && docker ps
-    # 변수/경로 점검 (토큰/비밀은 출력 안 함)
+
+    # 변수/경로 점검
     - echo "IMAGE_NAME=$IMAGE_NAME"
     - echo "CONTAINER_NAME=$CONTAINER_NAME"
     - echo "HOST_PORT=$HOST_PORT CONTAINER_PORT=$CONTAINER_PORT"
@@ -50,7 +51,7 @@ deploy-backend:
     - docker pull "$IMAGE_NAME:latest"
 
     - echo "=== Run new container ==="
-    # ★ 줄바꿈 없이 한 줄로 고정 (invalid reference format 방지)
-    - docker run -d --name "$CONTAINER_NAME" --env-file "$ENV_FILE" -p "$HOST_PORT:$CONTAINER_PORT" "$IMAGE_NAME:latest"
+    - echo "Full command: docker run -d --name $CONTAINER_NAME --env-file $ENV_FILE -p $HOST_PORT:$CONTAINER_PORT $IMAGE_NAME:latest"
+    - docker run -d --name $CONTAINER_NAME --env-file $ENV_FILE -p $HOST_PORT:$CONTAINER_PORT $IMAGE_NAME:latest
 
     - echo "=== Deployment Finished ==="
