@@ -40,11 +40,16 @@ spring:
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
 
+    servlet:
+      multipart:
+        max-file-size: 15MB
+        max-request-size: 15MB
+
 gms:
   api:
     key: ${GMS_API_KEY}
     url: ${GMS_API_URL}
-    model: gpt-4.1
+    model: gpt-4o
   image:
     api:
       url: ${GMS_IMAGE_API_URL}
