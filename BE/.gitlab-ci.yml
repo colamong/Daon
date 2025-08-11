@@ -5,11 +5,11 @@ stages:
   - build
   - deploy
 
-# 1) Docker 이미지 빌드 & 푸시
+# 1) 이미지 빌드 + 푸시 (Docker Hub)
 build-and-push:
   stage: build
   rules:
-    - if: '$CI_COMMIT_BRANCH == "deploy"'   # deploy 브랜치에서만 실행
+    - if: '$CI_COMMIT_BRANCH == "deploy"'
   script:
     - echo "=== Docker Hub Login ==="
     - docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_TOKEN"
@@ -20,22 +20,22 @@ build-and-push:
     - echo "=== Docker Push ==="
     - docker push "$IMAGE_NAME:latest"
 
-    - echo "=== Build & Push Finished ==="
-
-# 2) EC2에서 컨테이너 교체
+# 2) EC2(현재 러너가 있는 곳)에서 컨테이너 교체
 deploy-backend:
   stage: deploy
   rules:
     - if: '$CI_COMMIT_BRANCH == "deploy"'
   script:
-    - echo "=== Stop & Remove Existing Container ==="
+    - whoami && hostname
+    - docker version && docker ps
+    - echo "=== Stop & Remove existing container (if any) ==="
     - docker stop "$CONTAINER_NAME" || true
     - docker rm "$CONTAINER_NAME" || true
 
-    - echo "=== Pull Latest Image ==="
+    - echo "=== Pull latest image ==="
     - docker pull "$IMAGE_NAME:latest"
 
-    - echo "=== Run New Container ==="
+    - echo "=== Run new container ==="
     - docker run -d --name "$CONTAINER_NAME" \
       --env-file "$ENV_FILE" \
       -p "$HOST_PORT:$CONTAINER_PORT" \
