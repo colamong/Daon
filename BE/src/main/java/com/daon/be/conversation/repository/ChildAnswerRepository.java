@@ -20,7 +20,4 @@ public interface ChildAnswerRepository extends JpaRepository<ChildAnswer, Long> 
 	@Query("SELECT ca.topic.id FROM ChildAnswer ca WHERE ca.child.id = :childId ORDER BY ca.createdAt DESC")
 	Optional<Long> findLatestTopicIdByChildId(@Param("childId") Long childId);
 
-
-
-
 }

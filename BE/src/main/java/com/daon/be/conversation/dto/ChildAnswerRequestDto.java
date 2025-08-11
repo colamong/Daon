@@ -1,23 +1,5 @@
 package com.daon.be.conversation.dto;
 
-//import lombok.Getter;
-//import lombok.NoArgsConstructor;
-
-//@Getter
-//@NoArgsConstructor
-//public class ChildAnswerRequestDto {
-//
-//	private Long childId;          // FK 매핑용 (Controller에서 ChildProfile 조회용)
-//	private Long topicId;          // FK 매핑용 (Controller에서 ConversationTopic 조회용)
-//	private int step;              // 몇 번째 질문인지
-//	private String question;       // 질문 내용 (예: "오늘 기분이 어땠어요?")
-//	private String answer;         // 아이의 음성/텍스트 답변 결과
-//
-//	public void setStep(int step) {
-//		this.step = step;
-//	}
-//}
-
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -36,7 +18,21 @@ public class ChildAnswerRequestDto {
 	@Min(1)
 	private int step;
 
-	// 선택값(널 허용). 기본값 빈 문자열로 두면 NPE 방지에 좋음
+	// 선택값 (널 허용) 기본값 빈 문자열로 두면 NPE 방지에 좋음
 	private String question = "";
 	private String answer   = "";
+
+	// JSON 본문에 base64 문자열을 넣으면 Jackson이 자동으로 디코드
+	private byte[] audioBytes;
+
+	// 프런트가 파일명을 알고 있으면 힌트용 (확장자 추정)
+	private String audioFilename;
+
+	// 언어 코드 - 기본 korean
+	private String language = "ko";
+
+	// JSON을 base64 문자열 필드로 보내고 싶은 경우용
+	private String audioBase64;
+
+	private String aggregatedText;
 }

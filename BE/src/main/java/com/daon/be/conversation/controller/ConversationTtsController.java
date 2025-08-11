@@ -10,10 +10,6 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-/**
- * 파일 저장 없이 바로 재생 가능한 TTS 스트리밍 엔드포인트
- * 프론트: <audio src="/api/conversation/tts/stream?text=...">
- */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/conversation/tts")
@@ -24,7 +20,7 @@ public class ConversationTtsController {
     @GetMapping("/stream")
     public ResponseEntity<StreamingResponseBody> stream(
             @RequestParam String text,
-            @RequestParam(defaultValue = "nova") String voice,
+            @RequestParam(defaultValue = "fable") String voice,
             @RequestParam(defaultValue = "wav") String format,
             @RequestParam(defaultValue = "1.0") double speed,
             @RequestParam(defaultValue = "false") boolean eval // true면 streamAndEval 사용
