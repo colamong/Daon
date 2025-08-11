@@ -376,8 +376,7 @@ const startPronunciationPractice = () => {
 
 const skipPronunciationPractice = () => {
   showPronunciationConfirm.value = false
-  showInfo('정답입니다!', '성공', { duration: 2000 })
-  setTimeout(() => nextQuestion(), 1500)
+  setTimeout(() => nextQuestion(), 500)
 }
 
 const completePronunciationPractice = (score) => {
@@ -391,7 +390,6 @@ const submitAnswer = () => {
   if (!answer) return
   // 서버 DTO에 isCorrect가 이미 있음 (DB is_correct)
   if (answer.isCorrect) {
-    showInfo('정답입니다!', '성공', { duration: 2000 })
     nextQuestion()
   } else {
     showWarning('틀렸습니다. 다시 시도해보세요.', '오답', { duration: 2000 })
