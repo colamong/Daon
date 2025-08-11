@@ -21,29 +21,43 @@
         {{ userName }}
       </div>
       
-      <!-- 말풍선 -->
-      <div
-        :class="[
-          'px-4 py-2 max-w-xs text-sm rounded-xl',
-          isMine
-            ? 'bg-[#F2F5FD] text-right rounded-br-none'
-            : 'border border-black text-left',
-        ]"
-      >
-        {{ message }}
+      <!-- 말풍선과 시간 -->
+      <div :class="isMine ? 'flex flex-row-reverse items-end gap-2' : 'flex items-end gap-2'">
+        <!-- 말풍선 -->
+        <div
+          :class="[
+            'px-4 py-2 max-w-xs text-sm rounded-xl',
+            isMine
+              ? 'bg-[#F2F5FD] text-right rounded-br-none'
+              : 'border border-black text-left',
+          ]"
+        >
+          {{ message }}
+        </div>
+        
+        <!-- 시간 -->
+        <div class="text-xs text-gray-400 whitespace-nowrap pb-1">
+          {{ formattedTime }}
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-
+import { computed } from 'vue'
 import imagePlaceholder from '@/assets/icons/image-placeholder.svg'
+import { formatChatTime } from '@/utils/formatDate.js'
 
-defineProps({
+const props = defineProps({
   isMine: Boolean,
   message: String,
   timestamp: String,
   userName: String,
+})
+
+// 시간 포맷팅
+const formattedTime = computed(() => {
+  return formatChatTime(props.timestamp)
 })
 </script>
