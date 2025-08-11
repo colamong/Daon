@@ -227,6 +227,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Confetti 축하 효과 -->
+    <ConfettiEffect :show="showConfetti" />
   </div>
 </template>
 
@@ -237,6 +240,7 @@ import { useNotification } from '@/composables/useNotification'
 import IconButton from '@/components/button/IconButton.vue'
 import AnswerCard from '@/components/card/AnswerCard.vue'
 import PronunciationModal from '@/components/modal/PronunciationModal.vue'
+import ConfettiEffect from '@/components/effect/ConfettiEffect.vue'
 import learningService from '@/services/learningService'
 import ttsService from '@/services/ttsService'
 
@@ -277,6 +281,7 @@ const selectedCorrectAnswer = ref(null)
 const showNavigationConfirm = ref(false)
 const showExitConfirm = ref(false)
 const pendingNavigation = ref(null)
+const showConfetti = ref(false)
 
 // ---------- API 로딩 ----------
 const loadThemes = async () => {
@@ -319,6 +324,13 @@ watch(() => questionId.value, () => {
 const handleCorrectAnswer = (answer) => {
   selectedAnswer.value = answer.id
   selectedCorrectAnswer.value = answer
+  
+  // Confetti 효과 시작
+  showConfetti.value = true
+  setTimeout(() => {
+    showConfetti.value = false
+  }, 3000)
+  
   showPronunciationConfirm.value = true
 }
 
