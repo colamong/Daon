@@ -6,6 +6,7 @@ import com.daon.be.user.dto.UserProfileUpdateRequestDto;
 import com.daon.be.user.dto.UserSignupRequestDto;
 import com.daon.be.user.dto.JwrSigninResponseDto;
 import com.daon.be.user.dto.UserWithdrawRequestDto;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
 
@@ -13,10 +14,12 @@ public interface UserService {
 
 	JwrSigninResponseDto signin(JwtSigninRequestDto dto);
 
-	public void updateProfile(Long userId, UserProfileUpdateRequestDto dto);
+	void updateProfile(Long userId, UserProfileUpdateRequestDto dto);
 
-	public void withdraw(Long userId, UserWithdrawRequestDto dto);
+	void withdraw(Long userId, UserWithdrawRequestDto dto);
 
-	public NationDto getNationByCode(String code);
+	NationDto getNationByCode(String code);
 
+	// 프로필 이미지 업로드/교체 (멀티파트)
+	void updateProfileImage(Long userId, MultipartFile file);
 }
