@@ -87,7 +87,12 @@ export const useAuthStore = defineStore("auth", {
         const prevImage = this.user?.profileImage || null;
 
         this.user = { ...userData };
-        if (prevImage && !this.user.profileImage) {
+        
+        // 서버에서 받은 profileImg를 profileImage로 매핑
+        if (this.user.profileImg) {
+          this.user.profileImage = this.user.profileImg;
+          delete this.user.profileImg; // 중복 제거
+        } else if (prevImage && !this.user.profileImage) {
           this.user.profileImage = prevImage;
         }
 
