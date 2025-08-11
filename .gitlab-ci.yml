@@ -1,63 +1,124 @@
-# /.gitlab-ci.yml — deploy 브랜치 전용: 이미지 빌드→푸시→EC2 배포
+# .gitlab-ci.yml — BE(도커) + FE(정적배포), deploy 브랜치 전용
 
-# 파이프라인 자체를 deploy 브랜치에서만 생성
 workflow:
   rules:
     - if: '$CI_COMMIT_BRANCH == "deploy"'
     - when: never
 
-# 우리 EC2 러너(태그: daon)에서만 실행
+stages: [build_be, deploy_be, build_fe, package_fe, deploy_fe]
+
 default:
-  tags: ["daon"]
+  interruptible: true
+  tags: ["daon"]  # 모든 잡을 EC2 Shell 러너에서 실행
 
-stages: [build, deploy]
+.ssh_setup: &ssh_setup
+  - mkdir -p ~/.ssh
+  - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+  - chmod 600 ~/.ssh/id_rsa
+  - ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-# 1) Docker 이미지 빌드 + Docker Hub 푸시
-build-and-push:
-  stage: build
+# ===== Backend =====
+
+build-and-push-be:
+  stage: build_be
   rules:
     - if: '$CI_COMMIT_BRANCH == "deploy"'
+      changes:
+        - BE/**/*
+  before_script:
+    - docker -v
   script:
     - echo "=== Docker Hub Login ==="
     - docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_TOKEN"
     - echo "=== Docker Build ==="
-    - docker build -t "$IMAGE_NAME:latest" "$BACKEND_DIR"
+    - docker build -t "$IMAGE_NAME:latest" BE
     - echo "=== Docker Push ==="
     - docker push "$IMAGE_NAME:latest"
 
-# 2) EC2(러너 설치 서버)에서 컨테이너 교체
 deploy-backend:
-  stage: deploy
-  needs: ["build-and-push"]
+  stage: deploy_be
+  needs: ["build-and-push-be"]
   rules:
     - if: '$CI_COMMIT_BRANCH == "deploy"'
+      changes:
+        - BE/**/*
   script:
     - set -euxo pipefail
-    - whoami && hostname
-    - docker version && docker ps
-
-    # 변수/경로 점검
-    - echo "IMAGE_NAME=$IMAGE_NAME"
-    - echo "CONTAINER_NAME=$CONTAINER_NAME"
-    - echo "HOST_PORT=$HOST_PORT CONTAINER_PORT=$CONTAINER_PORT"
-    - echo "ENV_FILE=$ENV_FILE"
-    - test -f "$ENV_FILE" && echo "ENV_FILE exists" || (echo "ENV_FILE NOT FOUND"; exit 1)
-
-    - echo "=== Stop & Remove existing container (if any) ==="
     - docker stop "$CONTAINER_NAME" || true
     - docker rm "$CONTAINER_NAME" || true
-
-    - echo "=== Pull latest image ==="
     - docker pull "$IMAGE_NAME:latest"
-
-    - echo "=== Debug variables ==="
-    - echo "CONTAINER_NAME=[$CONTAINER_NAME]"
-    - echo "ENV_FILE=[$ENV_FILE]" 
-    - echo "HOST_PORT=[$HOST_PORT]"
-    - echo "CONTAINER_PORT=[$CONTAINER_PORT]"
-    - echo "IMAGE_NAME=[$IMAGE_NAME]"
-    
-    - echo "=== Run new container ==="
+    - test -f "$ENV_FILE"
     - docker run -d --name "${CONTAINER_NAME}" --env-file "${ENV_FILE}" -p "${HOST_PORT}:${CONTAINER_PORT}" "${IMAGE_NAME}:latest"
 
-    - echo "=== Deployment Finished ==="
+# ===== Frontend =====
+
+build-fe:
+  stage: build_fe
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "deploy"'
+      changes:
+        - FE/my-vue-app/**/*
+  before_script:
+    # Node/NPM 버전 확인 (환경 점검용, 나중에 삭제 가능)
+    - node -v
+    - npm -v
+  cache:
+    key: fe-${CI_COMMIT_REF_SLUG}
+    paths:
+      - FE/my-vue-app/node_modules/
+  script:
+    - cd FE/my-vue-app
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - FE/my-vue-app/dist/
+    expire_in: 1 week
+
+package-fe:
+  stage: package_fe
+  needs: ["build-fe"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "deploy"'
+      changes:
+        - FE/my-vue-app/**/*
+  before_script:
+    - tar --version  # 우분투에는 tar 기본 포함
+  script:
+    - export RELEASE="${CI_PIPELINE_IID}-${CI_COMMIT_SHORT_SHA}"
+    - tar -czf "dist-${RELEASE}.tar.gz" -C FE/my-vue-app/dist .
+    - echo "${RELEASE}" > RELEASE.txt
+  artifacts:
+    paths:
+      - dist-*.tar.gz
+      - RELEASE.txt
+    expire_in: 1 week
+
+deploy-frontend:
+  stage: deploy_fe
+  needs: ["package-fe"]
+  environment:
+    name: production
+    url: https://i13a706.p.ssafy.io
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "deploy"'
+      changes:
+        - FE/my-vue-app/**/*
+  before_script:
+    - *ssh_setup
+    - export RELEASE=$(cat RELEASE.txt)
+    - export TARGET="${SSH_TARGET_DIR}"
+    - export RELEASE_DIR="${TARGET}/releases/${RELEASE}"
+  script:
+    # 1) 서버에 릴리스 폴더 생성
+    - ssh ${SSH_USER}@${SSH_HOST} "mkdir -p '${RELEASE_DIR}'"
+    # 2) FE 아티팩트 업로드
+    - scp dist-${RELEASE}.tar.gz ${SSH_USER}@${SSH_HOST}:"${RELEASE_DIR}/"
+    # 3) 서버에서 압축 해제 및 원본 삭제
+    - ssh ${SSH_USER}@${SSH_HOST} "cd '${RELEASE_DIR}' && tar -xzf dist-${RELEASE}.tar.gz && rm dist-${RELEASE}.tar.gz"
+    # 4) current 심볼릭 링크 스위칭
+    - ssh ${SSH_USER}@${SSH_HOST} "ln -sfn '${RELEASE_DIR}' '${TARGET}/current'"
+    # 5) Nginx 검사 및 재시작
+    - ssh ${SSH_USER}@${SSH_HOST} "sudo nginx -t && sudo systemctl reload nginx"
+  when: manual
+  allow_failure: false

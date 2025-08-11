@@ -27,10 +27,12 @@ export const userService = {
   // 텍스트 프로필 수정 (닉네임/국가) 
   async updateProfile(profileData, userId) {
     try {
-      // userId를 헤더로 함께 전달 (백엔드에서 @RequestHeader("X-USER-ID") 로 받음)
-      const response = await apiClient.put(`/api/user/profile`, profileData, {
-        headers: { 'X-USER-ID': String(userId) }
-      });
+      // userId를 요청 본문에 포함시켜 전달
+      const requestData = {
+        ...profileData,
+        userId: userId
+      };
+      const response = await apiClient.put(`/api/user/profile`, requestData);
       return response.data;
     } catch (error) {
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {

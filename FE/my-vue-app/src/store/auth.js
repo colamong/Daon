@@ -43,15 +43,38 @@ export const useAuthStore = defineStore("auth", {
         console.log('회원가입 성공:', response.data);
         return response.data;
       } catch (error) {
+        console.log('Auth store signup error:', error);
+        console.log('Auth store error status:', error.response?.status);
+        console.log('Auth store error data:', error.response?.data);
+        
         if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
           throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
         }
         if (error.response) {
           const status = error.response.status;
-          const message = error.response.data?.message || error.response.data?.error;
-          if (status === 409) throw new Error(message || '이미 사용 중인 이메일입니다.');
+          const message = error.response.data?.message || error.response.data?.error || error.response.data;
+          
+          // 500 에러에서도 중복 이메일 체크
+          if (status === 500 && (
+              (message && (
+                message.includes('이미 사용 중') || 
+                message.includes('중복') || 
+                message.includes('already exists') ||
+                message.includes('duplicate') ||
+                message.includes('Duplicate') ||
+                message.includes('이미 가입된')
+              )) ||
+              // INTERNAL_SERVER_ERROR는 대부분 중복 이메일 에러로 처리
+              message === 'INTERNAL_SERVER_ERROR'
+            )) {
+            throw new Error('중복된 이메일입니다. 확인해주세요.');
+          }
+          
+          if (status === 409) throw new Error(message || '중복된 이메일입니다. 확인해주세요.');
           if (status === 400) throw new Error(message || '입력 정보가 올바르지 않습니다.');
           if (status === 422) throw new Error(message || '입력 형식이 올바르지 않습니다.');
+          if (status === 500) throw new Error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+          
           throw new Error(message || '회원가입 중 오류가 발생했습니다.');
         }
         throw new Error('네트워크 오류가 발생했습니다.');
