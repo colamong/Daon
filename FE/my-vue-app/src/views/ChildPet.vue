@@ -170,6 +170,9 @@
     <!-- 재생용(hidden) 오디오: GMS TTS가 여기로 흘러들어감 -->
     <audio ref="ttsPlayer" class="hidden"></audio>
     
+    <!-- 배경 눈 내리는 효과 -->
+    <SnowEffect :show="true" :flake-count="120" intensity="medium" />
+    
     <!-- 펭귄 진화 시 구름 전환 효과 -->
     <CloudTransition 
       :show="showEvolutionTransition" 
@@ -213,6 +216,7 @@ import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
 import HamsterLoading from "@/components/common/HamsterLoading.vue";
 import CloudTransition from "@/components/effect/CloudTransition.vue";
+import SnowEffect from "@/components/effect/SnowEffect.vue";
 
 /** ✅ GMS TTS 서비스(default export) */
 import ttsService from "@/services/ttsService_gms.js";
