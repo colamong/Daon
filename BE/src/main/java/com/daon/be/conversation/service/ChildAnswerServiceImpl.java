@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -413,6 +414,8 @@ public class ChildAnswerServiceImpl implements ChildAnswerService {
 		return nextQuestion;
 	}
 
+
+	// 시스템 프롬프트 템플릿 (Pengu 역할 + 첫 질문 규칙 포함)
 	public String buildSystemPrompt(String topicObjective, int questionNumber) {
 		String base = String.join("\n\n",
 			"너는 Pengu라는 감정 코칭 AI 펭귄이야.",
@@ -440,7 +443,7 @@ public class ChildAnswerServiceImpl implements ChildAnswerService {
 			: String.join("\n",
 			"- 진행 질문 규칙:",
 			"  1) 바로 직전 답변의 '행동/상황'에서 한 걸음만 확장.",
-			"  2) 원인·분석·메타인지 요구 금지(왜 그랬는지 등).",
+			"  2) 원인·분석·메타인지 요구 금지(왜 그랬는지, 먼저 움직인 곳 등).",
 			"  3) 선택지·구체화 표현을 활용해 부담을 낮춰.",
 			"  4) 필요하면 '그때 뭐 했어?', '누가 같이 있었어?'처럼 상황 묻기."
 		);
@@ -452,6 +455,9 @@ public class ChildAnswerServiceImpl implements ChildAnswerService {
 		return String.join("\n\n", base, stepRule, goal, stepInfo, ask);
 	}
 
+
+
+	// Q&A 기록을 messages 포맷으로 변환 + 마지막 요청 추가
 	public List<Map<String, String>> buildMessages(String systemPrompt, List<Object> prevQuestions, List<Object> prevAnswers) {
 		List<Map<String, String>> messages = new ArrayList<>();
 
@@ -459,6 +465,7 @@ public class ChildAnswerServiceImpl implements ChildAnswerService {
 			messages.add(Map.of("role", "system", "content", systemPrompt));
 		}
 
+		// assistant(user 질문) → user(아이 대답)
 		for (int i = 0; i < prevQuestions.size(); i++) {
 			String questionStr = normalizeRedisValue(prevQuestions.get(i));
 			messages.add(Map.of("role", "assistant", "content", questionStr));
@@ -470,6 +477,7 @@ public class ChildAnswerServiceImpl implements ChildAnswerService {
 			}
 		}
 
+		// 다음 질문 유도 요청
 		messages.add(Map.of("role", "user", "content", "→ 다음 질문을 자연스럽게 1개만 만들어줘."));
 		return messages;
 	}
@@ -559,13 +567,35 @@ public class ChildAnswerServiceImpl implements ChildAnswerService {
 
 	// 주제 순환
 	public Long getNextTopicId(Long childId) {
-		Optional<Long> recentTopicIdOpt = childAnswerRepository.findLatestTopicIdByChildId(childId);
-		return recentTopicIdOpt.map(id -> (id % 3) + 1).orElse(1L);
+		Long recentTopicId = conversationResultRepository
+			.findTopByChildIdOrderByCreatedAtDesc(childId)
+			.map(cr -> cr.getTopic() == null ? null : cr.getTopic().getId())
+			.orElse(null);
+
+		log.info("childId={}, recentTopicId={}", childId, recentTopicId);
+
+		Long firstId = conversationTopicRepository.findFirstByOrderByIdAsc()
+			.orElseThrow(() -> new IllegalStateException("등록된 ConversationTopic 없음"))
+			.getId();
+
+		if (recentTopicId == null) {
+			log.info("return firstId={}", firstId);
+			return firstId;
+		}
+
+		Long next = conversationTopicRepository.findFirstByIdGreaterThanOrderByIdAsc(recentTopicId)
+			.map(t -> t.getId())
+			.orElse(firstId);
+
+		log.info("nextTopicId={}", next);
+		return next;
 	}
+
 
 	public ConversationTopic getNextTopic(Long childId) {
 		Long nextTopicId = getNextTopicId(childId);
 		return conversationTopicRepository.findById(nextTopicId)
 			.orElseThrow(() -> new IllegalStateException("ConversationTopic ID " + nextTopicId + " 없음"));
 	}
+
 }

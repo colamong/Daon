@@ -26,6 +26,34 @@
       </div>
     </section>
 
+    <!-- 탭 메뉴 -->
+    <div class="flex justify-center mb-8">
+      <div class="bg-gray-100 p-1 rounded-lg">
+        <button
+          @click="activeTab = 'all'"
+          :class="[
+            'px-6 py-2 rounded-md font-medium transition-colors',
+            activeTab === 'all'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          ]"
+        >
+          전체 채팅방
+        </button>
+        <button
+          @click="activeTab = 'joined'"
+          :class="[
+            'px-6 py-2 rounded-md font-medium transition-colors',
+            activeTab === 'joined'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          ]"
+        >
+          참여중인 채팅방
+        </button>
+      </div>
+    </div>
+
     <!-- 검색창 래퍼 -->
     <div
       ref="wrapper"
@@ -54,8 +82,10 @@
 
     <!-- 정렬 & 필터 바 -->
     <div class="flex items-center justify-between">
-      <h3 class="text-2xl font-bold">온동네 커뮤니티</h3>
-      <div class="flex items-center space-x-4">
+      <h3 class="text-2xl font-bold">
+        {{ activeTab === 'all' ? '온동네 커뮤니티' : '참여중인 채팅방' }}
+      </h3>
+      <div v-if="activeTab === 'all'" class="flex items-center space-x-4">
         <button
           @click="sortOption = 'popularity'"
           :class="
@@ -88,13 +118,37 @@
           </option>
         </select>
       </div>
+      <div v-else class="flex items-center space-x-4">
+        <button
+          @click="joinedSortOption = 'recent'"
+          :class="
+            joinedSortOption === 'recent'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700'
+          "
+          class="px-4 py-2 rounded"
+        >
+          최근 참여순
+        </button>
+        <button
+          @click="joinedSortOption = 'alpha'"
+          :class="
+            joinedSortOption === 'alpha'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700'
+          "
+          class="px-4 py-2 rounded"
+        >
+          가나다순
+        </button>
+      </div>
     </div>
 
     <!-- 커뮤니티 카드 그리드 + 페이징 -->
     <section>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <div
-          v-for="post in pagedCommunities"
+          v-for="post in displayedCommunities"
           :key="post.id"
           class="cursor-pointer"
           @click="goChat(post.id)"
@@ -149,12 +203,15 @@ import SuggestionList from "@/components/widget/SuggestionList.vue";
 import CommunityCard from "@/components/card/CommunityCard.vue";
 import communityHero from "@/assets/images/community-hero.png";
 import { useCommunityStore } from "@/store/community.js";
+import { useAuthStore } from "@/store/auth.js";
 
 const router = useRouter();
 const communityStore = useCommunityStore();
+const authStore = useAuthStore();
 
 const searchQuery = ref("");
 const showDropdown = ref(false);
+const activeTab = ref("all"); // 'all' 또는 'joined'
 const wrapper = ref(null);
 const searchInput = ref(null);
 const popperEl = ref(null);
@@ -177,6 +234,11 @@ const filteredSuggestions = computed(() =>
 onMounted(async () => {
   // 커뮤니티 데이터 로드
   await communityStore.fetchAllCommunities();
+  
+  // 사용자 ID가 있으면 참여중인 채팅방도 로드
+  if (authStore.user?.id) {
+    await communityStore.fetchJoinedCommunities(authStore.user.id);
+  }
   
   await nextTick();
   popperInstance = createPopper(
@@ -219,8 +281,11 @@ function onClickOutside(e) {
   }
 }
 
-// 정렬 옵션: 'popularity' | 'alpha'
+// 전체 채팅방 정렬 옵션: 'popularity' | 'alpha'
 const sortOption = ref("popularity");
+
+// 참여중인 채팅방 정렬 옵션: 'recent' | 'alpha'
+const joinedSortOption = ref("recent");
 
 // 지역 필터 옵션
 const selectedRegion = ref("");
@@ -230,8 +295,8 @@ const regionOptions = computed(() =>
   Array.from(new Set(communityStore.communities.map((c) => c.title.split(" ")[0])))
 );
 
-// 필터 & 정렬된 리스트
-const processed = computed(() => {
+// 전체 채팅방: 필터 & 정렬된 리스트
+const processedAllCommunities = computed(() => {
   let list = communityStore.communities.slice();
   if (selectedRegion.value) {
     list = list.filter((c) => c.title.startsWith(selectedRegion.value));
@@ -244,14 +309,31 @@ const processed = computed(() => {
   return list;
 });
 
+// 참여중인 채팅방: 필터 & 정렬된 리스트
+const processedJoinedCommunities = computed(() => {
+  let list = communityStore.joinedCommunities.slice();
+  if (joinedSortOption.value === "alpha") {
+    list.sort((a, b) => a.title.localeCompare(b.title, "ko"));
+  } else if (joinedSortOption.value === "recent") {
+    // TODO: 실제로는 참여 시간 기준 정렬해야 함
+    list = list; // 현재는 기본 순서 유지
+  }
+  return list;
+});
+
+// 현재 탭에 따른 표시할 리스트
+const currentList = computed(() => {
+  return activeTab.value === 'all' ? processedAllCommunities.value : processedJoinedCommunities.value;
+});
+
 // 페이징
 const page = ref(0);
 const itemsPerPage = 12;
 const totalPages = computed(() =>
-  Math.ceil(processed.value.length / itemsPerPage)
+  Math.ceil(currentList.value.length / itemsPerPage)
 );
-const pagedCommunities = computed(() =>
-  processed.value.slice(
+const displayedCommunities = computed(() =>
+  currentList.value.slice(
     page.value * itemsPerPage,
     (page.value + 1) * itemsPerPage
   )
@@ -274,8 +356,8 @@ watch(searchQuery, async (v) => {
   }
 });
 
-// 필터링/정렬 변경 시 페이지 리셋
-watch([selectedRegion, sortOption], () => {
+// 필터링/정렬/탭 변경 시 페이지 리셋
+watch([selectedRegion, sortOption, joinedSortOption, activeTab], () => {
   page.value = 0;
 });
 async function openDropdown() {

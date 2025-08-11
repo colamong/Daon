@@ -3,9 +3,9 @@ package com.daon.be.conversation.entity;
 import java.time.LocalDateTime;
 
 import com.daon.be.ai.dto.GptChildConversationResponseDto;
+import com.daon.be.ai.dto.GptInterestAnalysisResponseDto;
 import com.daon.be.calendar.entity.Calendar;
 import com.daon.be.calendar.entity.ImageDiary;
-import com.daon.be.child.dto.ChildExpressionResponseDto;
 import com.daon.be.child.entity.ChildProfile;
 
 import jakarta.persistence.Entity;
@@ -44,6 +44,9 @@ public class ConversationResult {
 	@Column(name = "emotion_report", columnDefinition = "TEXT")
 	private String emotionReport; // 감정 요약
 
+	@Column(name = "interest_report", columnDefinition = "TEXT")
+	private String interestReport; // 관심사 분석 리포트
+
 	@Column(name = "created_at")
 	private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -71,9 +74,9 @@ public class ConversationResult {
 		this.emotionReport = gptResponse.getEmotion();
 	}
 
-	public ChildExpressionResponseDto toResponseDto() {
-		return new ChildExpressionResponseDto(this.emotionReport, this.analysisResult, this.createdAt);
+	public void applyInterestAnalysis(GptInterestAnalysisResponseDto gptResponse) {
+		this.analysisResult = gptResponse.getSummary();
+		this.interestReport = gptResponse.getReport();
 	}
 
 }
-
