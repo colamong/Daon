@@ -205,11 +205,19 @@ export const childService = {
   // 펭귄 상태 조회 API
   async getPetStatus(childId) {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/pet/${childId}`, {
-        timeout: 30000
+      console.log('펫 상태 조회 시도 - childId:', childId);
+      const response = await axios.get(`${API_BASE_URL}/pet/${childId}`, {
+        timeout: 30000,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
       });
+      console.log('펫 상태 조회 성공:', response.data);
       return response.data;
     } catch (error) {
+      console.error('펫 상태 조회 실패:', error.response?.status, error.response?.data);
+      
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
         throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
       }
@@ -221,7 +229,7 @@ export const childService = {
   // 대화 후 보상 지급 API
   async givePetReward(childId) {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/pet/reward/${childId}`, {}, {
+      const response = await axios.post(`${API_BASE_URL}/pet/reward/${childId}`, {}, {
         timeout: 30000
       });
       return response.data;
