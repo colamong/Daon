@@ -50,8 +50,14 @@ deploy-backend:
     - echo "=== Pull latest image ==="
     - docker pull "$IMAGE_NAME:latest"
 
+    - echo "=== Debug variables ==="
+    - echo "CONTAINER_NAME=[$CONTAINER_NAME]"
+    - echo "ENV_FILE=[$ENV_FILE]"
+    - echo "HOST_PORT=[$HOST_PORT]"
+    - echo "CONTAINER_PORT=[$CONTAINER_PORT]"
+    - echo "IMAGE_NAME=[$IMAGE_NAME]"
+
     - echo "=== Run new container ==="
-    - echo "Full command: docker run -d --name $CONTAINER_NAME --env-file $ENV_FILE -p $HOST_PORT:$CONTAINER_PORT $IMAGE_NAME:latest"
-    - docker run -d --name $CONTAINER_NAME --env-file $ENV_FILE -p $HOST_PORT:$CONTAINER_PORT $IMAGE_NAME:latest
+    - docker run -d --name "${CONTAINER_NAME}" --env-file "${ENV_FILE}" -p "${HOST_PORT}:${CONTAINER_PORT}" "${IMAGE_NAME}:latest"
 
     - echo "=== Deployment Finished ==="
