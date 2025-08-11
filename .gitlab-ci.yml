@@ -1,0 +1,63 @@
+# /.gitlab-ci.yml — deploy 브랜치 전용: 이미지 빌드→푸시→EC2 배포
+
+# 파이프라인 자체를 deploy 브랜치에서만 생성
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "deploy"'
+    - when: never
+
+# 우리 EC2 러너(태그: daon)에서만 실행
+default:
+  tags: ["daon"]
+
+stages: [build, deploy]
+
+# 1) Docker 이미지 빌드 + Docker Hub 푸시
+build-and-push:
+  stage: build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "deploy"'
+  script:
+    - echo "=== Docker Hub Login ==="
+    - docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_TOKEN"
+    - echo "=== Docker Build ==="
+    - docker build -t "$IMAGE_NAME:latest" "$BACKEND_DIR"
+    - echo "=== Docker Push ==="
+    - docker push "$IMAGE_NAME:latest"
+
+# 2) EC2(러너 설치 서버)에서 컨테이너 교체
+deploy-backend:
+  stage: deploy
+  needs: ["build-and-push"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "deploy"'
+  script:
+    - set -euxo pipefail
+    - whoami && hostname
+    - docker version && docker ps
+
+    # 변수/경로 점검
+    - echo "IMAGE_NAME=$IMAGE_NAME"
+    - echo "CONTAINER_NAME=$CONTAINER_NAME"
+    - echo "HOST_PORT=$HOST_PORT CONTAINER_PORT=$CONTAINER_PORT"
+    - echo "ENV_FILE=$ENV_FILE"
+    - test -f "$ENV_FILE" && echo "ENV_FILE exists" || (echo "ENV_FILE NOT FOUND"; exit 1)
+
+    - echo "=== Stop & Remove existing container (if any) ==="
+    - docker stop "$CONTAINER_NAME" || true
+    - docker rm "$CONTAINER_NAME" || true
+
+    - echo "=== Pull latest image ==="
+    - docker pull "$IMAGE_NAME:latest"
+
+    - echo "=== Debug variables ==="
+    - echo "CONTAINER_NAME=[$CONTAINER_NAME]"
+    - echo "ENV_FILE=[$ENV_FILE]" 
+    - echo "HOST_PORT=[$HOST_PORT]"
+    - echo "CONTAINER_PORT=[$CONTAINER_PORT]"
+    - echo "IMAGE_NAME=[$IMAGE_NAME]"
+    
+    - echo "=== Run new container ==="
+    - docker run -d --name "${CONTAINER_NAME}" --env-file "${ENV_FILE}" -p "${HOST_PORT}:${CONTAINER_PORT}" "${IMAGE_NAME}:latest"
+
+    - echo "=== Deployment Finished ==="

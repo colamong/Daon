@@ -152,11 +152,12 @@
 
     <!-- 발음 평가 모달 -->
     <PronunciationModal
-      v-model="showPronunciationModal"
-      :answer-text="selectedCorrectAnswer?.text || ''"
-      :pronunciation="selectedCorrectAnswer?.pronunciation || ''"
-      @complete="completePronunciationPractice"
-    />
+  v-model="showPronunciationModal"
+  :answer-text="selectedCorrectAnswer?.text || ''"
+  :pronunciation="selectedCorrectAnswer?.pronunciation || ''"
+  :question-id="currentContent?.id"       
+  @complete="completePronunciationPractice"
+/>
 
     <!-- 질문 이동 확인 모달 -->
     <div
