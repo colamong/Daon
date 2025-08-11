@@ -2,6 +2,8 @@ package com.daon.be.conversation.entity;
 
 import java.time.LocalDateTime;
 
+import com.daon.be.ai.dto.GptChildConversationResponseDto;
+import com.daon.be.ai.dto.GptInterestAnalysisResponseDto;
 import com.daon.be.calendar.entity.Calendar;
 import com.daon.be.calendar.entity.ImageDiary;
 import com.daon.be.child.entity.ChildProfile;
@@ -67,9 +69,13 @@ public class ConversationResult {
 		return r;
 	}
 
-	public void applyFullGptAnalysis(GptFullAnalysisResponseDto gptResponse) {
+	public void applyGptAnalysis(GptChildConversationResponseDto gptResponse) {
 		this.analysisResult = gptResponse.getSummary();
 		this.emotionReport = gptResponse.getEmotion();
+	}
+
+	public void applyInterestAnalysis(GptInterestAnalysisResponseDto gptResponse) {
+		this.analysisResult = gptResponse.getSummary();
 		this.interestReport = gptResponse.getReport();
 	}
 

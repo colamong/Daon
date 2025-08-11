@@ -30,7 +30,9 @@ import com.daon.be.conversation.repository.ConversationTopicRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChildAnswerServiceImpl implements ChildAnswerService {
@@ -277,27 +279,35 @@ public class ChildAnswerServiceImpl implements ChildAnswerService {
 		messages.add(Map.of("role", "user", "content", "→ 다음 질문을 자연스럽게 1개만 만들어줘."));
 		return messages;
 	}
-
-
-
-
-
-
-
 	public Long getNextTopicId(Long childId) {
-		Optional<Long> recentTopicIdOpt = childAnswerRepository.findLatestTopicIdByChildId(childId);
+		Long recentTopicId = conversationResultRepository
+			.findTopByChildIdOrderByCreatedAtDesc(childId)
+			.map(cr -> cr.getTopic() == null ? null : cr.getTopic().getId())
+			.orElse(null);
 
-		Long nextTopicId = recentTopicIdOpt
-			.map(id -> (id % 3) + 1)
-			.orElse(1L);
+		log.info("childId={}, recentTopicId={}", childId, recentTopicId);
 
-		return nextTopicId;
+		Long firstId = conversationTopicRepository.findFirstByOrderByIdAsc()
+			.orElseThrow(() -> new IllegalStateException("등록된 ConversationTopic 없음"))
+			.getId();
+
+		if (recentTopicId == null) {
+			log.info("return firstId={}", firstId);
+			return firstId;
+		}
+
+		Long next = conversationTopicRepository.findFirstByIdGreaterThanOrderByIdAsc(recentTopicId)
+			.map(t -> t.getId())
+			.orElse(firstId);
+
+		log.info("nextTopicId={}", next);
+		return next;
 	}
+
 
 	public ConversationTopic getNextTopic(Long childId) {
 		Long nextTopicId = getNextTopicId(childId);
 		return conversationTopicRepository.findById(nextTopicId)
 			.orElseThrow(() -> new IllegalStateException("ConversationTopic ID " + nextTopicId + " 없음"));
 	}
-
 }

@@ -38,4 +38,18 @@ public interface ConversationResultRepository extends JpaRepository<Conversation
 		@Param("childId") Long childId,
 		@Param("date") LocalDate date
 	);
+
+	// 가장 최근 대화 결과 1건
+	Optional<ConversationResult> findTopByChildIdOrderByCreatedAtDesc(Long childId);
+
+	// ConversationResultRepository
+	@Query("""
+select t.category
+from ConversationResult cr
+join cr.topic t
+where cr.id = :id and cr.child.id = :childId
+""")
+	Optional<String> findTopicCategoryByIdAndChildId(@Param("id") Long id, @Param("childId") Long childId);
+
+
 }

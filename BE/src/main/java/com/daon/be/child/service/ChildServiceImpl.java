@@ -7,6 +7,7 @@ import com.daon.be.child.dto.ChildRequestDTO;
 import com.daon.be.child.dto.ChildResponseDTO;
 import com.daon.be.child.entity.ChildInterest;
 import com.daon.be.child.entity.ChildProfile;
+import com.daon.be.child.entity.InterestAuthor;
 import com.daon.be.child.repository.ChildInterestRepository;
 import com.daon.be.child.repository.ChildProfileRepository;
 import com.daon.be.user.entity.User;
@@ -16,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,7 +50,7 @@ public class ChildServiceImpl implements ChildService {
         List<ChildInterest> interests = requestDTO.getInterests().stream()
                 .map(name -> ChildInterest.builder()
                         .childProfile(savedChild)
-                        .name(name)
+                        .interestType(name)
                         .build())
                 .collect(Collectors.toList());
         childInterestRepository.saveAll(interests);
@@ -56,7 +60,7 @@ public class ChildServiceImpl implements ChildService {
                 .name(savedChild.getName())
                 .registeredInterests(
                         interests.stream()
-                                .map(ChildInterest::getName)
+                                .map(ChildInterest::getInterestType)
                                 .collect(Collectors.toList())
                 )
                 .build();
@@ -74,7 +78,7 @@ public class ChildServiceImpl implements ChildService {
                     List<String> interests = childInterestRepository
                             .findByChildProfileId(child.getId())
                             .stream()
-                            .map(ChildInterest::getName)
+                            .map(ChildInterest::getInterestType)
                             .collect(Collectors.toList());
 
                     return ChildProfileResponseDTO.builder()
@@ -131,43 +135,41 @@ public class ChildServiceImpl implements ChildService {
     }
 
     @Override
-    public void addChildInterests(Long userId, Long childId,
-                                  ChildInterestCreateRequestDTO dto) {
+    public void addChildInterests(Long userId, Long childId, ChildInterestCreateRequestDTO dto) {
         System.out.println("=== addChildInterests 호출 ===");
         System.out.println("userId: " + userId + ", childId: " + childId);
         System.out.println("요청된 관심사: " + dto.getInterests());
 
         ChildProfile child = childProfileRepository.findById(childId)
-                .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
+            .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
         if (!child.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("권한이 없습니다.");
         }
 
-        // 기존 관심사 조회
-        List<String> existingInterests = childInterestRepository
-                .findByChildProfileId(childId)
-                .stream()
-                .map(ChildInterest::getName)
-                .collect(Collectors.toList());
+        // 기존 name 집합(정규화 키)
+        List<ChildInterest> existing = childInterestRepository.findByChildProfileId(childId);
+        Set<String> existingKeys = existing.stream()
+            .map(ChildInterest::getName)
+            .filter(Objects::nonNull)
+            .map(this::normKey)
+            .collect(Collectors.toSet());
 
-        System.out.println("기존 관심사: " + existingInterests);
+        // 입력: 정규화 + 중복 제거 -> 새 항목만 생성
+        LinkedHashSet<String> requested = dto.getInterests().stream()
+            .map(this::normalize)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // 중복 제거 후 새로운 관심사만 추가
-        List<ChildInterest> newInterests = dto.getInterests().stream()
-                .filter(name -> !existingInterests.contains(name))
-                .map(name -> ChildInterest.builder()
-                        .childProfile(child)
-                        .name(name)
-                        .build())
-                .collect(Collectors.toList());
+        List<ChildInterest> toCreate = requested.stream()
+            .filter(n -> !existingKeys.contains(normKey(n)))
+            .map(n -> ChildInterest.of(child, n, InterestAuthor.PARENT)) // 팩토리 사용
+            .toList();
 
-        System.out.println("추가할 새로운 관심사: " + newInterests.size() +
-                "개");
-        newInterests.forEach(interest -> System.out.println("- " +
-                interest.getName()));
+        System.out.println("추가할 새로운 관심사: " + toCreate.size() + "개");
+        toCreate.forEach(ci -> System.out.println("- " + ci.getName()));
 
-        if (!newInterests.isEmpty()) {
-            childInterestRepository.saveAll(newInterests);
+        if (!toCreate.isEmpty()) {
+            childInterestRepository.saveAll(toCreate);
             System.out.println("DB 저장 완료");
         } else {
             System.out.println("추가할 새로운 관심사 없음 (모두 중복)");
@@ -176,14 +178,48 @@ public class ChildServiceImpl implements ChildService {
         System.out.println("=== addChildInterests 완료 ===");
     }
 
-
     @Override
     public void deleteChildInterests(Long userId, Long childId, ChildInterestDeleteRequestDTO dto) {
         ChildProfile child = childProfileRepository.findById(childId)
-                .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
+            .orElseThrow(() -> new IllegalArgumentException("자녀 정보 없음"));
         if (!child.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("권한이 없습니다.");
         }
-        childInterestRepository.deleteByChildProfileIdAndNameIn(childId, dto.getInterests());
+
+        // 삭제 요청 집합(정규화 키)
+        Set<String> targets = dto.getInterests().stream()
+            .map(this::normalize)
+            .filter(Objects::nonNull)
+            .map(this::normKey)
+            .collect(Collectors.toSet());
+
+        if (targets.isEmpty()) return;
+
+        // 실제 DB 값 중에서 삭제 대상 이름 원본 리스트 추출(대소문자/공백 차이 흡수)
+        List<String> actualNamesToDelete = childInterestRepository.findByChildProfileId(childId).stream()
+            .map(ChildInterest::getName)
+            .filter(Objects::nonNull)
+            .filter(name -> targets.contains(normKey(name)))
+            .toList();
+
+        if (!actualNamesToDelete.isEmpty()) {
+            // 레포지토리: deleteByChildProfileIdAndNameIn 사용
+            childInterestRepository.deleteByChildProfileIdAndNameIn(childId, actualNamesToDelete);
+        }
     }
+
+    /* 유틸 */
+    private String normalize(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        if (t.isEmpty()) return null;
+        return t.length() > 100 ? t.substring(0, 100) : t;
+    }
+
+    private String normKey(String s) {
+        return s.trim().toLowerCase();
+    }
+
+
+
 }

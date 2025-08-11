@@ -24,8 +24,6 @@ public class ConversationController {
 	private final ChildProfileRepository childRepository;
 	private final ConversationTopicRepository topicRepository;
 
-
-
 	@PostMapping("/answer")
 	public ResponseEntity<GptAudioResponseDto> handleAnswer(@RequestBody ChildAnswerRequestDto dto) {
 		GptAudioResponseDto response = childAnswerService.saveAnswerAndGetNextQuestionAudio(dto);
