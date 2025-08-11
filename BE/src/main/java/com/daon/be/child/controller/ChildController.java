@@ -131,4 +131,24 @@ public class ChildController {
         childService.updateChildImage(userId, childId, file);
         return ResponseEntity.ok(new ApiResponse<>(200, "자녀 프로필 이미지 수정 완료", null));
     }
+    /** 부모가 등록한 관심사(PARENT)만 조회 */
+    @GetMapping("/{childId}/interest/parent")
+    public ResponseEntity<ApiResponse<List<String>>> getParentInterests(
+        @PathVariable Long userId,
+        @PathVariable Long childId
+    ) {
+        List<String> data = childService.getParentInterests(userId, childId);
+        return ResponseEntity.ok(new ApiResponse<>(200, "부모 등록 관심사 조회 성공", data));
+    }
+
+    /** AI가 추천한 관심사(AI)만 조회 */
+    @GetMapping("/{childId}/interest/ai")
+    public ResponseEntity<ApiResponse<List<String>>> getAiInterests(
+        @PathVariable Long userId,
+        @PathVariable Long childId
+    ) {
+        List<String> data = childService.getAiInterests(userId, childId);
+        return ResponseEntity.ok(new ApiResponse<>(200, "AI 추천 관심사 조회 성공", data));
+    }
+
 }

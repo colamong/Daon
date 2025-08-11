@@ -77,62 +77,81 @@
 
 <script setup>
 import { ref } from 'vue'
+import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
+import { evaluatePronunciation } from '@/services/pronunciationService'
 
 const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    required: true,
-  },
-  answerText: {
-    type: String,
-    required: true,
-  },
-  pronunciation: {
-    type: String,
-    required: true,
-  }
+  modelValue: { type: Boolean, required: true },
+  answerText: { type: String, required: true },
+  pronunciation: { type: String, required: true },
+  questionId: { type: [Number, String], required: true }
 })
-
 const emit = defineEmits(['update:modelValue', 'complete'])
 
 const isRecording = ref(false)
 const recordingComplete = ref(false)
 const score = ref(0)
 
-const toggleRecording = async () => {
-  if (isRecording.value) {
-    return // 이미 녹음 중이면 무시
-  }
-  
-  // 녹음 시작
+let stream, recorder
+
+async function toggleRecording() {
+  if (isRecording.value) return
+  stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+  recorder = new RecordRTC(stream, {
+    type: 'audio',
+    mimeType: 'audio/wav',             // WAV로 인코딩
+    recorderType: StereoAudioRecorder,
+    numberOfAudioChannels: 1,          // mono
+    desiredSampRate: 16000             // 16kHz (기기 따라 다를 수 있음)
+  })
+
   isRecording.value = true
-  
-  // 실제로는 여기서 음성 녹음 API 호출
-  // 임시로 2초 후 녹음 완료 처리
-  setTimeout(() => {
-    isRecording.value = false
-    recordingComplete.value = true
-    // 임시 점수 (실제로는 음성 인식 API 결과)
-    score.value = Math.floor(Math.random() * 20) + 80 // 80-100점 랜덤
-  }, 2000)
+  recorder.startRecording()
+
+  // 2초 녹음 후 자동 종료/업로드 (원하면 수동 종료 버튼으로 변경)
+  setTimeout(stopAndUpload, 2000)
 }
 
-const retryRecording = () => {
+async function stopAndUpload() {
+  await new Promise(r => recorder.stopRecording(r))
+  const blob = recorder.getBlob() // audio/wav
+  stream.getTracks().forEach(t => t.stop())
+  recorder.destroy()
+  recorder = null
+
+  // 업로드
+  const file = new File([blob], 'speech.wav', { type: 'audio/wav' })
+  const res = await evaluatePronunciation(props.questionId, file)
+  console.log('[Pronunciation] evaluate response:', res) 
+
+  // 백엔드 점수가 0~1이면 100점 환산
+  const raw = res?.score
+  const scaled = raw <= 1 ? Math.round(raw * 100) : Math.round(raw)
+  score.value = Number.isFinite(scaled) ? scaled : 0
+  recordingComplete.value = true
+  isRecording.value = false
+}
+
+function retryRecording() {
   isRecording.value = false
   recordingComplete.value = false
   score.value = 0
 }
 
-const completeAssessment = () => {
+function completeAssessment() {
   emit('complete', score.value)
   close()
 }
 
-const close = () => {
-  retryRecording() // 상태 초기화
+function close() {
+  try { stream?.getTracks().forEach(t => t.stop()) } catch {}
+  if (recorder) { try { recorder.destroy() } catch {} }
+  retryRecording()
   emit('update:modelValue', false)
 }
 </script>
+
 
 <style scoped>
 .fade-enter-active,

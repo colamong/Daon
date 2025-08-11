@@ -21,7 +21,16 @@ class WebSocketService {
     }
 
     try {
-      const socket = new SockJS('http://localhost:8080/ws')
+      // 환경에 따른 WebSocket URL 자동 설정
+      const USE_PROXY = import.meta?.env?.VITE_USE_PROXY === 'true'
+      const WS_BASE_URL = USE_PROXY
+        ? `${window.location.protocol}//${window.location.host}` // 현재 도메인 사용
+        : (import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:8080')
+      
+      const wsUrl = `${WS_BASE_URL}/ws`
+      console.log('WebSocket connecting to:', wsUrl)
+      
+      const socket = new SockJS(wsUrl)
 
       this.client = new Client({
         webSocketFactory: () => socket,
