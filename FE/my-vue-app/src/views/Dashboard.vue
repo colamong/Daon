@@ -288,7 +288,7 @@ import {
 const router = useRouter();
 const auth = useAuthStore();
 const childStore = useChildStore();
-const { showWarning } = useNotification();
+const { showWarning, showInfo } = useNotification();
 
 /* 일정 상태 */
 const events = ref([]);
@@ -375,6 +375,16 @@ watch(
   (len) => {
     if (len > 0 && selectedChildIndex.value >= len) {
       selectedChildIndex.value = 0;
+    }
+  }
+);
+
+/* 선택된 아이가 변경되면 오늘 활동 다시 로드 */
+watch(
+  () => selectedChild.value?.id,
+  async (newChildId) => {
+    if (newChildId) {
+      await loadTodayActivity();
     }
   }
 );
@@ -475,11 +485,11 @@ function openTodayReport() {
   if (hasActivity.value && todayActivity.value) {
     showEmotionReportModal.value = true;
   } else {
-    showWarning(
+    showInfo(
       selectedChild.value && selectedChild.value.name
-        ? getObjectSentence(selectedChild.value.name)
-        : "오늘의 활동을 기다리고 있어요!",
-      "아직 활동하지 않았습니다!"
+        ? `${selectedChild.value.name}의 멋진 하루가 시작됐어요! ✨<br>오늘 하루를 기록해주세요`
+        : "멋진 하루가 시작됐어요! ✨<br>오늘 하루를 기록해주세요",
+      "오늘의 활동"
     );
   }
 }
@@ -503,8 +513,7 @@ function getParticle(name, particles) {
   return hasJongseong ? particles[0] : particles[1];
 }
 function getSubjectSentence(name) {
-  const p = getParticle(name, ["은", "는"]);
-  return `${name}${p} 아직 활동하지 않았습니다.`;
+  return `${name}의 오늘의 활동을 기다리고 있어요`;
 }
 function getObjectSentence(name) {
   const p = getParticle(name, ["이", "가"]);
