@@ -1,8 +1,10 @@
 <!-- 메인화면 사이트 기능소개 카드, OCR 장점 소개 카드 -->
 <template>
-  <router-link
-    :to="link"
-    class="w-64 rounded-2xl shadow-md p-6 block hover:shadow-lg transition-shadow"
+  <component
+    :is="(to || link) ? 'router-link' : 'div'"
+    :to="to || link"
+    @click="handleClick"
+    class="w-64 rounded-2xl shadow-md p-6 block hover:shadow-lg transition-shadow cursor-pointer"
     :style="{ backgroundColor: cardStyle.bg }"
   >
     <div class="flex justify-center mb-4">
@@ -18,7 +20,7 @@
     <p class="text-sm text-center text-gray-700 font-paper">
       {{ cardStyle.description }}
     </p>
-  </router-link>
+  </component>
 </template>
 
 <script setup>
@@ -33,7 +35,20 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  to: {
+    type: [String, Object],
+    default: null,
+  },
 });
+
+const emit = defineEmits(['click']);
+
+function handleClick(event) {
+  // router-link가 아닌 경우에만 클릭 이벤트 emit
+  if (!props.to && !props.link) {
+    emit('click', event);
+  }
+}
 
 const cardStyle = computed(() => {
   const styles = {

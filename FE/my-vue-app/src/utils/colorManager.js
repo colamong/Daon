@@ -25,17 +25,27 @@ function getUsedColors() {
   return children.map(child => child.color).filter(Boolean)
 }
 
-// 새로운 색상 할당
-export function assignColorToChild(childId) {
-  const usedColors = getUsedColors()
+// 새로운 색상 할당 (현재 처리 중인 아이들 목록을 고려)
+export function assignColorToChild(childId, currentChildren = []) {
+  // 현재 처리 중인 아이들의 색상 목록
+  const usedColorsByCurrentChildren = currentChildren
+    .filter(child => child.id !== childId && child.color) // 자기 자신 제외
+    .map(child => child.color);
+  
+  // localStorage의 기존 색상들도 고려
+  const usedColorsFromStorage = getUsedColors();
+  
+  // 모든 사용된 색상들 합치기
+  const allUsedColors = [...new Set([...usedColorsByCurrentChildren, ...usedColorsFromStorage])];
   
   // 사용되지 않은 첫 번째 색상 찾기
-  const availableColor = COLOR_PALETTE.find(color => !usedColors.includes(color))
+  const availableColor = COLOR_PALETTE.find(color => !allUsedColors.includes(color));
   
-  // 모든 색상이 사용된 경우 랜덤으로 선택
-  const assignedColor = availableColor || COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)]
+  // 모든 색상이 사용된 경우 인덱스 기반으로 선택
+  const childIndex = currentChildren.findIndex(child => child.id === childId);
+  const assignedColor = availableColor || COLOR_PALETTE[childIndex % COLOR_PALETTE.length];
   
-  return assignedColor
+  return assignedColor;
 }
 
 // 아이의 색상 가져오기
@@ -93,13 +103,11 @@ export function ensureAllChildrenHaveColors() {
       const availableColor = COLOR_PALETTE.find(color => !usedColors.includes(color))
       child.color = availableColor || COLOR_PALETTE[index % COLOR_PALETTE.length]
       updated = true
-      console.log(`색상 할당됨: ${child.name} -> ${child.color}`)
     }
   })
   
   if (updated) {
     localStorage.setItem('children', JSON.stringify(children))
-    console.log('아이들 색상 정보 업데이트됨:', children.map(c => `${c.name}: ${c.color}`))
   }
   
   return children

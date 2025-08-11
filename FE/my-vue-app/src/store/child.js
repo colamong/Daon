@@ -47,7 +47,8 @@ export const useChildStore = defineStore("child", {
         // API에서 실제 데이터 불러오기
         const response = await childService.getAllChildren(userId);
         // API 응답 데이터를 적절한 형식으로 변환
-        this.children = response.data?.map(child => {
+        const childrenData = response.data || [];
+        this.children = childrenData.map((child, index) => {
           return {
             id: child.childId,
             name: child.name,
@@ -56,9 +57,14 @@ export const useChildStore = defineStore("child", {
             profileImage: child.profileImg || child.profile_img,
             interests: child.registeredInterests || child.interests || [],
             hasTodayDiary: false, // 당일 그림일기 생성 여부 (기본값 false)
-            color: assignColorToChild(child.childId) // 아이별 고유 컬러 할당
+            color: null // 먼저 null로 설정
           };
-        }) || [];
+        });
+        
+        // 모든 아이에게 색상 할당 (서로 다른 색상이 되도록)
+        this.children.forEach((child, index) => {
+          child.color = assignColorToChild(child.id, this.children);
+        });
         
         // 선택된 아이가 없거나 해당 아이가 목록에 없으면 첫 번째 아이 선택
         if (!this.selectedChildId || !this.children.find(child => child.id === this.selectedChildId)) {

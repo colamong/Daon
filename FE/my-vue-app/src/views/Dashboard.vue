@@ -90,8 +90,8 @@
         다문화 가정의 행복한 내일을 위해 다온이 함께합니다.
       </p>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <BaseCard variant="schedule" link="/schedule" />
-        <BaseCard variant="growth" link="/growth" />
+        <BaseCard variant="schedule" @click="openScheduleModal" />
+        <BaseCard variant="growth" :to="{ name: 'Growth' }" />
         <BaseCard variant="community" :to="{ name: 'Community' }" />
         <BaseCard variant="language" :to="{ name: 'OCRTool' }" />
       </div>
@@ -116,7 +116,9 @@
             class="bg-gray-500 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
           >
             <template v-if="isLoadingActivity">
-              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              <div
+                class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"
+              ></div>
               <p class="text-white mt-4">활동 데이터를 불러오는 중...</p>
             </template>
             <template v-else-if="hasActivity && todayActivity">
@@ -333,6 +335,11 @@ function openModal() {
   modalVisible.value = true;
 }
 
+// 일정 관리 카드 클릭 시 모달 열기
+function openScheduleModal() {
+  modalVisible.value = true;
+}
+
 // 일정 추가, 수정, 삭제는 모두 서버에 요청 후 새로고침!
 async function handleAddEvent({ title, date, description }) {
   try {
@@ -399,12 +406,16 @@ onMounted(async () => {
 });
 
 // 선택된 아이가 변경될 때마다 활동 데이터 다시 로드
-watch(selectedChild, async (newChild, oldChild) => {
-  if (newChild && newChild.id !== oldChild?.id) {
-    console.log('🔍 selectedChild 변경됨:', newChild.id);
-    await loadTodayActivity();
-  }
-}, { deep: true });
+watch(
+  selectedChild,
+  async (newChild, oldChild) => {
+    if (newChild && newChild.id !== oldChild?.id) {
+      console.log("🔍 selectedChild 변경됨:", newChild.id);
+      await loadTodayActivity();
+    }
+  },
+  { deep: true }
+);
 
 // 오늘 활동이 있는지 여부
 const hasActivity = computed(() => !!todayActivity.value);
@@ -423,39 +434,48 @@ async function loadTodayActivity() {
     const year = today.year();
     const month = today.month() + 1; // dayjs는 0부터 시작하므로 +1
 
-    console.log('🔍 한국 시간 기준:', {
-      today: today.format('YYYY-MM-DD HH:mm:ss'),
+    console.log("🔍 한국 시간 기준:", {
+      today: today.format("YYYY-MM-DD HH:mm:ss"),
       childId: selectedChild.value.id,
       year,
-      month
+      month,
     });
 
     // 월별 다이어리 조회
-    const response = await childService.getMonthlyDiaries(selectedChild.value.id, year, month);
-    console.log('🔍 월별 다이어리 응답:', response);
-    
+    const response = await childService.getMonthlyDiaries(
+      selectedChild.value.id,
+      year,
+      month
+    );
+    console.log("🔍 월별 다이어리 응답:", response);
+
     // ChildDrawing.vue와 동일한 방식으로 처리
-    const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
-    console.log('🔍 responseArray:', responseArray);
-    
+    const responseArray = Array.isArray(response)
+      ? response
+      : response
+      ? [response]
+      : [];
+    console.log("🔍 responseArray:", responseArray);
+
     // 오늘 날짜와 일치하는 다이어리 찾기
-    const todayDateStr = today.format('YYYY-MM-DD');
-    
-    const todayDiary = responseArray.find(diary => {
-      console.log('🔍 다이어리 개별 항목:', diary);
-      
+    const todayDateStr = today.format("YYYY-MM-DD");
+
+    const todayDiary = responseArray.find((diary) => {
+      console.log("🔍 다이어리 개별 항목:", diary);
+
       // ChildDrawing.vue와 동일한 방식: createdAt에서 날짜 부분만 추출
-      const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+      const diaryDate = diary.createdAt
+        ? diary.createdAt.split("T")[0]
+        : diary.date;
       console.log(`🔍 날짜 비교: ${diaryDate} vs ${todayDateStr}`);
-      
+
       return diaryDate === todayDateStr;
     });
 
-    console.log('🔍 오늘 다이어리 결과:', todayDiary);
+    console.log("🔍 오늘 다이어리 결과:", todayDiary);
     todayActivity.value = todayDiary || null;
-    
   } catch (error) {
-    console.error('월별 다이어리 조회 실패:', error);
+    console.error("월별 다이어리 조회 실패:", error);
     todayActivity.value = null;
   } finally {
     isLoadingActivity.value = false;
