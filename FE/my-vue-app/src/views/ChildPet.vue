@@ -72,7 +72,7 @@
 
     <!-- main (펭귄 + 아래에 붙는 게이지) -->
     <main
-      class="absolute left-1/2 top-[63%] -translate-x-1/2 -translate-y-1/2 transform z-10 flex flex-col items-center relative"
+      class="absolute left-1/2 !top-[57%] -translate-x-1/2 -translate-y-1/2 transform z-10 flex flex-col items-center relative"
     >
       <span class="mb-4 text-black text-4xl text-outline-white font-shark">
         {{ penguinData.name }}
@@ -86,7 +86,7 @@
           alt="펭귄 단계 이미지"
           :class="[
             'object-contain w-[140px] sm:w-[160px] lg:w-[200px] xl:w-[250px] transition-transform duration-100',
-            { 'animate-wiggle': conversationState.isSpeaking }
+            { 'animate-wiggle': conversationState.isSpeaking },
           ]"
         />
       </div>
@@ -169,13 +169,13 @@
 
     <!-- 재생용(hidden) 오디오: GMS TTS가 여기로 흘러들어감 -->
     <audio ref="ttsPlayer" class="hidden"></audio>
-    
+
     <!-- 배경 눈 내리는 효과 -->
     <SnowEffect :show="true" :flake-count="120" intensity="medium" />
-    
+
     <!-- 펭귄 진화 시 구름 전환 효과 -->
-    <CloudTransition 
-      :show="showEvolutionTransition" 
+    <CloudTransition
+      :show="showEvolutionTransition"
       @complete="onEvolutionComplete"
       @coverComplete="onEvolutionCoverComplete"
     />
@@ -236,6 +236,9 @@ import lvl5 from "../assets/images/lv_5.png";
 import lvl6 from "../assets/images/lv_6.png";
 import lvl7 from "../assets/images/lv_7.png";
 
+// 사운드 이펙트
+import lvlUpSound from "../assets/effects/lvl_up.mp3";
+
 // props
 const props = defineProps({
   childId: { type: [String, Number], default: null },
@@ -279,24 +282,37 @@ function animateProgress(targetPercent, duration = 1000) {
   const startPercent = animatedProgress.value;
   const difference = targetPercent - startPercent;
   const startTime = performance.now();
-  
+
   function updateProgress(currentTime) {
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    
+
     // easeOutQuart 이징 함수로 부드러운 애니메이션
     const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-    
-    animatedProgress.value = startPercent + (difference * easeOutQuart);
-    
+
+    animatedProgress.value = startPercent + difference * easeOutQuart;
+
     if (progress < 1) {
       requestAnimationFrame(updateProgress);
     } else {
       animatedProgress.value = targetPercent;
     }
   }
-  
+
   requestAnimationFrame(updateProgress);
+}
+
+// 레벨업 사운드 재생 함수
+function playLevelUpSound() {
+  try {
+    const audio = new Audio(lvlUpSound);
+    audio.volume = 0.7; // 볼륨 조절
+    audio.play().catch((e) => {
+      console.warn("레벨업 사운드 재생 실패:", e);
+    });
+  } catch (error) {
+    console.warn("레벨업 사운드 로드 실패:", error);
+  }
 }
 
 // 펭귄 진화 관련 함수들
@@ -304,6 +320,8 @@ function checkEvolution(oldStage, newStageValue) {
   if (newStageValue > oldStage) {
     previousStage.value = oldStage;
     newStage.value = newStageValue;
+    // 진화 발생 시 레벨업 사운드 재생
+    playLevelUpSound();
     return true; // 진화 발생
   }
   return false; // 진화 없음
@@ -344,10 +362,11 @@ async function loadPenguinData(animate = false) {
     const response = await childService.getPetStatus(currentChildId);
     const newProgressPercent = response.progressPercent || 0;
     const newStageValue = response.currentStage || 1;
-    
+
     // 진화 체크 (보상을 받았을 때만)
-    const shouldEvolutionEffect = animate && checkEvolution(penguinData.value.currentStage, newStageValue);
-    
+    const shouldEvolutionEffect =
+      animate && checkEvolution(penguinData.value.currentStage, newStageValue);
+
     if (shouldEvolutionEffect) {
       // 진화 발생 - 구름 전환 효과 시작
       showEvolutionTransition.value = true;
@@ -362,7 +381,7 @@ async function loadPenguinData(animate = false) {
         progressPercent: newProgressPercent,
         imageUrl: response.imageUrl || "/images/lv_1.png",
       };
-      
+
       // 애니메이션 적용 여부에 따라 처리
       if (animate) {
         animateProgress(newProgressPercent, 2000); // 2초 동안 애니메이션
@@ -801,7 +820,8 @@ function getPenguinImage(stage) {
 
 /* 펭귄이 말할 때 흔들리는 애니메이션 */
 @keyframes wiggle {
-  0%, 100% {
+  0%,
+  100% {
     transform: rotate(0deg) translateX(0px);
   }
   25% {
