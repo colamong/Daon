@@ -1,11 +1,15 @@
 <template>
   <form
     @submit.prevent="handleSignUp"
-    class="mx-auto w-full max-w-lg space-y-6 bg-white rounded-2xl shadow-lg p-8"
+    class="mx-auto w-full max-w-lg space-y-6 bg-white rounded-2xl shadow-lg p-8 m-10"
   >
     <!-- 로고 + 제목 -->
     <div class="flex flex-col items-center space-y-2">
-      <div class="w-20 h-20 bg-gray-300 rounded-lg"></div>
+      <img
+        :src="signupImage"
+        alt="회원가입 이미지"
+        class="!w-[100px] !h-[100px] object-contain"
+      />
       <h2 class="text-2xl font-semibold text-black font-paper">회원가입</h2>
     </div>
 
@@ -66,7 +70,7 @@
           v-model="domainOption"
           class="flex-1 py-2 pl-2 pr-2 text-sm focus:outline-none font-paper"
         >
-          <option disabled value="">도메인 선택</option>
+          <option disabled value="">이메일 선택</option>
           <option v-for="opt in domainOptions" :key="opt">{{ opt }}</option>
         </select>
         <input
@@ -196,8 +200,9 @@
 import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "vue-router";
-import { useNotification } from '@/composables/useNotification.js';
-import { nationService } from '@/services/nationService.js';
+import { useNotification } from "@/composables/useNotification.js";
+import { nationService } from "@/services/nationService.js";
+import signupImage from "@/assets/images/signup.png";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -224,13 +229,13 @@ async function loadCountries() {
   try {
     const nations = await nationService.getNations();
     countryOptions.value = nations;
-    console.log('국가 목록 로드 완료:', nations);
+    console.log("국가 목록 로드 완료:", nations);
   } catch (error) {
-    console.error('국가 목록 로드 실패:', error);
+    console.error("국가 목록 로드 실패:", error);
     showError(error.message, "국가 목록 로드 실패");
     // 국가 목록 로드 실패 시 기본 옵션 제공
     countryOptions.value = [
-      { code: "KR", nameKo: "대한민국", nameEn: "South Korea" }
+      { code: "KR", nameKo: "대한민국", nameEn: "South Korea" },
     ];
   }
 }
@@ -245,32 +250,32 @@ async function handleSignUp() {
     showError("닉네임을 입력해주세요.", "입력 오류");
     return;
   }
-  
+
   if (!emailLocal.value.trim()) {
     showError("이메일을 입력해주세요.", "입력 오류");
     return;
   }
-  
+
   if (domainOption.value === "직접 입력" && !customDomain.value.trim()) {
     showError("도메인을 입력해주세요.", "입력 오류");
     return;
   }
-  
+
   if (password.value.length < 6) {
     showWarning("비밀번호는 6자 이상이어야 합니다.", "비밀번호 오류");
     return;
   }
-  
+
   if (password.value !== confirmPassword.value) {
     showError("비밀번호가 일치하지 않습니다.", "비밀번호 확인");
     return;
   }
-  
+
   if (!country.value || country.value.trim() === "") {
     showError("국가를 선택해주세요.", "입력 오류");
     return;
   }
-  
+
   try {
     const signupData = {
       nickname: nickname.value,
@@ -278,38 +283,56 @@ async function handleSignUp() {
       password: password.value,
       nationCode: country.value || "KR", // camelCase로 수정
     };
-    console.log('회원가입 요청 데이터:', signupData);
-    console.log('선택된 국가 값:', country.value);
-    console.log('국가 옵션 목록:', countryOptions.value);
+    console.log("회원가입 요청 데이터:", signupData);
+    console.log("선택된 국가 값:", country.value);
+    console.log("국가 옵션 목록:", countryOptions.value);
     await auth.signup(signupData);
-    
+
     // 회원가입 성공 후 자동 로그인
     await auth.login({
       email: email.value,
-      password: password.value
+      password: password.value,
     });
-    
+
     // 로그인 후 사용자 정보 가져오기
     await auth.getCurrentUser();
-    
+
     showSuccess("회원가입이 완료되었습니다!", "환영합니다");
     router.push({ name: "Dashboard" });
   } catch (error) {
-    console.error('회원가입 오류:', error);
-    
+    console.error("회원가입 오류:", error);
+    console.log("Error status:", error.response?.status);
+    console.log("Error data:", error.response?.data);
+    console.log("Error message:", error.message);
+
     let errorMessage = "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.";
+
+    // 백엔드 응답 데이터에서 중복 이메일 메시지 확인
+    const responseMessage = error.response?.data?.message || error.response?.data?.error || error.response?.data;
     
-    // 백엔드에서 오는 구체적인 오류 메시지 사용
-    if (error.message) {
-      errorMessage = error.message;
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
-    } else if (error.response?.status === 409) {
-      errorMessage = "이미 사용 중인 이메일입니다.";
+    // 상태 코드별로 먼저 체크
+    if (error.response?.status === 409) {
+      errorMessage = "중복된 이메일입니다. 확인해주세요.";
     } else if (error.response?.status === 400) {
       errorMessage = "입력 정보를 다시 확인해주세요.";
+    } else if (error.response?.status === 500) {
+      // 500 에러인 경우 응답 메시지에서 중복 이메일 여부 확인
+      if (responseMessage && (
+          responseMessage.includes('이미 사용 중') || 
+          responseMessage.includes('중복') || 
+          responseMessage.includes('already exists') ||
+          responseMessage.includes('duplicate')
+        )) {
+        errorMessage = "중복된 이메일입니다. 확인해주세요.";
+      } else {
+        errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+      }
+    } else if (responseMessage && typeof responseMessage === 'string') {
+      errorMessage = responseMessage;
+    } else if (error.message && !error.message.includes('백엔드 서버')) {
+      errorMessage = error.message;
     }
-    
+
     showError(errorMessage, "회원가입 실패");
   }
 }

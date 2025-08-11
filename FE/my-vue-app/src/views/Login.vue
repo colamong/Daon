@@ -5,7 +5,11 @@
   >
     <!-- 로고 + 제목 -->
     <div class="flex flex-col items-center space-y-2">
-      <div class="w-20 h-20 bg-gray-300 rounded-lg"></div>
+      <img 
+        :src="loginImage" 
+        alt="로그인 이미지" 
+        class="w-20 h-20 object-contain"
+      />
       <h2 class="text-2xl font-semibold text-black font-paper">로그인</h2>
       <p class="text-xs text-gray-500 font-paper">
         Get started with our app, just login to enjoy the experience.
@@ -115,6 +119,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { useNotification } from '@/composables/useNotification.js';
+import loginImage from "@/assets/images/login.png";
 
 const router = useRouter();
 const auth = useAuthStore();

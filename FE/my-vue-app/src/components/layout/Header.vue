@@ -1,12 +1,11 @@
 <!-- src/components/layout/Header.vue -->
 <template>
   <header
-    class="relative w-full h-28 bg-background-header flex items-center justify-between px-8"
+    class="relative w-full !h-24 bg-background-header flex items-center justify-between px-8"
   >
     <!-- 왼쪽 로고 -->
-    <div @click="goDashboard" class="flex items-center gap-4 cursor-pointer">
-      <div class="w-16 h-16 bg-gray-500 rounded-full"></div>
-      <div class="text-2xl font-paperSemi text-[#526049]">다온(DA:ON)</div>
+    <div @click="goDashboard" class="cursor-pointer">
+      <img :src="DAONLogo" alt="DAON 로고" class="h-12 object-contain" />
     </div>
 
     <!-- 가운데 내비게이션 -->
@@ -34,7 +33,7 @@
         @click="toggleProfile"
         :src="auth.user?.profileImage || 'https://placehold.co/53x53'"
         alt="프로필"
-        class="w-14 h-14 rounded-full cursor-pointer object-cover"
+        class="w-11 h-11 rounded-full cursor-pointer object-cover"
       />
       <span
         @click="toggleProfile"
@@ -111,7 +110,7 @@
             alt="국가 아이콘"
             class="w-5 h-5"
           />
-          <span class="text-m text-violet-900">{{ auth.user?.country }}</span>
+          <span class="text-m text-violet-900">{{ auth.userNationName }}</span>
         </div>
 
         <!-- 5) 프로필 수정 버튼 -->
@@ -126,16 +125,16 @@
     </div>
 
     <!-- 펭구랑 놀자 - 아이 선택 모달 -->
-    <ChildSelectModal 
+    <ChildSelectModal
       v-model="showPenguinChildSelectModal"
       :children="childStore.children"
       action-text="펭귄과 놀"
       @select="onPenguinChildSelected"
       @register="goToChildRegister"
     />
-    
+
     <!-- 아이 등록 확인 모달 -->
-    <ConfirmChildRegistrationModal 
+    <ConfirmChildRegistrationModal
       v-model="showChildRegistrationModal"
       @confirm="handleChildRegistrationConfirm"
       @cancel="handleChildRegistrationCancel"
@@ -151,6 +150,7 @@ import { useChildStore } from "@/store/child";
 import BaseButton from "@/components/button/BaseButton.vue";
 import ChildSelectModal from "@/components/modal/ChildSelectModal.vue";
 import ConfirmChildRegistrationModal from "@/components/modal/ConfirmChildRegistrationModal.vue";
+import DAONLogo from "@/assets/images/DAON.png";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -173,7 +173,7 @@ function logout() {
 
 const goDashboard = () => router.push({ name: "Dashboard" });
 
-//비동기 처리: initialize 완료 후 분기 
+//비동기 처리: initialize 완료 후 분기
 const goChildMain = async () => {
   await childStore.initialize();
 
@@ -239,7 +239,11 @@ function handleClickOutside(e) {
   }
 }
 
-onMounted(() => document.addEventListener("click", handleClickOutside));
+onMounted(async () => {
+  document.addEventListener("click", handleClickOutside);
+  // 국가 목록 로드 (프로필 카드의 국가 정보 표시를 위해)
+  await auth.loadNations();
+});
 onBeforeUnmount(() =>
   document.removeEventListener("click", handleClickOutside)
 );
