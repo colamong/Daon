@@ -2,6 +2,7 @@ package com.daon.be.global.config;
 
 import java.util.List;
 
+import com.daon.be.user.auth.oauth.CustomOAuth2FailureHandler;
 import com.daon.be.user.auth.oauth.CustomOAuth2SuccessHandler;
 import com.daon.be.user.jwt.JwtAuthenticationFilter;
 import com.daon.be.user.jwt.JwtUtil;
@@ -24,6 +25,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
 	private final CustomOAuth2SuccessHandler oAuth2SuccessHandler;
+	private final CustomOAuth2FailureHandler oAuth2FailureHandler;
 	private final JwtUtil jwtUtil;
 
 	@Bean
@@ -42,6 +44,7 @@ public class SecurityConfig {
 				)
 				.oauth2Login(oauth2 -> oauth2
 						.successHandler(oAuth2SuccessHandler)
+						.failureHandler(oAuth2FailureHandler)
 				)
 				.addFilterBefore(
 						new JwtAuthenticationFilter(jwtUtil),

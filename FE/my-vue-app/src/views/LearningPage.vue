@@ -43,36 +43,19 @@
 
     <!-- 학습 콘텐츠 -->
     <div v-if="currentContent" class="space-y-8">
-      <!-- 상황 설명 -->
-      <div class="bg-blue-100 rounded-lg p-6">
-        <h2 class="text-xl font-paperBold text-gray-800 mb-2">상황</h2>
-        <p class="text-gray-700">{{ currentContent.situation }}</p>
-      </div>
+      <!-- 질문 (타이핑 효과) -->
+      <TypingEffect
+        :key="questionId"
+        :text="currentContent.question"
+        :pronunciation="currentContent.questionPronunciation"
+        :typing-speed="50"
+        @typing-complete="onTypingComplete"
+        @play-audio="playQuestionAudio"
+      />
 
-      <!-- 질문 카드 -->
-      <div class="mb-8">
-        <div class="bg-transition-blue/20 px-6 py-4 rounded-2xl w-full">
-          <div class="flex justify-between items-center">
-            <div class="flex-1">
-              <p class="text-base font-paperBold text-black mb-2">
-                {{ currentContent.question }}
-              </p>
-              <p class="text-gray-600 text-sm">
-                {{ currentContent.questionPronunciation }}
-              </p>
-            </div>
-            <button
-              @click="playQuestionAudio"
-              class="ml-4 bg-white hover:bg-gray-100 p-2 rounded-lg transition-colors border flex items-center justify-center w-8 h-8"
-            >
-              🔊
-            </button>
-          </div>
-        </div>
-      </div>
 
       <!-- 답변 선택지 -->
-      <div class="space-y-4">
+      <div v-if="showAnswers" class="space-y-4">
         <h3 class="text-xl font-paperBold text-gray-800">답변을 선택하세요:</h3>
         <div 
           v-for="answer in currentContent.answers"
@@ -249,6 +232,7 @@ import AnswerCard from '@/components/card/AnswerCard.vue'
 import PronunciationModal from '@/components/modal/PronunciationModal.vue'
 import ConfettiEffect from '@/components/effect/ConfettiEffect.vue'
 import IncorrectAnswerModal from '@/components/modal/IncorrectAnswerModal.vue'
+import TypingEffect from '@/components/effect/TypingEffect.vue'
 import learningService from '@/services/learningService'
 import ttsService from '@/services/ttsService'
 
@@ -291,6 +275,8 @@ const showExitConfirm = ref(false)
 const pendingNavigation = ref(null)
 const showConfetti = ref(false)
 const showIncorrectModal = ref(false)
+const showAnswers = ref(false)
+const showQuestionCard = ref(false)
 
 // ---------- API 로딩 ----------
 const loadThemes = async () => {
@@ -327,6 +313,8 @@ watch(() => chapterId.value, async () => {
 watch(() => questionId.value, () => {
   selectedAnswer.value = null
   selectedCorrectAnswer.value = null
+  showAnswers.value = false
+  showQuestionCard.value = false
 })
 
 // ---------- 정답/발음 ----------
@@ -478,6 +466,14 @@ const playAnswerAudio = async (answer) => {
   } catch {
     showWarning('음성 재생에 실패했습니다.', '오류', { duration: 1500 })
   }
+}
+
+// 타이핑 완료 시 답변 선택지 표시
+const onTypingComplete = () => {
+  // 타이핑 완료 후 약간의 딜레이 후 답변 선택지 표시
+  setTimeout(() => {
+    showAnswers.value = true
+  }, 500)
 }
 
 </script>

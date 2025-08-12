@@ -1,10 +1,10 @@
 <!-- 메인화면 사이트 기능소개 카드, OCR 장점 소개 카드 -->
 <template>
   <component
-    :is="(to || link) ? 'router-link' : 'div'"
+    :is="to || link ? 'router-link' : 'div'"
     :to="to || link"
     @click="handleClick"
-    class="w-64 rounded-2xl shadow-md p-6 block hover:shadow-lg transition-shadow cursor-pointer"
+    class="w-64 rounded-2xl shadow-md p-6 block hover:shadow-xl hover:shadow-gray-600/60 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
     :style="{ backgroundColor: cardStyle.bg }"
   >
     <div class="flex justify-center mb-4">
@@ -41,12 +41,12 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['click']);
+const emit = defineEmits(["click"]);
 
 function handleClick(event) {
   // router-link가 아닌 경우에만 클릭 이벤트 emit
   if (!props.to && !props.link) {
-    emit('click', event);
+    emit("click", event);
   }
 }
 

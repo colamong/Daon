@@ -1,28 +1,29 @@
 <template>
-  <div>
+  <div class="mx-4">
     <!-- 1) 카드: 클릭하면 모달 열림 -->
     <div
-      class="flex items-center w-full max-w-sm rounded-xl shadow border bg-white px-4 py-3 hover:shadow-md transition cursor-pointer"
+      class="group flex items-center w-full max-w-sm rounded-xl shadow border bg-white px-4 py-3 cursor-pointer transition-all duration-300 hover:scale-105 hover:z-10 relative"
+      :style="cardHoverStyle"
       @click="openView"
     >
       <!-- 컬러 스퀘어 -->
       <div
-        class="w-12 h-12 rounded-md mr-4 flex-shrink-0"
+        class="w-12 h-12 rounded-md mr-4 flex-shrink-0 transition-all duration-300 group-hover:shadow-lg group-hover:scale-110"
         :style="{ backgroundColor: cardColor }"
       ></div>
 
       <!-- 날짜 / 제목 -->
       <div class="flex-1">
-        <div class="text-lg font-paperBold text-gray-800">
+        <div class="text-lg font-paperBold text-gray-800 transition-colors duration-300 group-hover:text-blue-700">
           {{ formattedDate }}
         </div>
-        <div class="text-base font-paper text-gray-700">
+        <div class="text-base font-paper text-gray-700 transition-colors duration-300 group-hover:text-blue-600">
           {{ title }}
         </div>
       </div>
 
       <!-- 오른쪽 화살표 -->
-      <div class="text-gray-400 text-lg font-paperSemiBold">›</div>
+      <div class="text-gray-400 text-lg font-paperSemiBold transition-all duration-300 group-hover:text-blue-500 group-hover:transform group-hover:translate-x-1">›</div>
     </div>
 
     <!-- 2) 모달만 teleport -->
@@ -175,6 +176,23 @@ const cardColor = computed(() => {
   return cardColors[idx];
 });
 
+// 카드 색상에 따른 호버 스타일
+const cardHoverStyle = computed(() => {
+  const color = cardColor.value;
+  
+  // RGB 값 추출 (hex to rgb)
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  return {
+    '--hover-shadow': `0 0 12px rgba(${r}, ${g}, ${b}, 0.5)`,
+    '--hover-border-color': color,
+    '--hover-bg-color': `rgba(${r}, ${g}, ${b}, 0.05)`
+  };
+});
+
 // 메서드들
 function openView() {
   showModal.value = true;
@@ -204,5 +222,9 @@ function onDelete() {
 </script>
 
 <style scoped>
-/* 네비 버튼 관련 모든 코드를 삭제했습니다 */
+.group:hover {
+  box-shadow: var(--hover-shadow);
+  border-color: var(--hover-border-color);
+  background-color: var(--hover-bg-color);
+}
 </style>

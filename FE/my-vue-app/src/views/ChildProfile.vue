@@ -91,15 +91,6 @@
                     <p class="text-lg font-paper">{{ genderDisplay }}</p>
                   </div>
                 </div>
-                <div class="flex items-center space-x-3">
-                  <span class="text-purple-500 font-paperBold">📅</span>
-                  <div>
-                    <p class="text-sm text-gray-500">등록일</p>
-                    <p class="text-lg font-paper">
-                      {{ formatDate(selectedChild.registeredAt) }}
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -142,10 +133,8 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
-
   </div>
 </template>
 
@@ -165,9 +154,8 @@ const selectedChildIndex = computed({
     if (childrenList.value[index]) {
       childStore.selectChild(childrenList.value[index].id);
     }
-  }
+  },
 });
-
 
 // childStore의 computed 속성들 사용
 const hasChild = computed(() => childStore.hasChildren);
@@ -175,10 +163,9 @@ const selectedChild = computed(() => childStore.selectedChild);
 
 // 성별 한글 표시
 const genderDisplay = computed(() => {
-  if (!selectedChild.value?.gender) return '';
-  return selectedChild.value.gender === 'MALE' ? '남자' : '여자';
+  if (!selectedChild.value?.gender) return "";
+  return selectedChild.value.gender === "MALE" ? "남자" : "여자";
 });
-
 
 // 컴포넌트 마운트 시 아이 정보 로드
 onMounted(() => {
@@ -224,9 +211,9 @@ function goToEdit() {
 function goToActivity() {
   if (selectedChild.value) {
     // 선택된 아이 정보와 함께 ChildMain으로 이동
-    router.push({ 
-      name: 'ChildMain',
-      params: { childId: selectedChild.value.id }
+    router.push({
+      name: "ChildMain",
+      params: { childId: selectedChild.value.id },
     });
   } else {
     router.push({ name: "RegisterChild" });

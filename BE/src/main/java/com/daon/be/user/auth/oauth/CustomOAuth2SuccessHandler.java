@@ -7,14 +7,20 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Duration;
 
 @RequiredArgsConstructor
 @Component
@@ -22,6 +28,9 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 
 	private final UserRepository userRepository;
 	private final JwtUtil jwtUtil;
+
+	@Value("${frontend.origin}")
+	private String frontendOrigin;
 
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -52,27 +61,25 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 		String token = jwtUtil.generateToken(user.getId());
 
 		// JWT를 쿠키로 저장
-		Cookie cookie = new Cookie("accessToken", token);
-		cookie.setHttpOnly(true);
-		cookie.setPath("/");
-		cookie.setMaxAge(60 * 60 * 8); // 8시간
+		ResponseCookie c = ResponseCookie.from("accessToken", token)
+			.httpOnly(true)
+			.path("/")
+			.maxAge(Duration.ofHours(8))
+			.sameSite("Lax")
+			.build();
+		response.addHeader(HttpHeaders.SET_COOKIE, c.toString());
 
-		response.addCookie(cookie);
+		// 혹시 모를 SavedRequest 삭제(다른 리다이렉트에 덮이지 않게)
+		HttpSession session = request.getSession(false);
+		if (session != null) session.removeAttribute("SPRING_SECURITY_SAVED_REQUEST");
 
-		// json응답
-		//리다이렉트로 변경하고 싶으면
-		//response.sendRedirect("/login-success");
-		response.setContentType("application/json;charset=UTF-8");
-		response.setStatus(HttpServletResponse.SC_OK);
-		response.getWriter().write("""
-			    {
-			      "message": "OAuth2 로그인 성공",
-			      "user": {
-			        "id": %d,
-			        "email": "%s",
-			        "nickname": "%s"
-			      }
-			    }
-			""".formatted(user.getId(), user.getEmail(), user.getNickname()));
+		// 절대경로로 302 지정 후 즉시 종료
+		String target = frontendOrigin.endsWith("/") ? frontendOrigin : (frontendOrigin + "/dashboard");
+		System.out.println("[OAuth2Success] redirect -> " + target);
+		response.setStatus(HttpServletResponse.SC_FOUND);
+		response.setHeader(HttpHeaders.LOCATION, target);
+		return;
 	}
+
+
 }
