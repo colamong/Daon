@@ -1,6 +1,6 @@
 <!-- ScheduleList.vue -->
 <template>
-  <div>
+  <div class="space-y-4">
     <ScheduleCard
       v-for="(schedule, index) in schedules"
       :key="index"

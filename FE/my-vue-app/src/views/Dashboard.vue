@@ -53,9 +53,9 @@
           </button>
           <AddEventModal v-model="modalVisible" @add-event="handleAddEvent" />
         </div>
-        <div class="flex-1 overflow-y-auto pr-2">
+        <div class="flex-1 overflow-y-auto overflow-x-visible pr-2 py-2">
           <template v-if="filteredEvents.length">
-            <div class="space-y-4">
+            <div class="space-y-6">
               <ScheduleCard
                 v-for="ev in filteredEvents"
                 :key="ev.id"
@@ -102,7 +102,7 @@
         <h3 class="text-2xl font-semibold">오늘의 활동</h3>
         <button
           @click="openTodayReport"
-          class="text-sm text-gray-600 hover:underline"
+          class="text-sm text-gray-600 hover:underline hover:text-blue-600"
         >
           자세히 보기 →
         </button>
@@ -135,7 +135,7 @@
               </p>
               <button
                 @click="goToActivity"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-paper"
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-white hover:text-blue-600 font-paper"
               >
                 {{ hasChild ? "활동하러 가기" : "아이 등록하러 가기" }}
               </button>
@@ -155,7 +155,7 @@
                 class="relative"
               >
                 <div
-                  class="px-4 py-2 rounded-t-lg cursor-pointer transition-colors mr-1"
+                  class="px-4 py-2 rounded-t-lg cursor-pointer transition-colors mr-1 hover:text-orange-500 hover:font-bold"
                   :class="{
                     'bg-yellow-200 text-black font-bold':
                       selectedChildIndex === index,
@@ -173,7 +173,7 @@
               <!-- 아이 추가 버튼 탭 -->
               <div
                 @click="goToChildRegister"
-                class="px-3 py-2 bg-gray-600 text-white rounded-t-lg cursor-pointer hover:bg-gray-700 transition-colors flex items-center gap-1"
+                class="px-3 py-2 bg-gray-600 text-white rounded-t-lg cursor-pointer hover:bg-black transition-colors flex items-center gap-1"
               >
                 <span class="text-sm">아이추가 +</span>
               </div>

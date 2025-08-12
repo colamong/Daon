@@ -10,34 +10,54 @@
 
     <!-- 가운데 내비게이션 -->
     <nav class="flex gap-8">
-      <button @click="goChildMain" class="text-xl font-paper text-black">
+      <button
+        @click="goChildMain"
+        class="text-xl font-paper text-black hover:font-paperBold hover:text-2xl hover:text-blue-600"
+      >
         펭구랑 놀자
       </button>
-      <button @click="goChildProfile" class="text-xl font-paper text-black">
+      <button
+        @click="goChildProfile"
+        class="text-xl font-paper text-black hover:font-paperBold hover:text-2xl hover:text-blue-600"
+      >
         아이 프로필
       </button>
-      <button @click="goOCRTool" class="text-xl font-paper text-black">
+      <button
+        @click="goOCRTool"
+        class="text-xl font-paper text-black hover:font-paperBold hover:text-2xl hover:text-blue-600"
+      >
         문서 도우미
       </button>
-      <button @click="goCommunityChat" class="text-xl font-paper text-black">
+      <button
+        @click="goCommunityChat"
+        class="text-xl font-paper text-black hover:font-paperBold hover:text-2xl hover:text-blue-600"
+      >
         온동네
       </button>
-      <button @click="goLearningHelper" class="text-xl font-paper text-black">
+      <button
+        @click="goLearningHelper"
+        class="text-xl font-paper text-black hover:font-paperBold hover:text-2xl hover:text-blue-600"
+      >
         상황별 학습
       </button>
     </nav>
 
     <!-- 오른쪽: 프로필 토글 + 로그아웃 -->
-    <div class="flex items-center gap-4" ref="wrapper">
+    <div
+      class="flex items-center gap-4"
+      ref="wrapper"
+      @mouseenter="showProfileCard"
+      @mouseleave="hideProfileCard"
+    >
       <img
         @click="toggleProfile"
         :src="auth.user?.profileImage || 'https://placehold.co/53x53'"
         alt="프로필"
-        class="w-11 h-11 rounded-full cursor-pointer object-cover"
+        class="w-11 h-11 rounded-full cursor-pointer object-cover transition-transform hover:scale-105"
       />
       <span
         @click="toggleProfile"
-        class="cursor-pointer text-xl font-paper text-black"
+        class="cursor-pointer text-xl font-paper text-black hover:text-blue-600 transition-colors"
       >
         {{ auth.user?.nickname || "게스트" }}
       </span>
@@ -73,6 +93,8 @@
     <div
       v-if="showProfile"
       ref="profileCard"
+      @mouseenter="showProfileCard"
+      @mouseleave="hideProfileCard"
       class="font-paper fixed top-28 right-8 h-96 w-80 bg-purple-200 rounded-xl shadow-lg z-[1000]"
     >
       <!-- 외곽 테두리 -->
@@ -117,7 +139,7 @@
         <BaseButton
           variant="myprofile"
           link="/profile/edit"
-          class="mt-auto w-36"
+          class="mt-auto w-36 hover:border-2 hover:border-violet-900 hover:bg-white hover:text-violet-900"
         >
           프로필 수정
         </BaseButton>
@@ -161,9 +183,27 @@ const profileCard = ref(null);
 const wrapper = ref(null);
 const showPenguinChildSelectModal = ref(false);
 const showChildRegistrationModal = ref(false);
+const hoverTimer = ref(null);
 
 function toggleProfile() {
   showProfile.value = !showProfile.value;
+}
+
+function showProfileCard() {
+  // 기존 타이머가 있다면 취소
+  if (hoverTimer.value) {
+    clearTimeout(hoverTimer.value);
+    hoverTimer.value = null;
+  }
+  showProfile.value = true;
+}
+
+function hideProfileCard() {
+  // 200ms 딜레이를 두어 마우스가 카드로 이동할 시간을 줌
+  hoverTimer.value = setTimeout(() => {
+    showProfile.value = false;
+    hoverTimer.value = null;
+  }, 200);
 }
 
 function logout() {
