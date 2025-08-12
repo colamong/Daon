@@ -4,7 +4,7 @@
     class="mx-auto w-full max-w-lg space-y-6 bg-white rounded-2xl shadow-lg p-8 m-10"
   >
     <!-- 로고 + 제목 -->
-    <div class="flex flex-col items-center space-y-2">
+    <div class="flex flex-col items-center space-y-1">
       <img
         :src="signupImage"
         alt="회원가입 이미지"
@@ -177,7 +177,6 @@
     >
       회원가입
     </button>
-
   </form>
 </template>
 
@@ -293,8 +292,11 @@ async function handleSignUp() {
     let errorMessage = "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.";
 
     // 백엔드 응답 데이터에서 중복 이메일 메시지 확인
-    const responseMessage = error.response?.data?.message || error.response?.data?.error || error.response?.data;
-    
+    const responseMessage =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.response?.data;
+
     // 상태 코드별로 먼저 체크
     if (error.response?.status === 409) {
       errorMessage = "중복된 이메일입니다. 확인해주세요.";
@@ -302,19 +304,20 @@ async function handleSignUp() {
       errorMessage = "입력 정보를 다시 확인해주세요.";
     } else if (error.response?.status === 500) {
       // 500 에러인 경우 응답 메시지에서 중복 이메일 여부 확인
-      if (responseMessage && (
-          responseMessage.includes('이미 사용 중') || 
-          responseMessage.includes('중복') || 
-          responseMessage.includes('already exists') ||
-          responseMessage.includes('duplicate')
-        )) {
+      if (
+        responseMessage &&
+        (responseMessage.includes("이미 사용 중") ||
+          responseMessage.includes("중복") ||
+          responseMessage.includes("already exists") ||
+          responseMessage.includes("duplicate"))
+      ) {
         errorMessage = "중복된 이메일입니다. 확인해주세요.";
       } else {
         errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
       }
-    } else if (responseMessage && typeof responseMessage === 'string') {
+    } else if (responseMessage && typeof responseMessage === "string") {
       errorMessage = responseMessage;
-    } else if (error.message && !error.message.includes('백엔드 서버')) {
+    } else if (error.message && !error.message.includes("백엔드 서버")) {
       errorMessage = error.message;
     }
 
