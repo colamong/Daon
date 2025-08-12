@@ -169,7 +169,7 @@ watch(
   white-space: nowrap;
   width: 0;
   animation: typing v-bind(animationDuration + "s")
-    steps(v-bind(safeText.length)) forwards;
+    steps(v-bind("safeText.length")) forwards;
 }
 
 .typing-cursor {
