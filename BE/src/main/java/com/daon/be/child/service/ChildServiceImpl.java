@@ -94,7 +94,7 @@ public class ChildServiceImpl implements ChildService {
                 .map(child ->  {
                     // 각 child에 대해 관심사 조회
                     List<String> interests = childInterestRepository
-                            .findByChildProfileId(child.getId())
+                                .findByChildProfileId(child.getId())
                             .stream()
                             .map(ChildInterest::getName)
                             .collect(Collectors.toList());
