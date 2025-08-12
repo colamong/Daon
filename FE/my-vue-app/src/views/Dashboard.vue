@@ -19,9 +19,9 @@
         <!-- 이미지 -->
         <div class="md:w-1/2 flex justify-center relative">
           <img
-            src="@/assets/images/hero-group.png"
+            src="@/assets/images/hero-bg.png"
             alt="다문화 가족"
-            class="rounded-lg w-full max-w-sm relative z-10"
+            class="rounded-lg w-full max-w-md relative z-10"
           />
         </div>
       </div>
