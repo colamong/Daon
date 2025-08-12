@@ -338,22 +338,11 @@ onMounted(async () => {
     if (userId) await childStore.loadChildren(userId);
   }
 
-  // 스토어가 비어있을 때 직접 로드 보정
+  // 스토어가 비어있을 때 직접 로드 보정 (child store에서 이미 새로운 API를 사용하므로 단순화)
   try {
     const userId = auth.user?.id;
     if (userId && (!childrenList.value || childrenList.value.length === 0)) {
-      const list = await childService.getAllChildren(userId);
-      if (Array.isArray(list) && list.length) {
-        childStore.setChildren(
-          list.map((c) => ({
-            id: c.childId,
-            name: c.name,
-            birthDate: c.birthDate,
-            profileImage: c.imageUrl || c.profileImg || null,
-            interests: c.registeredInterests || c.interests || [],
-          }))
-        );
-      }
+      await childStore.loadChildren();
     }
   } catch (e) {
     console.warn("직접 자녀 목록 로드 실패:", e?.message || e);
