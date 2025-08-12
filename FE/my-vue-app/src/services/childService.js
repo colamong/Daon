@@ -256,5 +256,40 @@ export const childService = {
       
       throw new Error(error.response?.data?.message || '다이어리 조회 중 오류가 발생했습니다.');
     }
+  },
+
+  // 부모용 자녀 관심사 조회 API
+  async getChildInterestsForParent(userId, childId) {
+    try {
+      const { data } = await api.get(`/users/${userId}/children/${childId}/interest/parent`);
+      return data.data; // 관심사 배열 반환
+    } catch (error) {
+      handleError(error, '자녀 관심사 조회 중 오류가 발생했습니다.');
+    }
+  },
+
+  // AI 추천 자녀 관심사 조회 API
+  async getAIRecommendedInterests(userId, childId) {
+    try {
+      const { data } = await api.get(`/users/${userId}/children/${childId}/interest/ai`);
+      return data.data; // AI 추천 관심사 배열 반환
+    } catch (error) {
+      // AI 추천이 없거나 오류일 경우 빈 배열 반환 (에러를 throw하지 않음)
+      console.warn('AI 추천 관심사 조회 중 오류:', error);
+      return [];
+    }
+  },
+
+  // AI 추천 관심사에서 특정 관심사 삭제 API
+  async removeAIRecommendedInterest(userId, childId, dataBody) {
+    try {
+      const { data } = await api.delete(`/users/${userId}/children/${childId}/interest/ai`, {
+        data: dataBody,
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return data;
+    } catch (error) {
+      handleError(error, 'AI 추천 관심사 삭제 중 오류가 발생했습니다.');
+    }
   }
 };

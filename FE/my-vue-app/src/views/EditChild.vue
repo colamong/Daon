@@ -89,6 +89,34 @@
                 />
               </div>
 
+              <!-- AI 추천 관심사 -->
+              <div v-if="aiRecommendedInterests.length > 0">
+                <label class="block text-lg font-paperBold text-black mb-3">
+                  🤖 AI가 추천하는 관심사
+                </label>
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+                  <p class="text-sm text-gray-600 mb-3">아이의 활동 기록을 바탕으로 추천된 관심사입니다</p>
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      v-for="interest in aiRecommendedInterests"
+                      :key="interest"
+                      @click="addAIRecommendedInterest(interest)"
+                      :disabled="childData.interests.includes(interest)"
+                      class="px-3 py-2 bg-white border-2 rounded-lg font-paper text-sm transition-all duration-200 flex items-center gap-2"
+                      :class="{
+                        'border-gray-300 text-gray-500 cursor-not-allowed': childData.interests.includes(interest),
+                        'border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400 cursor-pointer': !childData.interests.includes(interest)
+                      }"
+                    >
+                      <span v-if="childData.interests.includes(interest)">✅</span>
+                      <span v-else>➕</span>
+                      {{ interest }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <!-- 추가하고 싶은 관심사 -->
               <div>
                 <label for="newInterest" class="block text-lg font-paperBold text-black mb-3">추가하고 싶은 관심사</label>
@@ -169,6 +197,7 @@ const selectedMonth = ref("");
 const selectedDay = ref("");
 const newInterest = ref("");
 const showDeleteConfirm = ref(false);
+const aiRecommendedInterests = ref([]);
 
 // 아이 데이터
 const childData = reactive({
@@ -226,7 +255,7 @@ async function loadChildren() {
 }
 
 // 특정 아이 데이터 로드
-function loadChildData(child) {
+async function loadChildData(child) {
   childData.id = child.id;
   childData.name = child.name || '';
   childData.birthDate = child.birthDate || '';
@@ -251,12 +280,15 @@ function loadChildData(child) {
   // 새 업로드 리셋
   childData.profileFile = null;
   childData.profileImagePreview = null;
+
+  // AI 추천 관심사 로드
+  await loadAIRecommendedInterests(child.id);
 }
 
 // 아이 선택
-function selectChild(index) {
+async function selectChild(index) {
   selectedChildIndex.value = index;
-  loadChildData(selectedChild.value);
+  await loadChildData(selectedChild.value);
 }
 
 // 이미지 업로드 처리
@@ -365,6 +397,70 @@ async function updateInterests(userId, childId) {
   const interestsToDelete = originalInterests.filter(i => !currentInterests.includes(i));
   if (interestsToDelete.length > 0) {
     await childService.deleteChildInterests(userId, childId, { interests: interestsToDelete });
+  }
+}
+
+// AI 추천 관심사 로드
+async function loadAIRecommendedInterests(childId) {
+  try {
+    const userId = auth.user?.id;
+    if (!userId) return;
+
+    const recommended = await childService.getAIRecommendedInterests(userId, childId);
+    aiRecommendedInterests.value = Array.isArray(recommended) ? recommended : [];
+  } catch (error) {
+    console.warn('AI 추천 관심사 로드 실패:', error);
+    aiRecommendedInterests.value = [];
+  }
+}
+
+// AI 추천 관심사 추가 (AI 추천에서 삭제 후 일반 관심사로 추가)
+async function addAIRecommendedInterest(interest) {
+  if (childData.interests.includes(interest)) return;
+
+  const newInterestValue = interest.trim();
+
+  // 중복 체크
+  const exists = interestOptions.value.find(
+    (option) => option.value.toLowerCase() === newInterestValue.toLowerCase()
+  );
+  if (exists) {
+    showWarning("이미 존재하는 관심사입니다.", "중복된 관심사");
+    return;
+  }
+
+  try {
+    const userId = auth.user?.id;
+    if (!userId) {
+      showError("로그인이 필요합니다.", "인증 오류");
+      return;
+    }
+
+    // 1단계: AI 추천에서 삭제 (기존 일반 관심사 삭제 API 사용)
+    await childService.deleteChildInterests(userId, childData.id, { interests: [newInterestValue] });
+    
+    // 2단계: 일반 관심사로 추가 (기존 addNewInterest와 동일한 로직)
+    await childService.addChildInterests(userId, childData.id, { interests: [newInterestValue] });
+
+    // 로컬 상태 업데이트
+    // AI 추천 목록에서 선택한 관심사 제거
+    aiRecommendedInterests.value = aiRecommendedInterests.value.filter(
+      item => item !== interest
+    );
+
+    // 일반 관심사 목록에 추가
+    const opt = { label: newInterestValue, value: newInterestValue };
+    interestOptions.value.push(opt);
+    if (!childData.interests.includes(newInterestValue)) {
+      childData.interests.push(newInterestValue);
+    }
+    showSuccess(`"${newInterestValue}" 관심사가 추가되었습니다.`, "관심사 추가");
+
+    // 스토어 업데이트
+    await childStore.loadChildren();
+  } catch (error) {
+    console.error("관심사 추가 실패:", error);
+    showError("관심사 추가에 실패했습니다.", "추가 실패");
   }
 }
 
