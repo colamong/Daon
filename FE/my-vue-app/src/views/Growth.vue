@@ -46,6 +46,7 @@
                   type="checkbox"
                   :value="child.name"
                   v-model="selectedChildrenForReport"
+                  @change="onSelectedChildrenChange"
                   class="sr-only"
                 />
                 <span
@@ -118,6 +119,33 @@ const calendarKey = ref(0);
 const showEmotionReportModal = ref(false);
 const selectedReportDate = ref("");
 const selectedReportData = ref(null);
+
+// selectedReportData 보호를 위한 잠금 플래그
+const isSettingReportData = ref(false);
+
+// selectedReportData 안전 설정 함수
+function setSelectedReportData(data) {
+  if (isSettingReportData.value) {
+    console.log('이미 설정 중이므로 무시됨');
+    return;
+  }
+  
+  isSettingReportData.value = true;
+  console.log('=== selectedReportData 안전 설정 시작 ===');
+  console.log('설정할 데이터:', data);
+  
+  selectedReportData.value = data;
+  
+  console.log('=== selectedReportData 안전 설정 완료 ===');
+  console.log('최종 설정된 값:', selectedReportData.value);
+  
+  // 50ms 후에 잠금 해제 (다른 자동 실행 방지)
+  setTimeout(() => {
+    isSettingReportData.value = false;
+  }, 50);
+}
+
+// selectedReportData 변경 추적 완전 제거
 const currentReportIndex = ref(0);
 
 // 리포트 표시용 선택된 아이들
@@ -129,8 +157,18 @@ const currentDate = ref(new Date());
 
 // 월별 다이어리 조회
 async function fetchMonthlyDiaries() {
+  console.log('fetchMonthlyDiaries 호출됨, 선택된 아이들:', selectedChildrenForReport.value);
+  
   if (selectedChildrenForReport.value.length === 0) {
+    console.log('선택된 아이가 없어서 모든 데이터 초기화');
     diaries.value = [];
+    
+    // 수동으로 캐시된 computed properties 초기화
+    diariesByDate.value = {};
+    allSelectedReports.value = [];
+    reportsByDate.value = {};
+    
+    console.log('모든 데이터 초기화 완료');
     return;
   }
   
@@ -166,14 +204,26 @@ async function fetchMonthlyDiaries() {
     
     diaries.value = allDiaries.sort((a, b) => new Date(a.date) - new Date(b.date));
     
+    // 수동으로 캐시된 computed properties 업데이트
+    updateDiariesByDate();
+    updateAllSelectedReports();
+    updateReportsByDate();
+    
   } catch (error) {
     console.error('다이어리 조회 오류:', error);
     diaries.value = [];
+    // 에러 시에도 캐시 초기화
+    diariesByDate.value = {};
+    allSelectedReports.value = [];
+    reportsByDate.value = {};
   }
 }
 
-// 날짜별 다이어리 맵
-const diariesByDate = computed(() => {
+// 날짜별 다이어리 맵 (childId 기준으로 정렬) - 캐시된 버전으로 변경
+const diariesByDate = ref({});
+
+// diaries가 변경될 때만 수동으로 업데이트
+function updateDiariesByDate() {
   const map = {};
   diaries.value.forEach(diary => {
     if (!map[diary.date]) {
@@ -181,20 +231,54 @@ const diariesByDate = computed(() => {
     }
     map[diary.date].push(diary);
   });
-  return map;
-});
+  
+  // 각 날짜별로 childId 기준 정렬
+  Object.keys(map).forEach(date => {
+    map[date].sort((a, b) => a.childId - b.childId);
+  });
+  
+  diariesByDate.value = map;
+}
 
-// 선택된 아이들의 모든 감정 리포트 데이터 (달력 표시용)
-const allSelectedReports = computed(() => {
-  return diaries.value.map(diary => ({
-    date: diary.date,
-    childName: diary.childName,
-    childId: diary.childId,
-    color: diary.color,
-    imageUrl: diary.imageUrl,
-    diaryText: diary.diaryText || diary.text || diary.content || ''
-  }));
-});
+// 선택된 아이들의 모든 감정 리포트 데이터 (달력 표시용) - 캐시된 버전
+const allSelectedReports = ref([]);
+
+// 리포트 데이터 수동 업데이트 함수
+function updateAllSelectedReports() {
+  console.log('=== allSelectedReports 수동 업데이트 시작 ===');
+  console.log('원본 diaries.value:', diaries.value);
+  console.log('사용 가능한 childrenList.value:', childrenList.value);
+  
+  const reports = diaries.value.map((diary, index) => {
+    // childId로 올바른 아이 이름 찾기
+    const child = childrenList.value.find(c => c.id === diary.childId);
+    if (!child) {
+      console.warn(`다이어리 ${index}: childId ${diary.childId}에 대한 아이를 찾을 수 없음`);
+      console.log('사용 가능한 아이들:', childrenList.value.map(c => ({ id: c.id, name: c.name })));
+    }
+    const correctChildName = child ? child.name : `Unknown-${diary.childId}`;
+    
+    const report = {
+      date: diary.date,
+      childName: correctChildName,
+      childId: diary.childId,
+      color: diary.color,
+      imageUrl: diary.imageUrl,
+      diaryText: diary.diaryText || diary.text || diary.content || ''
+    };
+    
+    console.log(`리포트 ${index} 생성:`, {
+      diary: { childId: diary.childId, date: diary.date, childName: diary.childName },
+      foundChild: child,
+      finalReport: { childId: report.childId, childName: report.childName, date: report.date }
+    });
+    
+    return report;
+  });
+  
+  console.log('allSelectedReports 최종 계산 완료:', reports.map(r => ({ date: r.date, childId: r.childId, childName: r.childName })));
+  allSelectedReports.value = reports;
+}
 
 // 아이별 우선순위 (등록 순서)
 const childPriority = computed(() => {
@@ -205,37 +289,212 @@ const childPriority = computed(() => {
   return priority;
 });
 
-// 전체 리포트를 날짜 순으로만 정렬 (네비게이션용, 원본 순서 유지)
-const allReportsForNavigation = computed(() => {
-  return allSelectedReports.value.sort((a, b) => {
-    // 날짜 우선 정렬
-    const dateCompare = new Date(a.date) - new Date(b.date);
-    if (dateCompare !== 0) return dateCompare;
-    
-    // 같은 날짜면 원본 순서 유지 (정렬 안 함)
-    return 0;
+// 날짜별로 그룹화된 리포트 데이터 (네비게이션용) - 캐시된 버전
+const reportsByDate = ref({});
+
+// 네비게이션용 리포트 그룹 수동 업데이트
+function updateReportsByDate() {
+  const groups = {};
+  allSelectedReports.value.forEach(report => {
+    if (!groups[report.date]) {
+      groups[report.date] = [];
+    }
+    groups[report.date].push(report);
   });
-});
+  
+  // 각 날짜별로 childId 순으로 정렬
+  Object.keys(groups).forEach(date => {
+    groups[date].sort((a, b) => a.childId - b.childId);
+  });
+  
+  console.log('날짜별 리포트 그룹:', groups);
+  reportsByDate.value = groups;
+}
 
-// 현재 리포트의 전체 인덱스 찾기
-const currentReportGlobalIndex = computed(() => {
-  if (!selectedReportData.value) return -1;
-  return allReportsForNavigation.value.findIndex(
-    (report) =>
-      report.date === selectedReportData.value.date &&
-      report.childName === selectedReportData.value.childName
-  );
-});
+// 자동 호출 차단용 플래그
+const allowNavigation = ref(false);
 
-// 네비게이션 관련 computed
-const hasPreviousReport = computed(() => currentReportGlobalIndex.value > 0);
-const hasNextReport = computed(
-  () =>
-    currentReportGlobalIndex.value < allReportsForNavigation.value.length - 1
-);
+// 이전 리포트 찾기 로직
+function findPreviousReport() {
+  console.log('!!! findPreviousReport 호출됨 - 호출 스택:', new Error().stack);
+  
+  // 자동 호출 차단 - 사용자가 직접 버튼 누를 때만 허용
+  if (!allowNavigation.value) {
+    console.log('자동 호출 차단됨 - findPreviousReport');
+    return null;
+  }
+  
+  if (!selectedReportData.value) {
+    console.log('이전 리포트 찾기: selectedReportData 없음');
+    return null;
+  }
+  
+  const currentDate = selectedReportData.value.date;
+  const currentChildId = selectedReportData.value.childId;
+  
+  console.log('=== 이전 리포트 찾기 시작 ===');
+  console.log('현재 리포트:', { currentDate, currentChildId });
+  console.log('사용 가능한 reportsByDate:', reportsByDate.value);
+  
+  // 1. 같은 날짜에서 더 작은 childId 찾기
+  const sameDate = reportsByDate.value[currentDate] || [];
+  console.log('같은 날짜의 리포트들:', sameDate);
+  
+  const prevInSameDate = sameDate
+    .filter(report => {
+      const isSmaller = report.childId < currentChildId;
+      console.log(`이전 찾기 - childId 비교: ${report.childId} < ${currentChildId} = ${isSmaller} (report: ${report.childName})`);
+      return isSmaller;
+    })
+    .sort((a, b) => b.childId - a.childId)[0]; // 가장 큰 ID부터
+  
+  if (prevInSameDate) {
+    console.log('같은 날짜에서 이전 리포트 발견:', prevInSameDate);
+    return prevInSameDate;
+  }
+  
+  // 2. 이전 날짜들에서 가장 최근 날짜의 가장 큰 childId 찾기
+  const dates = Object.keys(reportsByDate.value).sort((a, b) => new Date(b) - new Date(a));
+  console.log('정렬된 날짜들:', dates);
+  
+  for (const date of dates) {
+    console.log(`날짜 비교: ${date} < ${currentDate} = ${date < currentDate}`);
+    if (date < currentDate) {
+      const reportsInDate = reportsByDate.value[date];
+      const lastReport = reportsInDate[reportsInDate.length - 1]; // 가장 큰 childId
+      console.log('이전 날짜에서 리포트 발견:', { date, lastReport });
+      return lastReport;
+    }
+  }
+  
+  console.log('이전 리포트 없음');
+  return null;
+}
 
-// FullCalendar 설정
-const calendarOptions = computed(() => ({
+// 다음 리포트 찾기 로직
+function findNextReport() {
+  console.log('!!! findNextReport 호출됨 - 호출 스택:', new Error().stack);
+  
+  // 자동 호출 차단 - 사용자가 직접 버튼 누를 때만 허용
+  if (!allowNavigation.value) {
+    console.log('자동 호출 차단됨 - findNextReport');
+    return null;
+  }
+  
+  if (!selectedReportData.value) {
+    console.log('다음 리포트 찾기: selectedReportData 없음');
+    return null;
+  }
+  
+  const currentDate = selectedReportData.value.date;
+  const currentChildId = selectedReportData.value.childId;
+  
+  console.log('=== 다음 리포트 찾기 시작 ===');
+  console.log('현재 리포트:', { currentDate, currentChildId });
+  console.log('사용 가능한 reportsByDate:', reportsByDate.value);
+  
+  // 1. 같은 날짜에서 더 큰 childId 찾기
+  const sameDate = reportsByDate.value[currentDate] || [];
+  console.log('같은 날짜의 리포트들:', sameDate);
+  
+  const nextInSameDate = sameDate
+    .filter(report => {
+      const isBigger = report.childId > currentChildId;
+      console.log(`다음 찾기 - childId 비교: ${report.childId} > ${currentChildId} = ${isBigger} (report: ${report.childName})`);
+      return isBigger;
+    })
+    .sort((a, b) => a.childId - b.childId)[0]; // 가장 작은 ID부터
+  
+  if (nextInSameDate) {
+    console.log('같은 날짜에서 다음 리포트 발견:', {
+      childName: nextInSameDate.childName,
+      childId: nextInSameDate.childId,
+      date: nextInSameDate.date
+    });
+    return nextInSameDate;
+  }
+  
+  // 2. 다음 날짜들에서 가장 가까운 날짜의 가장 작은 childId 찾기
+  const dates = Object.keys(reportsByDate.value).sort((a, b) => new Date(a) - new Date(b));
+  console.log('정렬된 날짜들:', dates);
+  
+  for (const date of dates) {
+    console.log(`날짜 비교: ${date} > ${currentDate} = ${date > currentDate}`);
+    if (date > currentDate) {
+      const reportsInDate = reportsByDate.value[date];
+      const firstReport = reportsInDate[0]; // 가장 작은 childId
+      console.log('다음 날짜에서 리포트 발견:', { 
+        date, 
+        firstReport: {
+          childName: firstReport.childName,
+          childId: firstReport.childId,
+          date: firstReport.date
+        }
+      });
+      return firstReport;
+    }
+  }
+  
+  console.log('다음 리포트 없음');
+  return null;
+}
+
+// 네비게이션 버튼 표시 여부 (사용자가 직접 버튼 누를 때만 계산)
+const hasPreviousReport = ref(false);
+const hasNextReport = ref(false);
+
+// 모달이 열릴 때마다 버튼 상태 초기화
+function resetNavigationButtons() {
+  hasPreviousReport.value = false;
+  hasNextReport.value = false;
+  console.log('네비게이션 버튼 상태 초기화');
+}
+
+// 네비게이션 버튼 상태 계산 함수 (사용자가 버튼 클릭할 때만 호출)
+function calculateNavigationState() {
+  console.log('네비게이션 상태 계산 요청됨');
+  
+  if (!selectedReportData.value || !selectedReportData.value.date || !selectedReportData.value.childId) {
+    console.log('네비게이션 상태 계산 불가: 데이터 부족');
+    hasPreviousReport.value = false;
+    hasNextReport.value = false;
+    return;
+  }
+  
+  console.log('네비게이션 상태 계산 시작:', {
+    currentChild: selectedReportData.value.childName,
+    currentChildId: selectedReportData.value.childId,
+    currentDate: selectedReportData.value.date
+  });
+  
+  // 임시로 navigation 허용
+  allowNavigation.value = true;
+  
+  try {
+    const prevReport = findPreviousReport();
+    hasPreviousReport.value = prevReport !== null;
+    
+    const nextReport = findNextReport();
+    hasNextReport.value = nextReport !== null;
+    
+    console.log('네비게이션 상태 계산 완료:', {
+      hasPrev: hasPreviousReport.value,
+      hasNext: hasNextReport.value,
+      prevReport: prevReport ? { childName: prevReport.childName, date: prevReport.date } : null,
+      nextReport: nextReport ? { childName: nextReport.childName, date: nextReport.date } : null
+    });
+  } catch (error) {
+    console.error('네비게이션 상태 계산 오류:', error);
+    hasPreviousReport.value = false;
+    hasNextReport.value = false;
+  } finally {
+    // 계산 완료 후 다시 차단
+    allowNavigation.value = false;
+  }
+}
+
+// FullCalendar 설정 - computed 제거하고 직접 객체로 변경
+const calendarOptions = {
   plugins: [dayGridPlugin, interactionPlugin],
   initialView: "dayGridMonth",
   locale: "ko",
@@ -278,6 +537,13 @@ const calendarOptions = computed(() => ({
     
     const checkAndRender = () => {
       attempts++;
+      
+      // 선택된 아이가 없으면 아무것도 렌더링하지 않음
+      if (selectedChildrenForReport.value.length === 0) {
+        console.log('선택된 아이가 없어서 렌더링 건너뜀');
+        return;
+      }
+      
       const reportsForDate = diariesByDate.value[key] || [];
       
       if (reportsForDate.length > 0) {
@@ -295,6 +561,13 @@ const calendarOptions = computed(() => ({
         reportsForDate.forEach((report, index) => {
           // 최대 3개까지만 표시
           if (index < 3) {
+            console.log(`버튼 ${index} 생성:`, {
+              childName: report.childName,
+              childId: report.childId,
+              date: key,
+              report: report
+            });
+            
             const button = document.createElement("button");
             button.textContent = `${report.childName}`;
             button.style.backgroundColor = report.color;
@@ -322,37 +595,109 @@ const calendarOptions = computed(() => ({
             // 버튼에 데이터를 직접 저장
             button.setAttribute('data-child-name', report.childName);
             button.setAttribute('data-child-id', report.childId);
+            console.log(`버튼 속성 설정:`, {
+              'data-child-name': report.childName,
+              'data-child-id': report.childId
+            });
             button.setAttribute('data-date', report.date);
             
             button.addEventListener("click", async (e) => {
               e.stopPropagation();
               
               const clickedChildName = e.target.getAttribute('data-child-name');
-              const clickedChildId = e.target.getAttribute('data-child-id');
+              const clickedChildId = parseInt(e.target.getAttribute('data-child-id'));
               
-              try {
-                // 해당 아이의 해당 날짜 데이터를 직접 API로 조회
-                const clickedDate = new Date(key);
-                const year = clickedDate.getFullYear();
-                const month = clickedDate.getMonth() + 1;
-                
-                const response = await childService.getMonthlyDiaries(parseInt(clickedChildId), year, month);
-                const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
-                
-                // 해당 날짜의 다이어리 찾기
-                const todayDiary = responseArray.find(diary => {
-                  const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
-                  return diaryDate === key;
+              console.log('=== 버튼 클릭 시작 ===');
+              console.log('클릭한 버튼 정보:', {
+                clickedChildName,
+                clickedChildId,
+                clickedDate: key
+              });
+              
+              // 핸심: 이미 가지고 있는 reportsForDate에서 해당 아이의 리포트 찾기
+              console.log('타겟 찾기 전 reportsForDate:', reportsForDate);
+              console.log('찾는 childId:', clickedChildId, 'type:', typeof clickedChildId);
+              
+              // 모든 리포트의 childId와 비교
+              reportsForDate.forEach((r, idx) => {
+                console.log(`리포트 ${idx}:`, {
+                  childId: r.childId,
+                  childName: r.childName,
+                  type: typeof r.childId,
+                  match: r.childId === clickedChildId
                 });
-                
-                if (todayDiary) {
-                  selectedReportDate.value = key;
-                  // Dashboard와 같이 원본 데이터를 그대로 전달
-                  selectedReportData.value = todayDiary;
-                  showEmotionReportModal.value = true;
+              });
+              
+              const targetReport = reportsForDate.find(r => r.childId === clickedChildId);
+              console.log('찾은 타겟 리포트:', targetReport);
+              
+              if (!targetReport) {
+                console.error('타겟 리포트를 찾지 못함!');
+                console.log('사용된 검색 조건:', { clickedChildId, type: typeof clickedChildId });
+                console.log('사용가능한 리포트들:', reportsForDate.map(r => ({ childId: r.childId, childName: r.childName, type: typeof r.childId })));
+                return; // 여기서 중단
+              }
+              
+              if (targetReport) {
+                console.log('=== 타겟 리포트 발견, API 호출 시작 ===');
+                try {
+                  // API로 원본 다이어리 데이터 가져오기
+                  const clickedDate = new Date(key);
+                  const year = clickedDate.getFullYear();
+                  const month = clickedDate.getMonth() + 1;
+                  
+                  console.log('API 요청:', { childId: clickedChildId, year, month });
+                  const response = await childService.getMonthlyDiaries(clickedChildId, year, month);
+                  const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
+                  
+                  // 해당 날짜의 다이어리 찾기
+                  const todayDiary = responseArray.find(diary => {
+                    const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+                    return diaryDate === key;
+                  });
+                  
+                  console.log('찾은 오늘 다이어리:', todayDiary);
+                  
+                  if (todayDiary) {
+                    selectedReportDate.value = key;
+                    
+                    // 최종 데이터 설정 (반드시 타겟 리포트의 정보 사용)
+                    const finalData = {
+                      ...todayDiary,
+                      date: key,
+                      childName: targetReport.childName, // 반드시 타겟의 이름
+                      childId: targetReport.childId // 반드시 타겟의 childId
+                    };
+                    
+                    console.log('=== selectedReportData 설정 예정 ===');
+                    console.log('설정할 데이터:', finalData);
+                    setSelectedReportData(finalData);
+                    console.log('=== selectedReportData 설정 완료 ===');
+                    console.log('타겟 리포트로 최종 설정:', {
+                      targetChildName: targetReport.childName,
+                      targetChildId: targetReport.childId,
+                      finalData
+                    });
+                    
+                    // 모달 열고 네비게이션 상태 계산
+                    showEmotionReportModal.value = true;
+                    console.log('모달 열음');
+                    
+                    // 버튼 상태 계산 (사용자가 클릭한 후에만)
+                    calculateNavigationState();
+                    
+                    console.log('=== 버튼 클릭 성공 완료 ===');
+                  } else {
+                    console.warn('해당 날짜의 다이어리를 찾을 수 없음');
+                  }
+                } catch (error) {
+                  console.error('해당 아이의 다이어리 조회 실패:', error);
                 }
-              } catch (error) {
-                console.error('해당 아이의 다이어리 조회 실패:', error);
+              } else {
+                console.error('!!! 타겟 리포트를 찾지 못함 - 이것이 문제의 원인일 수 있음 !!!');
+                // targetReport를 찾지 못했을 때 어떤 일이 일어나는지 확인
+                // 아마도 여기서 fallback 로직이 실행되어 첫 번째 리포트가 나올 수 있음
+                return; // 여기서 완전히 중단
               }
             });
             
@@ -403,8 +748,24 @@ const calendarOptions = computed(() => ({
               
               if (todayDiary) {
                 selectedReportDate.value = key;
-                selectedReportData.value = todayDiary;
+                // childId로 올바른 아이 이름 찾기
+                const child = childrenList.value.find(c => c.id === additionalReport.childId);
+                const correctChildName = child ? child.name : `아이${additionalReport.childId}`;
+                
+                console.log('더보기 버튼 - 아이 정보:', {
+                  additionalReport, child, correctChildName,
+                  availableChildren: childrenList.value.map(c => ({ id: c.id, name: c.name }))
+                });
+                
+                setSelectedReportData({
+                  ...todayDiary,
+                  date: key, // 날짜 필드 명시적 설정
+                  childName: correctChildName,
+                  childId: additionalReport.childId
+                });
                 showEmotionReportModal.value = true;
+                // 네비게이션 상태 계산
+                calculateNavigationState();
               }
             } catch (error) {
               console.error('추가 리포트 조회 실패:', error);
@@ -425,28 +786,36 @@ const calendarOptions = computed(() => ({
     // 첫 시도는 700ms 후
     setTimeout(checkAndRender, 700);
   },
-}));
+};
 
-// childStore의 computed 속성들 사용
-const hasChild = computed(() => childStore.hasChildren);
-const childrenList = computed(() => childStore.children);
-const selectedChild = computed(() => {
-  return childrenList.value[selectedChildIndex.value] || childStore.selectedChild || {};
-});
+// childStore 직접 접근으로 변경
+const hasChild = ref(false);
+const childrenList = ref([]);
+const selectedChild = ref({});
+
+// 아이 데이터 수동 업데이트 함수
+function updateChildData() {
+  hasChild.value = childStore.hasChildren;
+  childrenList.value = [...childStore.children];
+  selectedChild.value = childrenList.value[selectedChildIndex.value] || childStore.selectedChild || {};
+}
 
 // 아이 정보 로드
 async function loadChildren() {
   await childStore.initialize();
+  updateChildData(); // 수동으로 아이 데이터 업데이트
   
   if (childStore.hasChildren) {
     const child = childStore.selectedChild || childStore.children[0];
     selectedChildIndex.value = childStore.children.findIndex(c => c.id === child.id);
+    updateChildData(); // 인덱스 변경 후 다시 업데이트
   }
 }
 
 // 아이 선택
 async function selectChild(index) {
   selectedChildIndex.value = index;
+  updateChildData(); // 선택 변경 후 수동 업데이트
 }
 
 // 감정 리포트 관련 함수
@@ -476,8 +845,24 @@ async function openEmotionReport(dateStr) {
       
       if (todayDiary) {
         selectedReportDate.value = dateStr;
-        selectedReportData.value = todayDiary;
+        // childId로 올바른 아이 이름 찾기
+        const child = childrenList.value.find(c => c.id === report.childId);
+        const correctChildName = child ? child.name : `아이${report.childId}`;
+        
+        console.log('날짜 클릭 - 아이 정보:', {
+          report, child, correctChildName,
+          availableChildren: childrenList.value.map(c => ({ id: c.id, name: c.name }))
+        });
+        
+        setSelectedReportData({
+          ...todayDiary,
+          date: dateStr, // 날짜 필드 명시적 설정
+          childName: correctChildName,
+          childId: report.childId
+        });
         showEmotionReportModal.value = true;
+        // 네비게이션 상태 계산
+        calculateNavigationState();
       }
     } catch (error) {
       console.error('감정 리포트 조회 실패:', error);
@@ -485,41 +870,96 @@ async function openEmotionReport(dateStr) {
   }
 }
 
-// 이전/다음 리포트 네비게이션
+// 이전/다음 리포트 네비게이션 (사용자 버튼 클릭시에만)
 async function goToPreviousReport() {
-  if (hasPreviousReport.value) {
-    const prevIndex = currentReportGlobalIndex.value - 1;
-    const report = allReportsForNavigation.value[prevIndex];
-    await loadReportData(report);
+  console.log('사용자가 이전 리포트 버튼 클릭');
+  
+  // 네비게이션 허용
+  allowNavigation.value = true;
+  
+  try {
+    const prevReport = findPreviousReport();
+    if (prevReport) {
+      console.log('이동할 이전 리포트:', prevReport);
+      await loadReportData(prevReport);
+      // 이동 후 새로운 위치에서 버튼 상태 다시 계산
+      calculateNavigationState();
+    }
+  } finally {
+    allowNavigation.value = false;
   }
 }
 
 async function goToNextReport() {
-  if (hasNextReport.value) {
-    const nextIndex = currentReportGlobalIndex.value + 1;
-    const report = allReportsForNavigation.value[nextIndex];
-    await loadReportData(report);
+  console.log('사용자가 다음 리포트 버튼 클릭');
+  
+  // 네비게이션 허용
+  allowNavigation.value = true;
+  
+  try {
+    const nextReport = findNextReport();
+    if (nextReport) {
+      console.log('이동할 다음 리포트:', nextReport);
+      await loadReportData(nextReport);
+      // 이동 후 새로운 위치에서 버튼 상태 다시 계산
+      calculateNavigationState();
+    }
+  } finally {
+    allowNavigation.value = false;
   }
 }
 
 // 리포트 데이터 로드 헬퍼 함수
 async function loadReportData(report) {
+  console.log('!!! loadReportData 호출됨 - 호출 스택:', new Error().stack);
+  
   try {
+    console.log('리포트 데이터 로드 시도:', report);
+    console.log('타겟 childId:', report.childId, '타겟 날짜:', report.date);
+    
     const clickedDate = new Date(report.date);
     const year = clickedDate.getFullYear();
     const month = clickedDate.getMonth() + 1;
     
+    console.log('API 요청:', { childId: report.childId, year, month, date: report.date });
+    
+    // 핵심: 해당 아이의 데이터만 요청
     const response = await childService.getMonthlyDiaries(report.childId, year, month);
     const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
     
+    console.log('API 응답 데이터:', responseArray);
+    
+    // 해당 날짜의 다이어리 찾기 (이미 해당 childId의 데이터만 있으므로 날짜만 매칭)
     const todayDiary = responseArray.find(diary => {
       const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
-      return diaryDate === report.date;
+      const match = diaryDate === report.date;
+      console.log('다이어리 매칭 검사:', {
+        diaryDate,
+        targetDate: report.date,
+        match,
+        diaryId: diary.id
+      });
+      return match;
     });
+    
+    console.log('찾은 최종 다이어리:', todayDiary);
     
     if (todayDiary) {
       selectedReportDate.value = report.date;
-      selectedReportData.value = todayDiary;
+      
+      // 핵심: report에서 전달된 childName을 그대로 사용
+      const finalData = {
+        ...todayDiary,
+        date: report.date,
+        childName: report.childName, // report에서 오는 childName 사용
+        childId: report.childId
+      };
+      
+      setSelectedReportData(finalData);
+      console.log('최종 설정된 selectedReportData:', finalData);
+      console.log('사용된 childName:', report.childName, '사용된 childId:', report.childId);
+    } else {
+      console.warn('해당 날짜의 다이어리를 찾을 수 없음:', report.date);
     }
   } catch (error) {
     console.error('리포트 데이터 로드 실패:', error);
@@ -535,33 +975,25 @@ function goBack() {
   router.push({ name: "Dashboard" });
 }
 
-// selectedChildrenForReport 변경 시 다이어리 재조회 및 달력 완전 재렌더링
-watch(selectedChildrenForReport, async () => {
+// selectedChildrenForReport 변경 시 수동으로 호출할 함수
+async function onSelectedChildrenChange() {
   console.log('선택된 아이들 변경됨:', selectedChildrenForReport.value);
   await fetchMonthlyDiaries();
   
   // 달력 완전 재마운트를 위해 키를 변경
   calendarKey.value += 1;
-}, { deep: true, immediate: false });
+}
 
 // 컴포넌트 마운트 시 실행
 onMounted(async () => {
   await childStore.initialize();
-  
-  // childStore에서 이미 색상이 할당되어 있으므로 추가 설정 불필요
+  updateChildData(); // 아이 데이터 수동 업데이트
   
   // 전역 함수로 등록 (달력의 HTML 버튼에서 호출하기 위해)
   window.openEmotionReport = openEmotionReport;
 
-  // Dashboard에서 선택된 아이를 기본으로 선택
-  setTimeout(() => {
-    const currentSelectedChild = childStore.selectedChild;
-    if (currentSelectedChild && currentSelectedChild.name) {
-      selectedChildrenForReport.value = [currentSelectedChild.name];
-    }
-    // 초기 다이어리 조회
-    fetchMonthlyDiaries();
-  }, 100);
+  // 기본적으로 아무것도 선택하지 않음 - 사용자가 직접 선택해야 함
+  // selectedChildrenForReport.value = []; // 이미 빈 배열이므로 아무것도 하지 않음
 });
 </script>
 
