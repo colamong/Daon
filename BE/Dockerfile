@@ -16,6 +16,12 @@ RUN gradle build --no-daemon -x test
 FROM eclipse-temurin:17-jdk
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    libtesseract-dev \
+    libleptonica-dev \
+ && rm -rf /var/lib/apt/lists/*
+
 
 # 빌드 결과 jar 파일 복사 (target 폴더 내 jar 이름 확인 필요)
 COPY --from=build /app/build/libs/*.jar app.jar
