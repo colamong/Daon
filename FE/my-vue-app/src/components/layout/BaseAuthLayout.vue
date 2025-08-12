@@ -1,35 +1,32 @@
 <!-- src/components/layout/BaseAuthLayout.vue -->
 
 <template>
+  <!-- 우측 하단 배경 이미지 (페이지별로 다른 이미지) -->
+  <div class="fixed bottom-0 right-10" style="z-index: 10 !important">
+    <img
+      :src="landingImg"
+      alt="페이지 배경 이미지"
+      class="opacity-90 w-64 h-auto"
+    />
+  </div>
+
   <div
-    class="min-h-screen w-full bg-cover bg-center flex items-center justify-center"
-    :style="{ backgroundImage: `url(${bgImage})` }"
+    class="relative min-h-screen w-full bg-blue-50 overflow-hidden flex items-center justify-center"
   >
-    <router-view />
+    <!-- 그라데이션 배경 (전체 화면) -->
+    <div
+      class="w-[1920px] h-[1080px] left-[-2.15px] top-0 absolute bg-gradient-to-b from-blue-400/50 via-blue-100/50 to-blue-50/50 backdrop-blur-[1.50px]"
+    ></div>
+
+    <!-- 컨텐츠 -->
+    <div class="relative z-10">
+      <router-view />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { useRoute } from "vue-router";
-
-import signupBg from "../../assets/images/login-bg.png";
-import loginBg from "../../assets/images/signup-bg.png";
-
-// 현재 라우트 정보 가져오기
-const route = useRoute();
-
-// route.name 에 따라 사용할 배경 이미지를 결정
-const bgImage = computed(() => {
-  switch (route.name) {
-    case "login": // 라우터 설정에서 name: 'Login' 으로 되어 있는 경우
-      return loginBg;
-    case "signup": // 라우터 설정에서 name: 'Signup' 으로 되어 있는 경우
-      return signupBg;
-    default:
-      return loginBg; // 기본 이미지
-  }
-});
+import landingImg from "@/assets/images/landing_img.png"; // 모든 페이지에서 통일
 </script>
 
 <style scoped>

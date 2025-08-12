@@ -42,26 +42,39 @@ export const useChildStore = defineStore("child", {
         // childService.getAllChildren은 payload(Array)를 바로 반환
         const list = await childService.getAllChildren(userId);
 
-        // API 응답 -> 화면에서 쓰기 쉬운 형식으로 변환
-        this.children = (Array.isArray(list) ? list : []).map((child) => ({
-          id: child.childId,                                        // 통일 키
-          name: child.name,
-          birthDate: child.birthDate ?? child.birth_date ?? null,
-          gender: child.gender ?? null,
+        // API 응답 -> 화면에서 쓰기 쉬운 형식으로 변환 (관심사는 별도 API로 가져오기)
+        this.children = await Promise.all(
+          (Array.isArray(list) ? list : []).map(async (child) => {
+            let interests = [];
+            try {
+              // 부모용 관심사 API 호출
+              interests = await childService.getChildInterestsForParent(userId, child.childId);
+            } catch (error) {
+              console.warn(`아이 ${child.name}의 관심사 로드 실패:`, error);
+              interests = [];
+            }
 
-          // 표시용 presigned URL
-          imageUrl: child.imageUrl ?? null,
+            return {
+              id: child.childId,                                        // 통일 키
+              name: child.name,
+              birthDate: child.birthDate ?? child.birth_date ?? null,
+              gender: child.gender ?? null,
 
-          // DB에 저장된 원본 S3 key (이미지 유지/수정 시 사용)
-          profileImg: child.profileImg ?? null,
+              // 표시용 presigned URL
+              imageUrl: child.imageUrl ?? null,
 
-          // 기존 컴포넌트 호환
-          profileImage: child.imageUrl ?? child.profileImg ?? null,
+              // DB에 저장된 원본 S3 key (이미지 유지/수정 시 사용)
+              profileImg: child.profileImg ?? null,
 
-          interests: child.registeredInterests ?? child.interests ?? [],
-          hasTodayDiary: false,
-          color: null,
-        }));
+              // 기존 컴포넌트 호환
+              profileImage: child.imageUrl ?? child.profileImg ?? null,
+
+              interests: interests || [],
+              hasTodayDiary: false,
+              color: null,
+            };
+          })
+        );
 
         // 색상 부여 (아이마다 고유색)
         this.children.forEach((c) => {

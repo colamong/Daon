@@ -1,5 +1,5 @@
 import axios from 'axios'
-const API_BASE = import.meta.env.VITE_PRONUN_API_BASE || 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_PRONUN_API_BASE || 'https://i13a706.p.ssafy.io/stt'
 
 export async function evaluatePronunciation(questionId, file) {
   const form = new FormData()
