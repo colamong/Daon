@@ -20,6 +20,7 @@ public interface UserService {
 
 	NationDto getNationByCode(String code);
 
+	
 	// 프로필 이미지 업로드/교체 (멀티파트)
 	void updateProfileImage(Long userId, MultipartFile file);
 }
