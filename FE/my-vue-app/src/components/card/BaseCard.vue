@@ -4,7 +4,7 @@
     :is="to || link ? 'router-link' : 'div'"
     :to="to || link"
     @click="handleClick"
-    class="w-64 rounded-2xl shadow-md p-6 block hover:shadow-lg transition-shadow cursor-pointer"
+    class="w-64 rounded-2xl shadow-md p-6 block hover:shadow-xl hover:shadow-gray-600/60 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
     :style="{ backgroundColor: cardStyle.bg }"
   >
     <div class="flex justify-center mb-4">
