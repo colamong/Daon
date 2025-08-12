@@ -33,11 +33,11 @@
     <!-- 콘텐츠 영역 -->
     <div class="grid grid-cols-2 gap-8 mt-8" v-if="currentTheme">
       <!-- 왼쪽: 테마 이미지 -->
-      <div class="bg-gray-100 rounded-xl overflow-hidden w-full h-80">
+      <div class="bg-gray-100 rounded-xl overflow-hidden w-full h-80 flex items-center justify-center">
         <img
           :src="currentTheme.image"
           :alt="currentTheme.title + ' 이미지'"
-          class="w-full h-full object-cover"
+          class="w-full h-full object-contain"
         />
       </div>
 

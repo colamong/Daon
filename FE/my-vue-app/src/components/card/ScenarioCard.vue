@@ -5,11 +5,11 @@
     class="block w-72 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow bg-white"
   >
     <!-- 이미지 영역 -->
-    <div class="h-40 overflow-hidden">
+    <div class="h-48 overflow-hidden bg-gray-100 flex items-center justify-center">
       <img
         :src="resolvedImage"
         alt="카드 배경 이미지"
-        class="w-full h-full object-cover"
+        class="w-full h-full object-contain"
       />
     </div>
 
