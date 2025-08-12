@@ -178,21 +178,6 @@
       회원가입
     </button>
 
-    <!-- Or separator -->
-    <div class="flex items-center text-xs text-gray-500">
-      <hr class="flex-grow border-t border-gray-200" />
-      <span class="px-2 font-paper text-sm">or</span>
-      <hr class="flex-grow border-t border-gray-200" />
-    </div>
-
-    <!-- Google 회원가입 -->
-    <button
-      type="button"
-      class="w-full h-11 flex items-center justify-center gap-2 border border-gray-200 rounded-lg hover:bg-gray-100 transition text-sm font-paper"
-    >
-      <img src="@/assets/icons/google.svg" alt="구글 아이콘" class="w-5 h-5" />
-      구글로 회원가입하기
-    </button>
   </form>
 </template>
 

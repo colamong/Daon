@@ -84,22 +84,6 @@
       로그인
     </button>
 
-    <!-- OR 구분선 -->
-    <div class="flex items-center text-xs text-gray-500">
-      <hr class="flex-grow border-t border-gray-200" />
-      <span class="px-2 font-paper">or</span>
-      <hr class="flex-grow border-t border-gray-200" />
-    </div>
-
-    <!-- 구글 로그인 -->
-    <button
-      type="button"
-      @click="handleGoogleLogin"
-      class="w-full h-11 flex items-center justify-center gap-2 border border-gray-200 rounded-lg hover:bg-gray-100 transition text-sm font-paper"
-    >
-      <img src="@/assets/icons/google.svg" alt="구글 아이콘" class="w-5 h-5" />
-      구글 로그인 하기
-    </button>
 
     <!-- 회원가입 링크 -->
     <p class="text-xs text-gray-500 text-center font-paper">
@@ -158,8 +142,4 @@ async function handleLogin() {
   }
 }
 
-/** 구글 로그인은 아직 미지원 알림 */
-function handleGoogleLogin() {
-  showInfo("구글 로그인은 아직 지원되지 않습니다.", "서비스 준비중");
-}
 </script>
