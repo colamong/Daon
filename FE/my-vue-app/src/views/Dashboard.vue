@@ -53,9 +53,9 @@
           </button>
           <AddEventModal v-model="modalVisible" @add-event="handleAddEvent" />
         </div>
-        <div class="flex-1 overflow-y-auto pr-2">
+        <div class="flex-1 overflow-y-auto overflow-x-visible pr-2 py-2">
           <template v-if="filteredEvents.length">
-            <div class="space-y-4">
+            <div class="space-y-6">
               <ScheduleCard
                 v-for="ev in filteredEvents"
                 :key="ev.id"
