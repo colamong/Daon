@@ -215,7 +215,9 @@ import { useAuthStore } from "@/store/auth";
 import { useRouter } from "vue-router";
 import { useNotification } from "@/composables/useNotification.js";
 import { nationService } from "@/services/nationService.js";
+import { userService } from "@/services/userService.js";
 import signupImage from "@/assets/images/signup.png";
+import defaultUserIcon from "@/assets/images/user_icon.png";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -272,6 +274,27 @@ onMounted(() => {
   loadCountries();
 });
 
+// 기본 프로필 이미지 업로드 함수
+async function uploadDefaultProfileImage() {
+  try {
+    // 기본 이미지를 fetch로 가져와서 File 객체로 변환
+    const response = await fetch(defaultUserIcon);
+    const blob = await response.blob();
+    const file = new File([blob], 'user_icon.png', { type: 'image/png' });
+    
+    // userService를 사용해서 이미지 업로드
+    await userService.uploadProfileImage(file);
+    console.log('기본 프로필 이미지 업로드 완료');
+    
+    // auth store의 사용자 정보도 업데이트
+    await auth.getCurrentUser();
+    
+  } catch (error) {
+    console.warn('기본 프로필 이미지 업로드 실패:', error);
+    // 기본 이미지 업로드 실패는 회원가입을 막지 않음
+  }
+}
+
 async function handleSignUp() {
   // 입력 값 검증
   if (!nickname.value.trim()) {
@@ -323,6 +346,12 @@ async function handleSignUp() {
     });
 
     // 로그인 후 사용자 정보 가져오기
+    await auth.getCurrentUser();
+
+    // 기본 프로필 이미지 업로드 (백그라운드에서 실행)
+    await uploadDefaultProfileImage();
+
+    // 이미지 업로드 후 사용자 정보 다시 로드
     await auth.getCurrentUser();
 
     showSuccess("회원가입이 완료되었습니다!", "환영합니다");
