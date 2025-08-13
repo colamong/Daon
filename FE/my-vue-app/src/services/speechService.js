@@ -72,17 +72,17 @@ export class SpeechService {
       }
 
       utterance.onend = () => {
-        log("TTS 재생 완료:", text);
+        console.log("TTS 재생 완료:", text);
         resolve();
       };
 
       utterance.onerror = (event) => {
-        error("TTS 오류:", event);
+        console.error("TTS 오류:", event);
         reject(new Error("Speech synthesis failed"));
       };
 
       this.synthesis.speak(utterance);
-      log("TTS 시작:", text);
+      console.log("TTS 시작:", text);
     });
   }
 
@@ -113,12 +113,12 @@ export class SpeechService {
 
       this.recognition.onstart = () => {
         this.isListening = true;
-        log("STT 시작");
+        console.log("STT 시작");
       };
 
       this.recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
-        log("STT 결과:", transcript);
+        console.log("STT 결과:", transcript);
         if (!hasResolved) {
           hasResolved = true;
           resolve(transcript);
@@ -127,7 +127,7 @@ export class SpeechService {
 
       this.recognition.onerror = (event) => {
         this.isListening = false;
-        error("STT 오류:", event.error);
+        console.error("STT 오류:", event.error);
         if (!hasResolved) {
           hasResolved = true;
           reject(new Error(`Speech recognition failed: ${event.error}`));
@@ -136,11 +136,11 @@ export class SpeechService {
 
       this.recognition.onend = () => {
         this.isListening = false;
-        log("STT 종료");
+        console.log("STT 종료");
         // 결과 없이 종료된 경우 기본 응답으로 처리
         if (!hasResolved) {
           hasResolved = true;
-          log("STT 인식 오류로 기본 응답 처리");
+          console.log("STT 인식 오류로 기본 응답 처리");
           resolve("음성 인식 오류입니다");
         }
       };

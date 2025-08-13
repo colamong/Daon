@@ -334,7 +334,7 @@ async function addNewInterest() {
 
     await childStore.loadChildren();
   } catch (error) {
-    error("관심사 추가 실패:", error);
+    console.error("관심사 추가 실패:", error);
     showError("관심사 추가에 실패했습니다.", "추가 실패");
   }
 }
@@ -381,7 +381,7 @@ async function handleUpdateChild() {
     showSuccess(`${childData.name}의 정보가 성공적으로 수정되었습니다!`, "수정 완료");
     router.push({ name: "ChildProfile" });
   } catch (error) {
-    error("아이 정보 수정 실패:", error);
+    console.error("아이 정보 수정 실패:", error);
     showError(error?.message || "아이 정보 수정에 실패했습니다. 다시 시도해주세요.", "수정 실패");
   } finally {
     loading.value = false;
@@ -409,7 +409,7 @@ async function loadAIRecommendedInterests(childId) {
     const recommended = await childService.getAIRecommendedInterests(userId, childId);
     aiRecommendedInterests.value = Array.isArray(recommended) ? recommended : [];
   } catch (error) {
-    warn('AI 추천 관심사 로드 실패:', error);
+    console.warn('AI 추천 관심사 로드 실패:', error);
     aiRecommendedInterests.value = [];
   }
 }
@@ -459,7 +459,7 @@ async function addAIRecommendedInterest(interest) {
     // 스토어 업데이트
     await childStore.loadChildren();
   } catch (error) {
-    error("관심사 추가 실패:", error);
+    console.error("관심사 추가 실패:", error);
     showError("관심사 추가에 실패했습니다.", "추가 실패");
   }
 }
@@ -500,7 +500,7 @@ async function deleteChild() {
       router.push({ name: "Dashboard" });
     }
   } catch (error) {
-    error("아이 삭제 실패 상세:", {
+    console.error("아이 삭제 실패 상세:", {
       message: error.message,
       response: error.response?.data,
       status: error.response?.status,

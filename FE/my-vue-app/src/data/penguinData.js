@@ -45,6 +45,7 @@ export const updateChildPenguinData = (childName, data) => {
   }
   
   // 실제 구현시에는 여기서 localStorage 저장 또는 API 호출
+  console.log(`${childName}의 펭귄 데이터 업데이트:`, penguinDataByChild[childName]);
   return penguinDataByChild[childName];
 };
 

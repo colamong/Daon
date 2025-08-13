@@ -12,6 +12,7 @@ export const useAuthStore = defineStore("auth", {
         user = JSON.parse(userData);
       }
     } catch (e) {
+      console.error('localStorage user 파싱 오류:', e);
     }
 
     return {
@@ -39,8 +40,12 @@ export const useAuthStore = defineStore("auth", {
         const response = await apiClient.post(`/api/user/signup`, {
           nickname, email, password, nationCode
         });
+        console.log('회원가입 성공:', response.data);
         return response.data;
       } catch (error) {
+        console.log('Auth store signup error:', error);
+        console.log('Auth store error status:', error.response?.status);
+        console.log('Auth store error data:', error.response?.data);
         
         if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
           throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
@@ -79,6 +84,7 @@ export const useAuthStore = defineStore("auth", {
     async login({ email, password }) {
       try {
         const response = await apiClient.post(`/api/user/signin`, { email, password });
+        console.log('로그인 성공:', response.data);
 
         // 서버는 쿠키로 인증 유지 → 프론트엔드에선 표식용 토큰만 저장
         this.token = "cookie-based-auth";
@@ -180,7 +186,9 @@ export const useAuthStore = defineStore("auth", {
       if (this.nations.length > 0) return;
       try {
         this.nations = await nationService.getNations();
+        console.log('국가 목록 로드 완료:', this.nations.length, '개국');
       } catch (error) {
+        console.error('국가 목록 로드 실패:', error);
       }
     },
 

@@ -5,8 +5,10 @@ export const userService = {
   async getCurrentUser() {
     try {
       const response = await apiClient.get(`/api/user/me`);
+      console.log('사용자 정보 응답:', response.data);
       return response.data.data || response.data;
     } catch (error) {
+      console.log(error.code);
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
         throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
       }
@@ -57,6 +59,7 @@ export const userService = {
       const res = await apiClient.put('/api/user/profile/image', form);
       return res.data;
     } catch (error) {
+      console.error('uploadProfileImage error:', error);
       throw new Error('프로필 이미지 업로드 중 오류가 발생했습니다.');
     }
   },

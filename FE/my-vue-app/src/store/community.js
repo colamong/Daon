@@ -45,6 +45,7 @@ export const useCommunityStore = defineStore('community', () => {
       communities.value = data.communities || []
     } catch (err) {
       error.value = '커뮤니티 목록을 불러오는데 실패했습니다.'
+      console.error('Failed to fetch communities:', err)
     } finally {
       loading.value = false
     }
@@ -58,6 +59,7 @@ export const useCommunityStore = defineStore('community', () => {
       return data.communities || []
     } catch (err) {
       error.value = '커뮤니티 검색에 실패했습니다.'
+      console.error('Failed to search communities:', err)
       return []
     } finally {
       loading.value = false
@@ -72,6 +74,7 @@ export const useCommunityStore = defineStore('community', () => {
       activeCommunities.value = data.communities || []
     } catch (err) {
       error.value = '참여 중인 커뮤니티 목록을 불러오는데 실패했습니다.'
+      console.error('Failed to fetch active communities:', err)
     } finally {
       loading.value = false
     }
@@ -93,6 +96,7 @@ export const useCommunityStore = defineStore('community', () => {
       } else {
         error.value = '커뮤니티 참여에 실패했습니다.'
       }
+      console.error('Failed to join community:', err)
       throw err
     } finally {
       loading.value = false
@@ -119,6 +123,7 @@ export const useCommunityStore = defineStore('community', () => {
       } else {
         error.value = '커뮤니티 나가기에 실패했습니다.'
       }
+      console.error('Failed to leave community:', err)
       throw err
     } finally {
       loading.value = false
@@ -134,6 +139,7 @@ export const useCommunityStore = defineStore('community', () => {
       participants.value = data || []
     } catch (err) {
       error.value = '참여자 목록을 불러오는데 실패했습니다.'
+      console.error('Failed to fetch participants:', err)
     } finally {
       loading.value = false
     }
@@ -154,6 +160,7 @@ export const useCommunityStore = defineStore('community', () => {
       websocketService.setMessages(data || [])
     } catch (err) {
       error.value = '메시지 히스토리를 불러오는데 실패했습니다.'
+      console.error('Failed to fetch messages:', err)
     } finally {
       loading.value = false
     }
@@ -163,16 +170,19 @@ export const useCommunityStore = defineStore('community', () => {
   const connectWebSocket = async () => {
     try {
       await websocketService.connect()
+      console.log('WebSocket connected successfully')
       bindReconnectAutoResubscribe() // 연결되면 재구독 바인딩
       bindOnMessageOnce()            // 수신 콜백 1회 바인딩
     } catch (err) {
       error.value = 'WebSocket 연결에 실패했습니다.'
+      console.error('Failed to connect WebSocket:', err)
       throw err
     }
   }
 
   const disconnectWebSocket = () => {
     websocketService.disconnect()
+    console.log('WebSocket disconnected')
   }
 
   const subscribeToCommunity = (communityId) => {
@@ -182,8 +192,10 @@ export const useCommunityStore = defineStore('community', () => {
       if (!messagesByRoom[communityId]) messagesByRoom[communityId] = []
       if (!knownIdsByRoom[communityId]) knownIdsByRoom[communityId] = new Set()
       websocketService.subscribeToCommunity(communityId)
+      console.log(`Subscribed to community ${communityId}`)
     } catch (err) {
       error.value = '커뮤니티 구독에 실패했습니다.'
+      console.error('Failed to subscribe to community:', err)
       throw err
     }
   }
@@ -195,6 +207,7 @@ export const useCommunityStore = defineStore('community', () => {
       websocketService.sendMessage(communityId, message, userId)
     } catch (err) {
       error.value = '메시지 전송에 실패했습니다.'
+      console.error('Failed to send message:', err)
       throw err
     }
   }
@@ -208,6 +221,7 @@ export const useCommunityStore = defineStore('community', () => {
         try {
           websocketService.subscribeToCommunity(currentRoomId.value)
         } catch (e) {
+          console.error('Auto-resubscribe failed:', e)
         }
       }
     })
