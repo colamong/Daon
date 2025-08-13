@@ -83,7 +83,7 @@
         <div class="text-base font-semibold">고객지원</div>
         <ul class="text-sm leading-snug space-y-1">
           <li><a href="#">자주 묻는 질문</a></li>
-          <li><a href="#">이용 가이드</a></li>
+          <li><button @click="showTutorial" class="font-paper text-black hover:font-paperBold">이용 가이드</button></li>
           <li><a href="#">공지사항</a></li>
           <li><a href="#">문의하기</a></li>
         </ul>
@@ -146,6 +146,11 @@
       @confirm="handleChildRegistrationConfirm"
       @cancel="handleChildRegistrationCancel"
     />
+
+    <!-- 네비게이션 튜토리얼 모달 -->
+    <NavigationTutorialModal
+      v-model="showTutorialModal"
+    />
   </footer>
 </template>
 
@@ -156,6 +161,7 @@ import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
 import ChildSelectModal from "@/components/modal/ChildSelectModal.vue";
 import ConfirmChildRegistrationModal from "@/components/modal/ConfirmChildRegistrationModal.vue";
+import NavigationTutorialModal from "@/components/modal/NavigationTutorialModal.vue";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -163,6 +169,7 @@ const childStore = useChildStore();
 
 const showPenguinChildSelectModal = ref(false);
 const showChildRegistrationModal = ref(false);
+const showTutorialModal = ref(false);
 
 //비동기 처리: initialize 완료 후 분기
 const goChildMain = async () => {
@@ -216,6 +223,17 @@ function handleChildRegistrationConfirm() {
 }
 function handleChildRegistrationCancel() {
   // 취소 시 아무것도 하지 않음
+}
+
+// 튜토리얼 모달 표시
+function showTutorial() {
+  // 페이지 상단으로 스크롤
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  // 스크롤 완료 후 모달 표시
+  setTimeout(() => {
+    showTutorialModal.value = true;
+  }, 800); // 시간을 좀 더 늘려서 스크롤이 완전히 끝난 후에 실행
 }
 </script>
 

@@ -5,62 +5,71 @@
   >
     <!-- 왼쪽 로고 -->
     <div @click="goDashboard" class="cursor-pointer">
-      <img :src="DAONLogo" alt="DAON 로고" class="h-12 object-contain" />
+      <h3 class="text-2xl font-paper font-bold text-black hover:text-blue-600">
+        다온(DA:ON)
+      </h3>
     </div>
 
     <!-- 가운데 내비게이션 -->
     <nav class="flex gap-8">
       <button
         @click="goChildMain"
-        class="text-xl font-paper text-black hover:font-paperBold hover:text-2xl hover:text-blue-600"
+        class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
+        data-tutorial="penguin"
       >
         펭구랑 놀자
       </button>
       <button
         @click="goChildProfile"
-        class="text-xl font-paper text-black hover:font-paperBold hover:text-2xl hover:text-blue-600"
+        class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
+        data-tutorial="profile"
       >
         아이 프로필
       </button>
       <button
         @click="goOCRTool"
-        class="text-xl font-paper text-black hover:font-paperBold hover:text-2xl hover:text-blue-600"
+        class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
+        data-tutorial="document"
       >
         문서 도우미
       </button>
       <button
         @click="goCommunityChat"
-        class="text-xl font-paper text-black hover:font-paperBold hover:text-2xl hover:text-blue-600"
+        class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
+        data-tutorial="community"
       >
         온동네
       </button>
       <button
         @click="goLearningHelper"
-        class="text-xl font-paper text-black hover:font-paperBold hover:text-2xl hover:text-blue-600"
+        class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
+        data-tutorial="growth"
       >
         상황별 학습
       </button>
     </nav>
 
     <!-- 오른쪽: 프로필 토글 + 로그아웃 -->
-    <div
-      class="flex items-center gap-4"
-      ref="wrapper"
-      @mouseenter="showProfileCard"
-      @mouseleave="hideProfileCard"
-    >
-      <img
-        @click="toggleProfile"
-        :src="auth.user?.profileImage || 'https://placehold.co/53x53'"
-        alt="프로필"
-        class="w-11 h-11 rounded-full cursor-pointer object-cover transition-transform hover:scale-105"
-      />
-      <span
-        @click="toggleProfile"
-        class="cursor-pointer text-xl font-paper text-black hover:text-blue-600 transition-colors"
+    <div class="flex items-center gap-4" ref="wrapper">
+      <div
+        class="flex items-center"
+        ref="wrapper"
+        @mouseenter="showProfileCard"
+        @mouseleave="hideProfileCard"
       >
-        {{ auth.user?.nickname || "게스트" }}
-      </span>
+        <img
+          @click="toggleProfile"
+          :src="auth.user?.profileImage || 'https://placehold.co/53x53'"
+          alt="프로필"
+          class="w-11 h-11 rounded-full cursor-pointer object-cover transition-transform hover:scale-105"
+        />
+        <span
+          @click="toggleProfile"
+          class="ml-2 cursor-pointer text-xl font-paper text-black hover:text-blue-600 transition-colors"
+        >
+          {{ auth.user?.nickname || "게스트" }}
+        </span>
+      </div>
 
       <!-- Tailwind 로직만으로 재구현한 로그아웃 버튼 -->
       <button
@@ -95,28 +104,23 @@
       ref="profileCard"
       @mouseenter="showProfileCard"
       @mouseleave="hideProfileCard"
-      class="font-paper fixed top-28 right-8 h-96 w-80 bg-purple-200 rounded-xl shadow-lg z-[1000]"
+      class="font-paper fixed top-20 right-8 h-80 w-76 bg-purple-200 rounded-xl shadow-lg z-[1000] border-2 border-violet-900"
     >
-      <!-- 외곽 테두리 -->
-      <div
-        class="absolute inset-0 h-96 w-80 rounded-xl border-2 border-violet-900"
-      ></div>
-
       <!-- 컨텐츠 래퍼 -->
       <div
-        class="relative flex flex-col items-center p-8 pt-12 space-y-4 text-center h-full overflow-visible"
+        class="relative flex flex-col items-center p-8 pt-2 space-y-4 text-center h-full overflow-visible"
       >
         <!-- 1) 프로필 사진 (오타 수정: class="\" 제거) -->
-        <div class="">
+        <div class="mt-2">
           <img
             :src="auth.user?.profileImage || 'https://placehold.co/96x96'"
             alt="프로필"
-            class="w-24 h-24 rounded-full object-cover border-4 border-white"
+            class="w-20 h-20 rounded-full object-cover border-4 border-white"
           />
         </div>
 
         <!-- 2) 닉네임 -->
-        <h3 class="mt-4 text-2xl font-bold text-violet-900">
+        <h3 class="mt-1 text-xl font-bold text-violet-900">
           {{ auth.user?.nickname }}
         </h3>
 
@@ -139,7 +143,7 @@
         <BaseButton
           variant="myprofile"
           link="/profile/edit"
-          class="mt-auto w-36 hover:border-2 hover:border-violet-900 hover:bg-white hover:text-violet-900"
+          class="w-36 hover:border-2 hover:border-violet-900 hover:bg-white hover:text-violet-900"
         >
           프로필 수정
         </BaseButton>
@@ -172,7 +176,6 @@ import { useChildStore } from "@/store/child";
 import BaseButton from "@/components/button/BaseButton.vue";
 import ChildSelectModal from "@/components/modal/ChildSelectModal.vue";
 import ConfirmChildRegistrationModal from "@/components/modal/ConfirmChildRegistrationModal.vue";
-import DAONLogo from "@/assets/images/DAON.png";
 
 const router = useRouter();
 const auth = useAuthStore();

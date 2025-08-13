@@ -1,27 +1,31 @@
 <template>
   <section class="px-6 py-8 max-w-4xl mx-auto mb-10">
-    <BaseFileUpload 
-      mode="file" 
-      @translate="onTranslateRequested" 
+    <BaseFileUpload
+      mode="file"
+      @translate="onTranslateRequested"
       @upload:file="onFileUploaded"
       :disabled="isLoading"
     />
-    
+
     <!-- 로딩 알림 -->
-    <div 
-      v-if="isLoading" 
+    <div
+      v-if="isLoading"
       class="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md"
     >
       <div class="flex items-center">
-        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
-        <p class="text-blue-700 font-medium">OCR 처리 및 번역 중입니다... 잠시만 기다려주세요.</p>
+        <div
+          class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"
+        ></div>
+        <p class="text-blue-700 font-paper">
+          번역 중입니다... 잠시만 기다려주세요.
+        </p>
       </div>
     </div>
-    
+
     <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
-      <BaseCard variant="ocr1" class="!bg-white" />
-      <BaseCard variant="ocr2" class="!bg-white" />
-      <BaseCard variant="ocr3" class="!bg-white" />
+      <BaseCard variant="ocr1" class="ocr-card" />
+      <BaseCard variant="ocr2" class="ocr-card" />
+      <BaseCard variant="ocr3" class="ocr-card" />
     </div>
   </section>
 </template>
@@ -49,15 +53,15 @@ async function onTranslateRequested(payload) {
 
   try {
     isLoading.value = true;
-    
+
     const result = await ocrService.uploadAndOcr(currentFile.value);
-    
+
     router.push({
       name: "OCRResult",
       query: {
         image: payload.image || "",
         file: payload.file || "",
-        result: JSON.stringify(result)
+        result: JSON.stringify(result),
       },
     });
   } catch (error) {
@@ -70,5 +74,18 @@ async function onTranslateRequested(payload) {
 </script>
 
 <style scoped>
-/* 필요 시 스타일만 추가하세요 */
+/* OCR 카드 호버 효과 제거 */
+:deep(.ocr-card) {
+  transform: none !important;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+  background-color: white !important;
+  cursor: default !important;
+}
+
+:deep(.ocr-card:hover) {
+  transform: none !important;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+  background-color: white !important;
+  cursor: default !important;
+}
 </style>

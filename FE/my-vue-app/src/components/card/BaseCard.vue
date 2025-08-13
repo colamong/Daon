@@ -78,19 +78,19 @@ const cardStyle = computed(() => {
     },
     ocr1: {
       title: "빠른 처리",
-      description: "AI 기반 OCR로 몇 초만에 텍스트 추출",
+      description: "AI 기반 빠른 텍스트 추출",
       icon: new URL("@/assets/icons/ocr1.svg", import.meta.url).href,
       bg: "#F2F5FD",
     },
     ocr2: {
       title: "다국어 지원",
-      description: "다국어 텍스트도 빠르게 인식하세요.",
+      description: "다양한 언어에서 사용 가능",
       icon: new URL("@/assets/icons/ocr2.svg", import.meta.url).href,
       bg: "#F2F5FD",
     },
     ocr3: {
       title: "실생활 밀착",
-      description: "가정통신문, 공공기관 문서 등 실질적 활용",
+      description: "가정통신문, 공문서 등 실생활에 도움",
       icon: new URL("@/assets/icons/ocr3.svg", import.meta.url).href,
       bg: "#F2F5FD",
     },

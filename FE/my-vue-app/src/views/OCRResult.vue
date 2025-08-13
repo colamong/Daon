@@ -39,9 +39,9 @@
         <div
           class="bg-white rounded-xl shadow p-4 flex-1 overflow-y-auto max-h-[calc(50vh-150px)]"
         >
-          <h2 class="font-semibold mb-2 text-sm">요약 결과</h2>
+          <h2 class="font-paperSemi mb-2 text-sm">요약 결과</h2>
           <div
-            class="text-gray-600 whitespace-pre-wrap text-sm leading-relaxed"
+            class="text-gray-600 whitespace-pre-wrap font-paper text-sm leading-relaxed"
           >
             {{ summary || "요약 결과가 없습니다." }}
           </div>
@@ -51,9 +51,9 @@
         <div
           class="bg-white rounded-xl shadow p-4 flex-1 overflow-y-auto max-h-[calc(50vh-150px)]"
         >
-          <h2 class="font-semibold mb-2 text-sm">번역 결과</h2>
+          <h2 class="font-paperSemi mb-2 text-sm">번역 결과</h2>
           <div
-            class="text-gray-600 whitespace-pre-wrap text-sm leading-relaxed"
+            class="text-gray-600 whitespace-pre-wrap font-paper text-sm leading-relaxed"
           >
             {{ translation || "번역 결과가 없습니다." }}
           </div>

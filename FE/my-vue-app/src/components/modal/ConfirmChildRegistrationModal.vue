@@ -1,30 +1,42 @@
 <template>
-  <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center">
-    <!-- 배경 오버레이 -->
-    <div 
-      class="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
-      @click="handleCancel"
-    ></div>
-    
+  <div
+    v-if="modelValue"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+    @click="handleCancel"
+  >
     <!-- 모달 콘텐츠 -->
-    <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6">
+    <div
+      class="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6"
+      @click.stop
+    >
       <!-- 아이콘 -->
       <div class="text-center mb-4">
-        <div class="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
-          <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        <div
+          class="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center"
+        >
+          <svg
+            class="w-8 h-8 !text-yellow-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
           </svg>
         </div>
       </div>
 
       <!-- 메시지 -->
-      <div class="text-center mb-6">
+      <div class="text-center mb-6 font-paper">
         <h3 class="text-lg font-bold text-gray-800 mb-2">
-          등록된 아이가 없습니다
+          아이를 등록해주세요
         </h3>
         <p class="text-gray-600">
-          펭귀과 놀기 위해서는 아이를 먼저 등록해야 합니다.<br>
-          아이를 등록하시겠습니까?
+          펭구와 놀기 위해서는 아이를 먼저 등록해야 합니다.
         </p>
       </div>
 
@@ -52,38 +64,41 @@
 const props = defineProps({
   modelValue: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
 // Emits
-const emit = defineEmits(['update:modelValue', 'confirm', 'cancel']);
+const emit = defineEmits(["update:modelValue", "confirm", "cancel"]);
 
 // 확인
 function handleConfirm() {
-  emit('confirm');
-  emit('update:modelValue', false);
+  emit("confirm");
+  emit("update:modelValue", false);
 }
 
 // 취소
 function handleCancel() {
-  emit('cancel');
-  emit('update:modelValue', false);
+  emit("cancel");
+  emit("update:modelValue", false);
 }
 </script>
 
 <style scoped>
 /* 모달 트랜지션 */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: all 0.3s ease;
 }
 
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
   transform: scale(0.95);
 }
 
-.fade-enter-to, .fade-leave-from {
+.fade-enter-to,
+.fade-leave-from {
   opacity: 1;
   transform: scale(1);
 }

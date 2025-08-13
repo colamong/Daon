@@ -1,17 +1,19 @@
 <template>
-  <div class="m-10 mb-20 max-w-5xl mx-auto px-4 py-8 font-paper bg-white rounded-xl">
+  <div
+    class="m-10 mb-20 max-w-4xl mx-auto px-4 py-8 font-paper bg-white rounded-xl"
+  >
     <!-- 헤더 -->
     <div v-if="currentContent && currentTheme">
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex justify-between items-center mb-6 pl-10 pr-5">
         <div>
           <h1 class="text-4xl font-paperBold text-gray-800 mb-2">
             {{ currentTheme.title }}에서
           </h1>
           <p class="text-lg text-gray-600">
-            Ch.{{ chapterId }} {{ currentChapter?.title || '' }}
+            Ch.{{ chapterId }} {{ currentChapter?.title || "" }}
           </p>
         </div>
-        
+
         <!-- 버튼들 -->
         <div class="flex space-x-2">
           <IconButton
@@ -36,13 +38,13 @@
           </button>
         </div>
       </div>
-      
+
       <!-- 구분선 -->
-      <hr class="border-gray-300 mb-8">
+      <hr class="border-gray-300 mb-8" />
     </div>
 
     <!-- 학습 콘텐츠 -->
-    <div v-if="currentContent" class="space-y-8">
+    <div v-if="currentContent" class="space-y-8 pl-20 pr-20">
       <!-- 질문 (타이핑 효과) -->
       <TypingEffect
         :key="questionId"
@@ -53,16 +55,16 @@
         @play-audio="playQuestionAudio"
       />
 
-
       <!-- 답변 선택지 -->
       <div v-if="showAnswers" class="space-y-4">
         <h3 class="text-xl font-paperBold text-gray-800">답변을 선택하세요:</h3>
-        <div 
+        <div
           v-for="answer in currentContent.answers"
           :key="answer.id"
-          class="space-y-2"
+          class="space-y-2 pl-20 pr-20"
         >
-          <AnswerCard 
+          <AnswerCard
+            class="text-center"
             :text="answer.text"
             :isCorrect="answer.isCorrect"
             :class="selectedAnswer === answer.id ? 'ring-2 ring-blue-500' : ''"
@@ -90,7 +92,7 @@
       <h2 class="text-2xl font-paperBold text-gray-600 mb-4">
         학습 콘텐츠를 찾을 수 없습니다
       </h2>
-      <button 
+      <button
         @click="$router.push('/dashboard/learning')"
         class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors"
       >
@@ -103,7 +105,9 @@
       v-if="showPronunciationConfirm"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-paper"
     >
-      <div class="bg-white rounded-xl overflow-hidden shadow-lg max-w-md w-full mx-4">
+      <div
+        class="bg-white rounded-xl overflow-hidden shadow-lg max-w-md w-full mx-4"
+      >
         <div class="p-6 text-center">
           <div class="mb-4">
             <span class="text-4xl">🎉</span>
@@ -114,7 +118,7 @@
           <p class="text-gray-600 mb-6">
             정답입니다! 발음 연습을 통해 더 완벽하게 학습해보세요.
           </p>
-          
+
           <div class="flex space-x-3 justify-center">
             <button
               @click="skipPronunciationPractice"
@@ -135,30 +139,30 @@
 
     <!-- 발음 평가 모달 -->
     <PronunciationModal
-  v-model="showPronunciationModal"
-  :answer-text="selectedCorrectAnswer?.text || ''"
-  :pronunciation="selectedCorrectAnswer?.pronunciation || ''"
-  :question-id="currentContent?.id"       
-  @complete="completePronunciationPractice"
-/>
+      v-model="showPronunciationModal"
+      :answer-text="selectedCorrectAnswer?.text || ''"
+      :pronunciation="selectedCorrectAnswer?.pronunciation || ''"
+      :question-id="currentContent?.id"
+      @complete="completePronunciationPractice"
+    />
 
     <!-- 질문 이동 확인 모달 -->
     <div
       v-if="showNavigationConfirm"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-paper"
     >
-      <div class="bg-white rounded-xl overflow-hidden shadow-lg max-w-md w-full mx-4">
+      <div
+        class="bg-white rounded-xl overflow-hidden shadow-lg max-w-md w-full mx-4"
+      >
         <div class="p-6 text-center">
           <div class="mb-4">
             <span class="text-4xl">⚠️</span>
           </div>
-          <h3 class="text-lg font-paperSemi mb-2 text-gray-800">
-            학습 중단
-          </h3>
+          <h3 class="text-lg font-paperSemi mb-2 text-gray-800">학습 중단</h3>
           <p class="text-gray-600 mb-6">
             학습이 완료되지 않았습니다. 정말 이동하시겠습니까?
           </p>
-          
+
           <div class="flex space-x-3 justify-center">
             <button
               @click="cancelNavigation"
@@ -182,18 +186,16 @@
       v-if="showExitConfirm"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-paper"
     >
-      <div class="bg-white rounded-xl overflow-hidden shadow-lg max-w-md w-full mx-4">
+      <div
+        class="bg-white rounded-xl overflow-hidden shadow-lg max-w-md w-full mx-4"
+      >
         <div class="p-6 text-center">
           <div class="mb-4">
             <span class="text-4xl">⚠️</span>
           </div>
-          <h3 class="text-lg font-paperSemi mb-2 text-gray-800">
-            학습 중단
-          </h3>
-          <p class="text-gray-600 mb-6">
-            학습을 중단하고 나가시겠습니까?
-          </p>
-          
+          <h3 class="text-lg font-paperSemi mb-2 text-gray-800">학습 중단</h3>
+          <p class="text-gray-600 mb-6">학습을 중단하고 나가시겠습니까?</p>
+
           <div class="flex space-x-3 justify-center">
             <button
               @click="cancelExit"
@@ -216,264 +218,289 @@
     <ConfettiEffect :show="showConfetti" />
 
     <!-- 오답 모달 -->
-    <IncorrectAnswerModal 
-      :show="showIncorrectModal" 
-      @close="closeIncorrectModal" 
+    <IncorrectAnswerModal
+      :show="showIncorrectModal"
+      @close="closeIncorrectModal"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useNotification } from '@/composables/useNotification'
-import IconButton from '@/components/button/IconButton.vue'
-import AnswerCard from '@/components/card/AnswerCard.vue'
-import PronunciationModal from '@/components/modal/PronunciationModal.vue'
-import ConfettiEffect from '@/components/effect/ConfettiEffect.vue'
-import IncorrectAnswerModal from '@/components/modal/IncorrectAnswerModal.vue'
-import TypingEffect from '@/components/effect/TypingEffect.vue'
-import learningService from '@/services/learningService'
-import ttsService from '@/services/ttsService'
+import { ref, computed, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useNotification } from "@/composables/useNotification";
+import IconButton from "@/components/button/IconButton.vue";
+import AnswerCard from "@/components/card/AnswerCard.vue";
+import PronunciationModal from "@/components/modal/PronunciationModal.vue";
+import ConfettiEffect from "@/components/effect/ConfettiEffect.vue";
+import IncorrectAnswerModal from "@/components/modal/IncorrectAnswerModal.vue";
+import TypingEffect from "@/components/effect/TypingEffect.vue";
+import learningService from "@/services/learningService";
+import ttsService from "@/services/ttsService";
 
-const route = useRoute()
-const router = useRouter()
-const { showInfo, showWarning } = useNotification()
+const route = useRoute();
+const router = useRouter();
+const { showInfo, showWarning } = useNotification();
 
 // 라우트 파라미터
-const themeId = computed(() => Number(route.params.themeId))
-const chapterId = computed(() => Number(route.params.chapterId))
-const questionId = computed(() => Math.max(1, Number(route.params.questionId) || 1)) // 1-base index
+const themeId = computed(() => Number(route.params.themeId));
+const chapterId = computed(() => Number(route.params.chapterId));
+const questionId = computed(() =>
+  Math.max(1, Number(route.params.questionId) || 1)
+); // 1-base index
 
 // 상태
-const themes = ref([])       // 전체 테마
-const chapters = ref([])     // 현재 테마의 챕터 목록
-const questions = ref([])    // 현재 챕터의 질문 목록
+const themes = ref([]); // 전체 테마
+const chapters = ref([]); // 현재 테마의 챕터 목록
+const questions = ref([]); // 현재 챕터의 질문 목록
 
 // 현재 테마/챕터/문항
 const currentTheme = computed(() =>
-  themes.value.find(t => t.id === themeId.value)
-)
+  themes.value.find((t) => t.id === themeId.value)
+);
 
 const currentChapter = computed(() =>
-  chapters.value.find(c => c.id === chapterId.value)
-)
+  chapters.value.find((c) => c.id === chapterId.value)
+);
 
-const currentContent = computed(() =>
-  questions.value[questionId.value - 1]
-)
+const currentContent = computed(() => questions.value[questionId.value - 1]);
 
-const totalQuestions = computed(() => questions.value.length)
+const totalQuestions = computed(() => questions.value.length);
 
 // UI 상태
-const selectedAnswer = ref(null)
-const showPronunciationConfirm = ref(false)
-const showPronunciationModal = ref(false)
-const selectedCorrectAnswer = ref(null)
-const showNavigationConfirm = ref(false)
-const showExitConfirm = ref(false)
-const pendingNavigation = ref(null)
-const showConfetti = ref(false)
-const showIncorrectModal = ref(false)
-const showAnswers = ref(false)
-const showQuestionCard = ref(false)
+const selectedAnswer = ref(null);
+const showPronunciationConfirm = ref(false);
+const showPronunciationModal = ref(false);
+const selectedCorrectAnswer = ref(null);
+const showNavigationConfirm = ref(false);
+const showExitConfirm = ref(false);
+const pendingNavigation = ref(null);
+const showConfetti = ref(false);
+const showIncorrectModal = ref(false);
+const showAnswers = ref(false);
+const showQuestionCard = ref(false);
 
 // ---------- API 로딩 ----------
 const loadThemes = async () => {
-  const list = await learningService.getThemes()
-  themes.value = list
-}
+  const list = await learningService.getThemes();
+  themes.value = list;
+};
 
 const loadChapters = async () => {
-  if (!themeId.value) return
-  const list = await learningService.getChaptersByTheme(themeId.value)
-  chapters.value = list
-}
+  if (!themeId.value) return;
+  const list = await learningService.getChaptersByTheme(themeId.value);
+  chapters.value = list;
+};
 
 const loadQuestions = async () => {
-  if (!chapterId.value) return
-  const list = await learningService.getQuestionsByChapter(chapterId.value)
-  questions.value = list
+  if (!chapterId.value) return;
+  const list = await learningService.getQuestionsByChapter(chapterId.value);
+  questions.value = list;
   // 범위 보정
   if (questionId.value > totalQuestions.value && totalQuestions.value > 0) {
-    router.replace(`/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/1`)
+    router.replace(
+      `/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/1`
+    );
   }
-}
+};
 
 // 최초 로딩
 onMounted(async () => {
-  await Promise.all([loadThemes(), loadChapters()])
-  await loadQuestions()
-})
+  await Promise.all([loadThemes(), loadChapters()]);
+  await loadQuestions();
+});
 
 // 라우트 변경 대응
-watch(() => chapterId.value, async () => {
-  await loadQuestions()
-})
-watch(() => questionId.value, () => {
-  selectedAnswer.value = null
-  selectedCorrectAnswer.value = null
-  showAnswers.value = false
-  showQuestionCard.value = false
-})
+watch(
+  () => chapterId.value,
+  async () => {
+    await loadQuestions();
+  }
+);
+watch(
+  () => questionId.value,
+  () => {
+    selectedAnswer.value = null;
+    selectedCorrectAnswer.value = null;
+    showAnswers.value = false;
+    showQuestionCard.value = false;
+  }
+);
 
 // ---------- 정답/발음 ----------
 const handleCorrectAnswer = (answer) => {
-  selectedAnswer.value = answer.id
-  selectedCorrectAnswer.value = answer
-  
+  selectedAnswer.value = answer.id;
+  selectedCorrectAnswer.value = answer;
+
   // Confetti 효과 시작
-  showConfetti.value = true
+  showConfetti.value = true;
   setTimeout(() => {
-    showConfetti.value = false
-  }, 3000)
-  
+    showConfetti.value = false;
+  }, 3000);
+
   // 성공 효과음 재생
-  playSuccessSound()
-  
-  showPronunciationConfirm.value = true
-}
+  playSuccessSound();
+
+  showPronunciationConfirm.value = true;
+};
 
 // 성공 효과음 재생
 const playSuccessSound = () => {
   try {
-    const audio = new Audio('/src/assets/effects/answer.mp3')
-    audio.volume = 0.7
-    audio.play().catch(error => {
-      console.warn('효과음 재생 실패:', error)
-    })
+    const audio = new Audio("/src/assets/effects/answer.mp3");
+    audio.volume = 0.7;
+    audio.play().catch((error) => {
+      console.warn("효과음 재생 실패:", error);
+    });
   } catch (error) {
-    console.warn('효과음 로드 실패:', error)
+    console.warn("효과음 로드 실패:", error);
   }
-}
+};
 
 const handleIncorrectAnswer = () => {
   // 오답 모달 표시
-  showIncorrectModal.value = true
-}
+  showIncorrectModal.value = true;
+};
 
 // 오답 모달 닫기
 const closeIncorrectModal = () => {
-  showIncorrectModal.value = false
-  selectedAnswer.value = null
-}
+  showIncorrectModal.value = false;
+  selectedAnswer.value = null;
+};
 
 const startPronunciationPractice = () => {
-  showPronunciationConfirm.value = false
-  showPronunciationModal.value = true
-}
+  showPronunciationConfirm.value = false;
+  showPronunciationModal.value = true;
+};
 
 const skipPronunciationPractice = () => {
-  showPronunciationConfirm.value = false
-  setTimeout(() => nextQuestion(), 500)
-}
+  showPronunciationConfirm.value = false;
+  setTimeout(() => nextQuestion(), 500);
+};
 
 const completePronunciationPractice = (score) => {
-  showPronunciationModal.value = false
-  showInfo(`발음 점수: ${score}점! 잘했습니다!`, '발음 평가 완료', { duration: 3000 })
-  setTimeout(() => nextQuestion(), 2000)
-}
+  showPronunciationModal.value = false;
+  showInfo(`발음 점수: ${score}점! 잘했습니다!`, "발음 평가 완료", {
+    duration: 3000,
+  });
+  setTimeout(() => nextQuestion(), 2000);
+};
 
 const submitAnswer = () => {
-  const answer = currentContent.value?.answers.find(a => a.id === selectedAnswer.value)
-  if (!answer) return
+  const answer = currentContent.value?.answers.find(
+    (a) => a.id === selectedAnswer.value
+  );
+  if (!answer) return;
   // 서버 DTO에 isCorrect가 이미 있음 (DB is_correct)
   if (answer.isCorrect) {
-    nextQuestion()
+    nextQuestion();
   } else {
-    showWarning('틀렸습니다. 다시 시도해보세요.', '오답', { duration: 2000 })
-    selectedAnswer.value = null
+    showWarning("틀렸습니다. 다시 시도해보세요.", "오답", { duration: 2000 });
+    selectedAnswer.value = null;
   }
 
   // (옵션) 서버 텍스트 비교로 검증하려면:
   // const correctText = await learningService.getCorrectChoiceText(currentContent.value.id)
   // const isCorrect = answer.text?.trim() === String(correctText).trim()
-}
+};
 
 const nextQuestion = () => {
-  const curr = questionId.value
-  const total = totalQuestions.value
-  selectedAnswer.value = null
-  selectedCorrectAnswer.value = null
+  const curr = questionId.value;
+  const total = totalQuestions.value;
+  selectedAnswer.value = null;
+  selectedCorrectAnswer.value = null;
 
   if (curr < total) {
-    router.push(`/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/${curr + 1}`)
+    router.push(
+      `/dashboard/learning/theme/${themeId.value}/chapter/${
+        chapterId.value
+      }/question/${curr + 1}`
+    );
   } else {
-    showInfo('챕터를 완료했습니다!', '완료', { duration: 3000 })
+    showInfo("챕터를 완료했습니다!", "완료", { duration: 3000 });
     setTimeout(() => {
-      router.push(`/dashboard/learning/theme/${themeId.value}`)
-    }, 1200)
+      router.push(`/dashboard/learning/theme/${themeId.value}`);
+    }, 1200);
   }
-}
+};
 
 // ---------- 네비게이션 ----------
 const confirmNavigation = (direction) => {
-  pendingNavigation.value = direction
-  showNavigationConfirm.value = true
-}
+  pendingNavigation.value = direction;
+  showNavigationConfirm.value = true;
+};
 
 const executeNavigation = () => {
-  const direction = pendingNavigation.value
-  showNavigationConfirm.value = false
-  const target = direction === 'prev' ? questionId.value - 1 : questionId.value + 1
+  const direction = pendingNavigation.value;
+  showNavigationConfirm.value = false;
+  const target =
+    direction === "prev" ? questionId.value - 1 : questionId.value + 1;
   if (target >= 1 && target <= totalQuestions.value) {
-    router.push(`/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/${target}`)
+    router.push(
+      `/dashboard/learning/theme/${themeId.value}/chapter/${chapterId.value}/question/${target}`
+    );
   }
-  selectedAnswer.value = null
-  selectedCorrectAnswer.value = null
-}
+  selectedAnswer.value = null;
+  selectedCorrectAnswer.value = null;
+};
 
 const cancelNavigation = () => {
-  showNavigationConfirm.value = false
-  pendingNavigation.value = null
-}
+  showNavigationConfirm.value = false;
+  pendingNavigation.value = null;
+};
 
 // ---------- 나가기 ----------
-const confirmExit = () => { showExitConfirm.value = true }
-const executeExit = () => { showExitConfirm.value = false; router.push('/dashboard/learning') }
-const cancelExit = () => { showExitConfirm.value = false }
+const confirmExit = () => {
+  showExitConfirm.value = true;
+};
+const executeExit = () => {
+  showExitConfirm.value = false;
+  router.push("/dashboard/learning");
+};
+const cancelExit = () => {
+  showExitConfirm.value = false;
+};
 
 // ---------- 오디오 ----------
 const playQuestionAudio = async () => {
-  const text = (currentContent.value?.question || '').trim()
-  const url  = currentContent.value?.audioUrl
+  const text = (currentContent.value?.question || "").trim();
+  const url = currentContent.value?.audioUrl;
 
   try {
     if (ttsService.supported && text) {
-      await ttsService.speakText(text, { lang: 'ko-KR', rate: 1, pitch: 1.05 })
+      await ttsService.speakText(text, { lang: "ko-KR", rate: 1, pitch: 1.05 });
     } else if (url) {
-      await new Audio(url).play()
+      await new Audio(url).play();
     } else {
-      showInfo('질문 음성을 재생합니다', '음성 재생', { duration: 1000 })
+      showInfo("질문 음성을 재생합니다", "음성 재생", { duration: 1000 });
     }
-  } catch {
-    
-  }
-}
+  } catch {}
+};
 
 const playAnswerAudio = async (answer) => {
-  const text = (answer?.text || '').trim()
-  const url  = answer?.audioUrl
+  const text = (answer?.text || "").trim();
+  const url = answer?.audioUrl;
 
   try {
     if (ttsService.supported && text) {
-      await ttsService.speakText(text, { lang: 'ko-KR', rate: 1, pitch: 1.05 })
+      await ttsService.speakText(text, { lang: "ko-KR", rate: 1, pitch: 1.05 });
     } else if (url) {
-      await new Audio(url).play()
+      await new Audio(url).play();
     } else {
-      showInfo(`"${answer.text}" 음성을 재생합니다`, '음성 재생', { duration: 1000 })
+      showInfo(`"${answer.text}" 음성을 재생합니다`, "음성 재생", {
+        duration: 1000,
+      });
     }
   } catch {
-    showWarning('음성 재생에 실패했습니다.', '오류', { duration: 1500 })
+    showWarning("음성 재생에 실패했습니다.", "오류", { duration: 1500 });
   }
-}
+};
 
 // 타이핑 완료 시 답변 선택지 표시
 const onTypingComplete = () => {
   // 타이핑 완료 후 약간의 딜레이 후 답변 선택지 표시
   setTimeout(() => {
-    showAnswers.value = true
-  }, 500)
-}
-
+    showAnswers.value = true;
+  }, 500);
+};
 </script>

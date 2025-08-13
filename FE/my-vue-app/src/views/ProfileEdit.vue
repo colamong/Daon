@@ -2,8 +2,17 @@
   <div class="py-8 px-4">
     <div class="mx-auto max-w-5xl bg-white pt-10 pb-10 rounded-2xl mb-10">
       <!-- 상단 타이틀 -->
-      <div class="text-center mb-12">
+      <div class="flex justify-between items-center mb-12 px-8">
+        <div class="flex-1"></div>
         <h1 class="text-4xl font-paperBold text-gray-800">프로필 수정</h1>
+        <div class="flex-1 flex justify-end">
+          <button
+            @click="goBack"
+            class="px-6 py-2 bg-gray-300 text-gray-700 font-paperBold text-sm rounded-lg hover:bg-gray-400 transition-colors"
+          >
+            취소
+          </button>
+        </div>
       </div>
 
       <!-- 좌우 레이아웃 -->
@@ -15,6 +24,7 @@
             <div>
               <img
                 :src="
+                  formData.previewImage ||
                   formData.profileImage ||
                   currentProfile.profileImage ||
                   'https://placehold.co/200x200'
@@ -133,16 +143,19 @@ const formData = reactive({
   nickname: "",
   nationCode: "",
   profileImage: "",
+  newImageFile: null, // 새로 선택한 이미지 파일
+  previewImage: "", // 미리보기용 이미지
 });
 
 // 국가 옵션 (백엔드에서 로드)
 const countryOptions = ref([]);
 
-// 🔹 이미지 변경은 서버에 즉시 업로드하므로, hasChanges는 텍스트만 비교
+// 변경사항 확인 (이미지 변경도 포함)
 const hasChanges = computed(() => {
   return (
     formData.nickname !== currentProfile.nickname ||
-    formData.nationCode !== currentProfile.nationCode
+    formData.nationCode !== currentProfile.nationCode ||
+    formData.newImageFile !== null
   );
 });
 
@@ -194,7 +207,7 @@ function triggerFileInput() {
   fileInput.value?.click();
 }
 
-async function handleImageChange(event) {
+function handleImageChange(event) {
   const file = event.target.files?.[0];
   if (!file) return;
 
@@ -212,26 +225,12 @@ async function handleImageChange(event) {
     return;
   }
 
-  try {
-    uploadingImage.value = true;
-
-    // 서버에 즉시 업로드 (멀티파트)
-    // auth.uploadProfileImage는 서버 업로드 후 this.user.profileImage를 objectURL로 교체하도록 구현해둠
-    await auth.uploadProfileImage(file);
-
-    // 화면 미리보기 동기화
-    // store에서 user.profileImage를 objectURL로 바꿨다면 그 값을 폼에도 반영
-    formData.profileImage = auth.user?.profileImage || formData.profileImage;
-
-    showSuccess("프로필 사진이 변경되었습니다.", "업로드 완료");
-  } catch (err) {
-    console.error(err);
-    showError("이미지 업로드에 실패했습니다. 다시 시도해주세요.", "업로드 실패");
-  } finally {
-    uploadingImage.value = false;
-    // 같은 파일 다시 선택 가능하도록 초기화
-    event.target.value = '';
-  }
+  // 파일 저장 및 미리보기 설정
+  formData.newImageFile = file;
+  formData.previewImage = URL.createObjectURL(file);
+  
+  // 같은 파일 다시 선택 가능하도록 초기화
+  event.target.value = '';
 }
 
 async function handleUpdateProfile() {
@@ -254,15 +253,32 @@ async function handleUpdateProfile() {
   loading.value = true;
 
   try {
-    // 텍스트 정보만 업데이트 (이미지는 별도 업로드로 이미 반영됨)
+    // 1. 이미지가 변경되었다면 먼저 업로드
+    if (formData.newImageFile) {
+      uploadingImage.value = true;
+      await auth.uploadProfileImage(formData.newImageFile);
+      uploadingImage.value = false;
+    }
+
+    // 2. 텍스트 정보 업데이트
     await auth.updateProfile?.({
       nickname: formData.nickname,
       nationCode: formData.nationCode
     });
 
-    // 현재 상태 동기화
+    // 3. 현재 상태 동기화
     currentProfile.nickname = formData.nickname;
     currentProfile.nationCode = formData.nationCode;
+    if (formData.newImageFile) {
+      currentProfile.profileImage = auth.user?.profileImage || currentProfile.profileImage;
+    }
+
+    // 4. 임시 상태 초기화
+    formData.newImageFile = null;
+    if (formData.previewImage) {
+      URL.revokeObjectURL(formData.previewImage);
+      formData.previewImage = "";
+    }
 
     showSuccess("프로필이 성공적으로 업데이트되었습니다!", "수정 완료");
     router.push({ name: "Dashboard" });
@@ -271,6 +287,11 @@ async function handleUpdateProfile() {
     showError(error?.message || "프로필 업데이트에 실패했습니다. 다시 시도해주세요.", "업데이트 실패");
   } finally {
     loading.value = false;
+    uploadingImage.value = false;
   }
+}
+
+function goBack() {
+  router.push({ name: "Dashboard" });
 }
 </script>

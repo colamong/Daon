@@ -77,11 +77,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useChildStore } from "@/store/child";
 import outIcon from "../assets/images/out.png";
 import bgImage from "../assets/images/child_main.png";
+import bgmSound from "../assets/effects/bgm.mp3";
 
 // props 정의
 const props = defineProps({
@@ -97,6 +98,10 @@ const childStore = useChildStore();
 // 현재 선택된 아이 정보
 const currentChild = computed(() => childStore.selectedChild);
 
+// BGM 관리
+const bgmAudio = ref(null);
+const isBGMPlaying = ref(false);
+
 // 컴포넌트 마운트 시 실행
 onMounted(() => {
   childStore.initialize();
@@ -108,6 +113,14 @@ onMounted(() => {
       childStore.selectChild(childId);
     }
   }
+
+  // BGM 자동 재생 시도
+  playBGM();
+});
+
+// 컴포넌트 언마운트 시 BGM 정지
+onUnmounted(() => {
+  stopBGM();
 });
 
 const goDashboard = () => router.push({ name: "Dashboard" });
@@ -131,6 +144,46 @@ function goToDrawing() {
       name: "ChildDrawing",
       params: { childId: currentChild.value.id },
     });
+  }
+}
+
+// BGM 재생
+function playBGM() {
+  if (!isBGMPlaying.value) {
+    try {
+      console.log('BGM 재생 시도 중...');
+      bgmAudio.value = new Audio('/src/assets/effects/bgm.mp3');
+      bgmAudio.value.loop = true;
+      bgmAudio.value.volume = 0.3;
+      bgmAudio.value.autoplay = true;
+      
+      // 강제 재생 시도
+      const playPromise = bgmAudio.value.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          isBGMPlaying.value = true;
+          console.log('BGM 재생 성공');
+        }).catch(error => {
+          console.log('자동 재생 차단됨, 사용자 상호작용 대기 중:', error);
+          // 차단된 경우 첫 번째 클릭/터치 이벤트에서 재생
+          document.addEventListener('click', playBGM, { once: true });
+          document.addEventListener('touchstart', playBGM, { once: true });
+        });
+      }
+    } catch (error) {
+      console.error('BGM 생성 실패:', error);
+    }
+  }
+}
+
+// BGM 정지
+function stopBGM() {
+  if (bgmAudio.value) {
+    bgmAudio.value.pause();
+    bgmAudio.value.currentTime = 0;
+    bgmAudio.value = null;
+    isBGMPlaying.value = false;
   }
 }
 
