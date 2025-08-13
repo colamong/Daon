@@ -5,7 +5,9 @@
     class="block w-72 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow bg-white"
   >
     <!-- 이미지 영역 -->
-    <div class="h-48 overflow-hidden bg-gray-100 flex items-center justify-center">
+    <div
+      class="h-48 overflow-hidden bg-blue-100/40 flex items-center justify-center"
+    >
       <img
         :src="resolvedImage"
         alt="카드 배경 이미지"
@@ -23,27 +25,27 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = defineProps({
   image: String,
   title: {
     type: String,
-    required: true
+    required: true,
   },
   description: {
     type: String,
-    required: true
+    required: true,
   },
   link: {
     type: String,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
 const resolvedImage = computed(() => {
   return props.image
     ? props.image
-    : new URL('@/assets/icons/image-placeholder.svg', import.meta.url).href
-})
+    : new URL("@/assets/icons/image-placeholder.svg", import.meta.url).href;
+});
 </script>

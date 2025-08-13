@@ -355,7 +355,7 @@ async function handleSignUp() {
     await auth.getCurrentUser();
 
     showSuccess("회원가입이 완료되었습니다!", "환영합니다");
-    router.push({ name: "Dashboard" });
+    router.push({ name: "Dashboard", query: { firstLogin: 'true' } });
   } catch (error) {
     console.error("회원가입 오류:", error);
     console.log("Error status:", error.response?.status);

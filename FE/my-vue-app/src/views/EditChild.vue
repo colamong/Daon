@@ -1,9 +1,18 @@
 <template>
   <div class="py-8 px-4">
-    <div class="mx-auto max-w-6xl bg-white pt-10 pb-10 rounded-2xl mb-10">
+    <div class="mx-auto max-w-5xl bg-white pt-10 pb-10 rounded-2xl mb-10">
       <!-- 상단 타이틀 -->
-      <div class="text-center mb-12">
+      <div class="flex justify-between items-center mb-12 px-8">
+        <div class="flex-1"></div>
         <h1 class="text-4xl font-paperBold text-gray-800">아이 프로필 수정</h1>
+        <div class="flex-1 flex justify-end">
+          <button
+            @click="goBack"
+            class="px-6 py-2 bg-gray-300 text-gray-700 font-paperBold text-sm rounded-lg hover:bg-gray-400 transition-colors"
+          >
+            취소
+          </button>
+        </div>
       </div>
 
       <!-- 아이가 없는 경우 -->
@@ -20,7 +29,10 @@
       <!-- 아이가 있는 경우 -->
       <div v-else class="space-y-8">
         <!-- 아이 선택 탭 (여러 명인 경우) -->
-        <div v-if="childrenList.length > 1" class="flex justify-center space-x-4 mb-8">
+        <div
+          v-if="childrenList.length > 1"
+          class="flex justify-center space-x-4 mb-8"
+        >
           <button
             v-for="(child, index) in childrenList"
             :key="child.id"
@@ -28,14 +40,15 @@
             class="px-6 py-3 rounded-lg font-paperBold transition-colors"
             :class="{
               'bg-purple-500 text-white': selectedChildIndex === index,
-              'bg-gray-200 text-gray-700 hover:bg-gray-300': selectedChildIndex !== index,
+              'bg-gray-200 text-gray-700 hover:bg-gray-300':
+                selectedChildIndex !== index,
             }"
           >
             {{ child.name }}
           </button>
         </div>
 
-        <!-- 수정 폼 -->
+        <!-- 메인 콘텐츠: 좌우 레이아웃 (아이 등록과 동일) -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 px-8">
           <!-- 좌측: 이미지 업로드 -->
           <div class="flex flex-col space-y-6">
@@ -50,7 +63,11 @@
             <form @submit.prevent="handleUpdateChild" class="space-y-8">
               <!-- 이름 -->
               <div>
-                <label for="childName" class="block text-lg font-paperBold text-black mb-3">이름</label>
+                <label
+                  for="childName"
+                  class="block text-lg font-paperBold text-black mb-3"
+                  >이름</label
+                >
                 <input
                   id="childName"
                   v-model="childData.name"
@@ -63,109 +80,154 @@
 
               <!-- 생년월일 -->
               <div>
-                <label for="birthDate" class="block text-lg font-paperBold text-black mb-3">생년월일</label>
+                <label
+                  for="birthDate"
+                  class="block text-lg font-paperBold text-black mb-3"
+                  >생년월일</label
+                >
                 <div class="flex gap-2">
-                  <select v-model="selectedYear" class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white">
+                  <select
+                    v-model="selectedYear"
+                    class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white"
+                  >
                     <option value="">년도</option>
-                    <option v-for="year in years" :key="year" :value="year">{{ year }}년</option>
+                    <option v-for="year in years" :key="year" :value="year">
+                      {{ year }}년
+                    </option>
                   </select>
-                  <select v-model="selectedMonth" class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white">
+                  <select
+                    v-model="selectedMonth"
+                    class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white"
+                  >
                     <option value="">월</option>
-                    <option v-for="month in 12" :key="month" :value="month">{{ month }}월</option>
+                    <option v-for="month in 12" :key="month" :value="month">
+                      {{ month }}월
+                    </option>
                   </select>
-                  <select v-model="selectedDay" class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white">
+                  <select
+                    v-model="selectedDay"
+                    class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white"
+                  >
                     <option value="">일</option>
-                    <option v-for="day in daysInMonth" :key="day" :value="day">{{ day }}일</option>
+                    <option v-for="day in daysInMonth" :key="day" :value="day">
+                      {{ day }}일
+                    </option>
                   </select>
                 </div>
-              </div>
-
-              <!-- 관심사 -->
-              <div>
-                <BaseCheckboxGroup
-                  v-model="childData.interests"
-                  label="관심사"
-                  :options="interestOptions"
-                />
               </div>
 
               <!-- AI 추천 관심사 -->
-              <div v-if="aiRecommendedInterests.length > 0">
+              <div>
                 <label class="block text-lg font-paperBold text-black mb-3">
                   🤖 AI가 추천하는 관심사
                 </label>
-                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
-                  <p class="text-sm text-gray-600 mb-3">아이의 활동 기록을 바탕으로 추천된 관심사입니다</p>
-                  <div class="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      v-for="interest in aiRecommendedInterests"
-                      :key="interest"
-                      @click="addAIRecommendedInterest(interest)"
-                      :disabled="childData.interests.includes(interest)"
-                      class="px-3 py-2 bg-white border-2 rounded-lg font-paper text-sm transition-all duration-200 flex items-center gap-2"
-                      :class="{
-                        'border-gray-300 text-gray-500 cursor-not-allowed': childData.interests.includes(interest),
-                        'border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400 cursor-pointer': !childData.interests.includes(interest)
-                      }"
-                    >
-                      <span v-if="childData.interests.includes(interest)">✅</span>
-                      <span v-else>➕</span>
-                      {{ interest }}
-                    </button>
+                <div
+                  class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200 min-h-[120px] flex items-center justify-center"
+                >
+                  <div
+                    v-if="aiRecommendedInterests.length > 0"
+                    class="w-full font-paper"
+                  >
+                    <p class="text-sm text-gray-600 mb-3 !font-paper">
+                      아이의 활동 기록을 바탕으로 추천된 관심사입니다
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        v-for="interest in aiRecommendedInterests"
+                        :key="interest"
+                        @click="addAIRecommendedInterest(interest)"
+                        :disabled="childData.interests.includes(interest)"
+                        class="px-3 py-2 bg-white border-2 rounded-lg font-paper text-sm transition-all duration-200 flex items-center gap-2"
+                        :class="{
+                          'border-gray-300 text-gray-500 cursor-not-allowed':
+                            childData.interests.includes(interest),
+                          'border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400 cursor-pointer':
+                            !childData.interests.includes(interest),
+                        }"
+                      >
+                        <span v-if="childData.interests.includes(interest)"
+                          >✅</span
+                        >
+                        <span v-else>➕</span>
+                        {{ interest }}
+                      </button>
+                    </div>
+                  </div>
+                  <div v-else class="text-center text-gray-500 font-paper">
+                    <div class="text-3xl mb-2">🤖</div>
+                    <p class="font-paper">아직 AI 추천 관심사가 없습니다.</p>
+                    <p class="text-sm mt-1 font-paper">
+                      아이의 활동이 늘어나면 추천됩니다!
+                    </p>
                   </div>
                 </div>
               </div>
+            </form>
+          </div>
+        </div>
 
-              <!-- 추가하고 싶은 관심사 -->
-              <div>
-                <label for="newInterest" class="block text-lg font-paperBold text-black mb-3">추가하고 싶은 관심사</label>
-                <div class="flex gap-2">
-                  <input
-                    id="newInterest"
-                    v-model="newInterest"
-                    type="text"
-                    placeholder="새로운 관심사를 입력하세요"
-                    class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg"
-                    @keypress.enter.prevent="addNewInterest"
-                  />
-                  <button
-                    type="button"
-                    @click="addNewInterest"
-                    class="px-6 py-3 bg-purple-500 text-white font-paperBold text-lg rounded-lg hover:bg-purple-600 transition-colors"
-                  >
-                    추가
-                  </button>
-                </div>
-              </div>
+        <!-- 하단 관심사 영역 (아이 등록과 동일) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 px-8 mt-12">
+          <!-- 좌측: 관심사 -->
+          <div>
+            <BaseCheckboxGroup
+              v-model="childData.interests"
+              label="관심사"
+              :options="interestOptions"
+            />
+          </div>
 
-              <!-- 수정/삭제 버튼 -->
-              <div class="flex gap-4 pt-6">
-                <button
-                  type="submit"
-                  :disabled="loading"
-                  class="flex-1 py-4 bg-purple-500 text-white font-paperBold text-lg rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {{ loading ? "수정 중..." : "수정하기" }}
-                </button>
+          <!-- 우측: 추가하고 싶은 관심사 + 버튼들 -->
+          <div class="space-y-8">
+            <!-- 추가하고 싶은 관심사 -->
+            <div>
+              <label
+                for="newInterest"
+                class="block text-lg font-paperBold text-black mb-3"
+              >
+                추가하고 싶은 관심사
+              </label>
+              <div class="flex gap-2">
+                <input
+                  id="newInterest"
+                  v-model="newInterest"
+                  type="text"
+                  placeholder="새로운 관심사를 입력하세요"
+                  class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg"
+                  @keypress.enter.prevent="addNewInterest"
+                />
                 <button
                   type="button"
-                  @click="confirmDelete"
-                  class="px-8 py-4 text-white font-paperBold text-lg rounded-lg transition-colors"
-                  :class="showDeleteConfirm ? 'bg-red-700 hover:bg-red-800' : 'bg-red-500 hover:bg-red-600'"
+                  @click="addNewInterest"
+                  class="px-6 py-3 bg-purple-500 text-white font-paperBold text-lg rounded-lg hover:bg-purple-600 transition-colors"
                 >
-                  {{ showDeleteConfirm ? '정말 삭제하기' : '삭제' }}
+                  추가
                 </button>
               </div>
-            </form>
+            </div>
 
-            <!-- 취소 버튼 -->
-            <div class="text-center">
+            <!-- 수정/삭제 버튼 -->
+            <div class="flex gap-4 pt-6">
               <button
-                @click="goBack"
-                class="px-8 py-3 bg-gray-300 text-gray-700 font-paperBold text-lg rounded-lg hover:bg-gray-400 transition-colors"
+                type="button"
+                @click="handleUpdateChild"
+                :disabled="loading"
+                class="flex-1 py-4 bg-purple-500 text-white font-paperBold text-lg rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                취소
+                {{ loading ? "수정 중..." : "수정하기" }}
+              </button>
+              <button
+                type="button"
+                @click="confirmDelete"
+                class="px-8 py-4 text-white font-paperBold text-lg rounded-lg transition-colors"
+                :class="
+                  showDeleteConfirm
+                    ? 'bg-red-700 hover:bg-red-800'
+                    : 'bg-red-500 hover:bg-red-600'
+                "
+              >
+                {{ showDeleteConfirm ? "정말 삭제하기" : "삭제" }}
               </button>
             </div>
           </div>
@@ -181,7 +243,7 @@ import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
-import { useNotification } from '@/composables/useNotification.js';
+import { useNotification } from "@/composables/useNotification.js";
 import BaseImageUpload from "@/components/form/BaseImageUpload.vue";
 import BaseCheckboxGroup from "@/components/form/BaseCheckboxGroup.vue";
 
@@ -206,15 +268,18 @@ const childData = reactive({
   birthDate: "",
   gender: "",
   interests: [],
-  imageUrl: null,            // 서버에서 내려준 presigned URL
-  profileKey: null,          // 서버에 저장된 S3 key (URL이 오면 프런트에서 추출)
-  profileFile: null,         // 새로 선택한 File (멀티파트 업로드용)
+  imageUrl: null, // 서버에서 내려준 presigned URL
+  profileKey: null, // 서버에 저장된 S3 key (URL이 오면 프런트에서 추출)
+  profileFile: null, // 새로 선택한 File (멀티파트 업로드용)
   profileImagePreview: null, // 미리보기용 Object URL
 });
 
 // 미리보기 이미지 선택 로직
-const previewImage = computed(() =>
-  childData.profileImagePreview || childData.imageUrl || 'https://placehold.co/300x300'
+const previewImage = computed(
+  () =>
+    childData.profileImagePreview ||
+    childData.imageUrl ||
+    "https://placehold.co/300x300"
 );
 
 // 년도 옵션
@@ -242,14 +307,21 @@ const interestOptions = ref([]);
 // store 연동
 const hasChild = computed(() => childStore.hasChildren);
 const childrenList = computed(() => childStore.children);
-const selectedChild = computed(() => childrenList.value[selectedChildIndex.value] || childStore.selectedChild || {});
+const selectedChild = computed(
+  () =>
+    childrenList.value[selectedChildIndex.value] ||
+    childStore.selectedChild ||
+    {}
+);
 
 // 아이 정보 로드
 async function loadChildren() {
   await childStore.initialize();
   if (childStore.hasChildren) {
     const child = childStore.selectedChild || childStore.children[0];
-    selectedChildIndex.value = childStore.children.findIndex(c => c.id === child.id);
+    selectedChildIndex.value = childStore.children.findIndex(
+      (c) => c.id === child.id
+    );
     loadChildData(child);
   }
 }
@@ -257,14 +329,17 @@ async function loadChildren() {
 // 특정 아이 데이터 로드
 async function loadChildData(child) {
   childData.id = child.id;
-  childData.name = child.name || '';
-  childData.birthDate = child.birthDate || '';
-  childData.gender = child.gender || '';
-  childData.interests = Array.isArray(child.interests) ? [...child.interests] : [];
+  childData.name = child.name || "";
+  childData.birthDate = child.birthDate || "";
+  childData.gender = child.gender || "";
+  childData.interests = Array.isArray(child.interests)
+    ? [...child.interests]
+    : [];
   childData.imageUrl = child.imageUrl || child.profileImage || null;
 
   // 기존 S3 키 확보 (서버가 key 또는 URL을 줄 수 있음)
-  childData.profileKey = child.profileImg || extractS3Key(childData.imageUrl) || null;
+  childData.profileKey =
+    child.profileImg || extractS3Key(childData.imageUrl) || null;
 
   // 생년월일 파싱
   if (childData.birthDate) {
@@ -275,7 +350,10 @@ async function loadChildData(child) {
   }
 
   // 관심사 옵션
-  interestOptions.value = (childData.interests || []).map(v => ({ label: v, value: v }));
+  interestOptions.value = (childData.interests || []).map((v) => ({
+    label: v,
+    value: v,
+  }));
 
   // 새 업로드 리셋
   childData.profileFile = null;
@@ -322,7 +400,9 @@ async function addNewInterest() {
       return;
     }
 
-    await childService.addChildInterests(userId, childData.id, { interests: [newInterestValue] });
+    await childService.addChildInterests(userId, childData.id, {
+      interests: [newInterestValue],
+    });
 
     const opt = { label: newInterestValue, value: newInterestValue };
     interestOptions.value.push(opt);
@@ -330,7 +410,10 @@ async function addNewInterest() {
       childData.interests.push(newInterestValue);
     }
     newInterest.value = "";
-    showSuccess(`"${newInterestValue}" 관심사가 추가되었습니다.`, "관심사 추가");
+    showSuccess(
+      `"${newInterestValue}" 관심사가 추가되었습니다.`,
+      "관심사 추가"
+    );
 
     await childStore.loadChildren();
   } catch (error) {
@@ -363,14 +446,21 @@ async function handleUpdateChild() {
     const requestData = {
       name: childData.name.trim(),
       birthDate: childData.birthDate,
-      gender: childData.gender,                // 서버에서 무시 가능
-      profileImg: childData.profileKey || null // Base64/Presigned 금지
+      gender: childData.gender, // 서버에서 무시 가능
+      profileImg: childData.profileKey || null, // Base64/Presigned 금지
     };
     await childService.updateChild(userId, childData.id, requestData);
 
     // 2) 새 파일이 있으면 멀티파트 업로드
-    if (childData.profileFile && typeof childService.uploadChildImage === 'function') {
-      await childService.uploadChildImage(userId, childData.id, childData.profileFile);
+    if (
+      childData.profileFile &&
+      typeof childService.uploadChildImage === "function"
+    ) {
+      await childService.uploadChildImage(
+        userId,
+        childData.id,
+        childData.profileFile
+      );
     }
 
     // 3) 관심사 변경(해제된 것 삭제)
@@ -378,11 +468,17 @@ async function handleUpdateChild() {
 
     // 4) 상태 갱신
     await childStore.loadChildren();
-    showSuccess(`${childData.name}의 정보가 성공적으로 수정되었습니다!`, "수정 완료");
+    showSuccess(
+      `${childData.name}의 정보가 성공적으로 수정되었습니다!`,
+      "수정 완료"
+    );
     router.push({ name: "ChildProfile" });
   } catch (error) {
     console.error("아이 정보 수정 실패:", error);
-    showError(error?.message || "아이 정보 수정에 실패했습니다. 다시 시도해주세요.", "수정 실패");
+    showError(
+      error?.message || "아이 정보 수정에 실패했습니다. 다시 시도해주세요.",
+      "수정 실패"
+    );
   } finally {
     loading.value = false;
   }
@@ -390,13 +486,17 @@ async function handleUpdateChild() {
 
 // 관심사 변경 처리 - 체크 해제된 항목 삭제
 async function updateInterests(userId, childId) {
-  const originalChild = childStore.children.find(c => c.id === childId);
+  const originalChild = childStore.children.find((c) => c.id === childId);
   const originalInterests = originalChild?.interests || [];
   const currentInterests = childData.interests || [];
 
-  const interestsToDelete = originalInterests.filter(i => !currentInterests.includes(i));
+  const interestsToDelete = originalInterests.filter(
+    (i) => !currentInterests.includes(i)
+  );
   if (interestsToDelete.length > 0) {
-    await childService.deleteChildInterests(userId, childId, { interests: interestsToDelete });
+    await childService.deleteChildInterests(userId, childId, {
+      interests: interestsToDelete,
+    });
   }
 }
 
@@ -406,10 +506,15 @@ async function loadAIRecommendedInterests(childId) {
     const userId = auth.user?.id;
     if (!userId) return;
 
-    const recommended = await childService.getAIRecommendedInterests(userId, childId);
-    aiRecommendedInterests.value = Array.isArray(recommended) ? recommended : [];
+    const recommended = await childService.getAIRecommendedInterests(
+      userId,
+      childId
+    );
+    aiRecommendedInterests.value = Array.isArray(recommended)
+      ? recommended
+      : [];
   } catch (error) {
-    console.warn('AI 추천 관심사 로드 실패:', error);
+    console.warn("AI 추천 관심사 로드 실패:", error);
     aiRecommendedInterests.value = [];
   }
 }
@@ -437,15 +542,19 @@ async function addAIRecommendedInterest(interest) {
     }
 
     // 1단계: AI 추천에서 삭제 (기존 일반 관심사 삭제 API 사용)
-    await childService.deleteChildInterests(userId, childData.id, { interests: [newInterestValue] });
-    
+    await childService.deleteChildInterests(userId, childData.id, {
+      interests: [newInterestValue],
+    });
+
     // 2단계: 일반 관심사로 추가 (기존 addNewInterest와 동일한 로직)
-    await childService.addChildInterests(userId, childData.id, { interests: [newInterestValue] });
+    await childService.addChildInterests(userId, childData.id, {
+      interests: [newInterestValue],
+    });
 
     // 로컬 상태 업데이트
     // AI 추천 목록에서 선택한 관심사 제거
     aiRecommendedInterests.value = aiRecommendedInterests.value.filter(
-      item => item !== interest
+      (item) => item !== interest
     );
 
     // 일반 관심사 목록에 추가
@@ -454,7 +563,10 @@ async function addAIRecommendedInterest(interest) {
     if (!childData.interests.includes(newInterestValue)) {
       childData.interests.push(newInterestValue);
     }
-    showSuccess(`"${newInterestValue}" 관심사가 추가되었습니다.`, "관심사 추가");
+    showSuccess(
+      `"${newInterestValue}" 관심사가 추가되었습니다.`,
+      "관심사 추가"
+    );
 
     // 스토어 업데이트
     await childStore.loadChildren();
@@ -504,14 +616,18 @@ async function deleteChild() {
       message: error.message,
       response: error.response?.data,
       status: error.response?.status,
-      error
+      error,
     });
     showError(`아이 삭제에 실패했습니다: ${error.message}`, "삭제 실패");
   }
 }
 
-function goToRegister() { router.push({ name: "RegisterChild" }); }
-function goBack() { router.push({ name: "ChildProfile" }); }
+function goToRegister() {
+  router.push({ name: "RegisterChild" });
+}
+function goBack() {
+  router.push({ name: "ChildProfile" });
+}
 
 // 프리사인/공개 URL에서 S3 key 추출
 function extractS3Key(urlOrKey) {
@@ -520,16 +636,16 @@ function extractS3Key(urlOrKey) {
 
   try {
     const u = new URL(urlOrKey);
-    let key = u.pathname.startsWith('/') ? u.pathname.slice(1) : u.pathname;
-    key = key.replace(/^\/+/, '');
+    let key = u.pathname.startsWith("/") ? u.pathname.slice(1) : u.pathname;
+    key = key.replace(/^\/+/, "");
     return key || null;
   } catch {
-    const idx = urlOrKey.indexOf('.amazonaws.com/');
+    const idx = urlOrKey.indexOf(".amazonaws.com/");
     if (idx > -1) {
-      const rest = urlOrKey.substring(idx + '.amazonaws.com/'.length);
-      return rest.split('?')[0];
+      const rest = urlOrKey.substring(idx + ".amazonaws.com/".length);
+      return rest.split("?")[0];
     }
-    const lastSlash = urlOrKey.lastIndexOf('/');
+    const lastSlash = urlOrKey.lastIndexOf("/");
     return lastSlash > -1 ? urlOrKey.substring(lastSlash + 1) : urlOrKey;
   }
 }

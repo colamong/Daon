@@ -1,6 +1,6 @@
 <template>
   <div
-    class="m-10 mb-20 max-w-5xl mx-auto px-4 py-8 font-paper bg-white rounded-xl"
+    class="m-10 mb-20 max-w-4xl mx-auto px-4 py-8 font-paper bg-white rounded-xl"
   >
     <!-- 헤더 -->
     <div class="text-center mb-12">
@@ -31,24 +31,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import ScenarioCard from '@/components/card/ScenarioCard.vue'
-import learningService from '@/services/learningService' // 
+import { ref, onMounted } from "vue";
+import ScenarioCard from "@/components/card/ScenarioCard.vue";
+import learningService from "@/services/learningService"; //
 
 // 상태
-const learningThemes = ref([])
-const loading = ref(true)
-const error = ref('')
+const learningThemes = ref([]);
+const loading = ref(true);
+const error = ref("");
 
 // 로딩
 onMounted(async () => {
   try {
-    const themes = await learningService.getThemes() // [{id,title,description,image}]
-    learningThemes.value = themes
+    const themes = await learningService.getThemes(); // [{id,title,description,image}]
+    learningThemes.value = themes;
   } catch (e) {
-    error.value = 'failed'
+    error.value = "failed";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-})
+});
 </script>
