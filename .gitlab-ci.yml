@@ -31,9 +31,9 @@ build-and-push-be:
     - echo "=== Docker Hub Login ==="
     - docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_TOKEN"
     - echo "=== Docker Build ==="
-    - docker build -t junwoooo/daon:latest BE
+    - docker build -t "$IMAGE_NAME:latest" BE
     - echo "=== Docker Push ==="
-    - docker push junwoooo/daon:latest
+    - docker push "$IMAGE_NAME:latest"
 
 deploy-backend:
   stage: deploy_be
@@ -44,19 +44,11 @@ deploy-backend:
         - BE/**/*
   script:
     - set -euxo pipefail
-    # 네트워크 없으면 생성 (idempotent)
-    - docker network inspect daon-network >/dev/null 2>&1 || docker network create daon-network
-    # 기존 컨테이너 정리
-    - docker stop daon-app || true
-    - docker rm daon-app || true
-    # 최신 이미지 풀
-    - docker pull junwoooo/daon:latest
-    # .env 존재 확인
-    - test -f .env
-    # 새 컨테이너 실행 (백슬래시 없이 한 줄)
-    - docker run -d --name daon-app --network daon-network --env-file .env -p 8080:8080 --restart=always junwoooo/daon:latest
-    # (옵션) 배포 직후 이름해석 확인
-    - docker exec daon-app getent hosts redis || true
+    - docker stop "$CONTAINER_NAME" || true
+    - docker rm "$CONTAINER_NAME" || true
+    - docker pull "$IMAGE_NAME:latest"
+    - test -f "$ENV_FILE"
+    - docker run -d --name "${CONTAINER_NAME}" --network daon-network --env-file "${ENV_FILE}" -p "${HOST_PORT}:${CONTAINER_PORT}" --restart=always "${IMAGE_NAME}:latest"
 
 # ===== Frontend =====
 
@@ -67,6 +59,7 @@ build-fe:
       changes:
         - FE/my-vue-app/**/*
   before_script:
+    # Node/NPM 버전 확인 (환경 점검용, 나중에 삭제 가능)
     - node -v
     - npm -v
   cache:
@@ -90,7 +83,7 @@ package-fe:
       changes:
         - FE/my-vue-app/**/*
   before_script:
-    - tar --version
+    - tar --version  # 우분투에는 tar 기본 포함
   script:
     - export RELEASE="${CI_PIPELINE_IID}-${CI_COMMIT_SHORT_SHA}"
     - tar -czf "dist-${RELEASE}.tar.gz" -C FE/my-vue-app/dist .
