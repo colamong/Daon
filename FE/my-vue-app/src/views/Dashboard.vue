@@ -27,78 +27,6 @@
       </div>
     </section>
 
-    <!-- 2. 캘린더 + 일정 목록 -->
-    <section
-      class="max-w-6xl container mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8"
-    >
-      <!-- 달력 -->
-      <div class="lg:col-span-2 bg-white rounded-xl shadow p-6 h-[530px]">
-        <CalendarWidget
-          :events="
-            events.map((ev) => ({ ...ev, date: ev.eventDate || ev.date }))
-          "
-          @update-month="onMonthChange"
-          @date-selected="onDateSelected"
-        />
-      </div>
-
-      <!-- 일정 목록 -->
-      <div class="bg-white rounded-xl shadow p-6 flex flex-col h-[530px]">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-semibold">일정 목록</h3>
-          <button
-            @click="openModal"
-            class="text-sm text-blue-600 hover:underline"
-          >
-            + 일정 추가
-          </button>
-          <AddEventModal 
-            v-model="modalVisible" 
-            :initial-date="selectedDate"
-            @add-event="handleAddEvent" 
-          />
-        </div>
-        <div class="flex-1 overflow-y-auto overflow-x-visible pr-2 py-2">
-          <template v-if="filteredEvents.length">
-            <div class="space-y-6">
-              <ScheduleCard
-                v-for="ev in filteredEvents"
-                :key="ev.id"
-                :id="ev.id"
-                :date="ev.date"
-                :title="ev.title"
-                :description="ev.description"
-                :all-events="filteredEvents"
-                @update="handleUpdate"
-                @delete="handleDelete"
-              />
-            </div>
-          </template>
-          <template v-else>
-            <div class="h-full flex items-center justify-center text-gray-500">
-              아직 등록된 일정이 없습니다.
-            </div>
-          </template>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3. 기능 카드 -->
-    <section class="max-w-6xl container mx-auto px-6 py-12 bg-white mb-20">
-      <h3 class="text-2xl font-semibold text-center mb-2">
-        다온과 함께하는 특별한 여정
-      </h3>
-      <p class="text-center text-gray-600 mb-8">
-        다문화 가정의 행복한 내일을 위해 다온이 함께합니다.
-      </p>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <BaseCard variant="schedule" @click="openScheduleModal" />
-        <BaseCard variant="growth" :to="{ name: 'Growth' }" />
-        <BaseCard variant="community" :to="{ name: 'Community' }" />
-        <BaseCard variant="language" :to="{ name: 'OCRTool' }" />
-      </div>
-    </section>
-
     <!-- 4. 오늘의 활동 -->
     <section
       class="max-w-6xl container mx-auto px-6 py-5 bg-white rounded-xl shadow mb-20 h-[520px]"
@@ -249,6 +177,89 @@
             >
               아이 등록하러 가기
             </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 기능 카드 -->
+    <section class="max-w-8xl bg-white !mb-10">
+      <div class="max-w-6xl container mx-auto px-6 py-12 bg-white mb-10">
+        <h3 class="text-2xl font-semibold text-center mb-2">
+          다온과 함께하는 특별한 여정
+        </h3>
+        <p class="text-center text-gray-600 mb-8">
+          다문화 가정의 행복한 내일을 위해 다온이 함께합니다.
+        </p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <BaseCard variant="schedule" @click="openScheduleModal" />
+          <BaseCard variant="growth" :to="{ name: 'Growth' }" />
+          <BaseCard variant="community" :to="{ name: 'Community' }" />
+          <BaseCard variant="language" :to="{ name: 'OCRTool' }" />
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 캘린더 + 일정 목록 -->
+    <section class="mb-10">
+      <!-- 오늘의 일정 제목 -->
+      <div class="text-center font-paperBold">
+        <h2 class="text-3xl text-gray-800">오늘의 일정</h2>
+      </div>
+
+      <div
+        class="max-w-6xl container mx-auto px-6 pt-4 pb-12 grid grid-cols-1 lg:grid-cols-3 gap-8"
+      >
+        <!-- 달력 -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow p-6 h-[530px]">
+          <CalendarWidget
+            :events="
+              events.map((ev) => ({ ...ev, date: ev.eventDate || ev.date }))
+            "
+            @update-month="onMonthChange"
+            @date-selected="onDateSelected"
+          />
+        </div>
+
+        <!-- 일정 목록 -->
+        <div class="bg-white rounded-xl shadow p-6 flex flex-col h-[530px]">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold">일정 목록</h3>
+            <button
+              @click="openModal"
+              class="text-sm text-blue-600 hover:underline"
+            >
+              + 일정 추가
+            </button>
+            <AddEventModal
+              v-model="modalVisible"
+              :initial-date="selectedDate"
+              @add-event="handleAddEvent"
+            />
+          </div>
+          <div class="flex-1 overflow-y-auto overflow-x-visible pr-2 py-2">
+            <template v-if="filteredEvents.length">
+              <div class="space-y-6">
+                <ScheduleCard
+                  v-for="ev in filteredEvents"
+                  :key="ev.id"
+                  :id="ev.id"
+                  :date="ev.date"
+                  :title="ev.title"
+                  :description="ev.description"
+                  :all-events="filteredEvents"
+                  @update="handleUpdate"
+                  @delete="handleDelete"
+                />
+              </div>
+            </template>
+            <template v-else>
+              <div
+                class="h-full flex items-center justify-center text-gray-500"
+              >
+                아직 등록된 일정이 없습니다.
+              </div>
+            </template>
           </div>
         </div>
       </div>
