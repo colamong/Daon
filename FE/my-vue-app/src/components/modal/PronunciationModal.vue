@@ -52,17 +52,18 @@
               {{ isRecording ? '녹음 중...' : '녹음하기' }}
             </button>
             
-            <div v-if="recordingComplete" class="flex space-x-3">
-              <button
-                @click="completeAssessment"
-                class="flex-1 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-paperBold"
-              >
-                종료
-              </button>
-            </div>
-
-            <!-- 항상 표시되는 종료 버튼 -->
+            <!-- 평가 완료 후 종료 버튼 -->
             <button
+              v-if="recordingComplete"
+              @click="completeAssessment"
+              class="w-full px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-paperBold"
+            >
+              종료
+            </button>
+
+            <!-- 녹음 이전에만 표시되는 종료 버튼 -->
+            <button
+              v-if="!recordingComplete"
               @click="close"
               class="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors font-paper"
             >
