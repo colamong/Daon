@@ -1,6 +1,6 @@
 <template>
   <div class="py-8 px-4">
-    <div class="mx-auto max-w-6xl bg-white pt-10 pb-10 rounded-2xl mb-10">
+    <div class="mx-auto max-w-5xl bg-white pt-10 pb-10 rounded-2xl mb-10">
       <!-- 상단 타이틀 -->
       <div class="text-center mb-12">
         <h1 class="text-4xl font-paperBold text-gray-800">아이 등록</h1>
