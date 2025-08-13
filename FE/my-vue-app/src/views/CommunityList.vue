@@ -15,12 +15,12 @@
         </div>
         <div class="md:w-1/2 p-6 flex flex-col justify-center text-xl">
           <p class="text-gray-700 mb-2">
-            이웃 간의 작은 이야기부터 따뜻한 나눔까지,
+            서로의 이야기를 나누고, 도움과 응원을 주고받는 곳.
           </p>
-          <p class="text-gray-700 mb-2">온 동네 사람들의 마음을 잇는</p>
-          <p class="text-gray-700 mb-5">따뜻한 커뮤니티 공간입니다.</p>
+          <p class="text-gray-700 mb-2">새로운 환경에서 함께 모여</p>
+          <p class="text-gray-700 mb-5">정보를 나누고 서로의 경험을 나누며,</p>
           <p class="text-gray-700">
-            우리 동네에 숨겨진 일상의 온기를 만나보세요.
+            서로에게 힘이 되어 주세요.
           </p>
         </div>
       </div>
@@ -83,7 +83,7 @@
     <!-- 정렬 & 필터 바 -->
     <div class="flex items-center justify-between">
       <h3 class="text-2xl font-bold">
-        {{ activeTab === 'all' ? '온동네 커뮤니티' : '참여중인 채팅방' }}
+        {{ getListTitle() }}
       </h3>
       <div v-if="activeTab === 'all'" class="flex items-center space-x-4">
         <button
@@ -148,7 +148,7 @@
     <section>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <div
-          v-for="post in displayedCommunities"
+          v-for="post in currentList.slice(page * 12, (page + 1) * 12)"
           :key="post.id"
           class="cursor-pointer"
           @click="goChat(post.id)"
@@ -156,7 +156,7 @@
           <CommunityCard
             :location="post.title"
             :date="''" 
-            :image="''"
+            :image="getRegionImage(post.title)"
             :favorites="post.currentParticipants"
           />
         </div>
@@ -209,6 +209,81 @@ const router = useRouter();
 const communityStore = useCommunityStore();
 const authStore = useAuthStore();
 
+// 지역명 매핑 (실제 파일명에 맞춤)
+const regionNameMap = {
+  // 서울특별시 구 (서울은 구별로 세분화)
+  '강남구': { name: 'gangnam', ext: 'png' },
+  '강동구': { name: 'gangdong', ext: 'png' },
+  '강북구': { name: 'gangbuk', ext: 'png' },
+  '강서구': { name: 'gangseo', ext: 'png' },
+  '관악구': { name: 'gwanak', ext: 'png' },
+  '광진구': { name: 'gwangjin', ext: 'png' },
+  '구로구': { name: 'guro', ext: 'jpg' },
+  '금천구': { name: 'geumcheon', ext: 'png' },
+  '노원구': { name: 'nowon', ext: 'png' },
+  '도봉구': { name: 'dobong', ext: 'png' },
+  '동대문구': { name: 'dongdaemun', ext: 'png' },
+  '동작구': { name: 'dongjak', ext: 'png' },
+  '마포구': { name: 'mapo', ext: 'png' },
+  '서대문구': { name: 'seodaemun', ext: 'png' },
+  '서초구': { name: 'seocho', ext: 'png' },
+  '성동구': { name: 'seongdong', ext: 'png' },
+  '성북구': { name: 'seongbuk', ext: 'png' },
+  '송파구': { name: 'songpa', ext: 'png' },
+  '양천구': { name: 'yangcheon', ext: 'png' },
+  '영등포구': { name: 'yeongdeungpo', ext: 'png' },
+  '용산구': { name: 'yongsan', ext: 'png' },
+  '은평구': { name: 'eunpyeong', ext: 'png' },
+  '종로구': { name: 'jongno', ext: 'png' },
+  '중구': { name: 'junggu', ext: 'png' },
+  '중랑구': { name: 'jungnang', ext: 'png' },
+  
+  // 광역시/도 (시도 단위로 통일)
+  '부산광역시': { name: 'busan', ext: 'png' },
+  '대구광역시': { name: 'daegu', ext: 'png' },
+  '인천광역시': { name: 'incheon', ext: 'png' },
+  '광주광역시': { name: 'gwangju', ext: 'jpg' },
+  '대전광역시': { name: 'daegeon', ext: 'png' },
+  '울산광역시': { name: 'ulsan', ext: 'svg' },
+  '세종시': { name: 'sejong', ext: 'jpg' },
+  '경기도': { name: 'gyeongido', ext: 'jpg' },
+  '강원특별자치도': { name: 'gangwon', ext: 'jpg' },
+  '충청북도': { name: 'chungbuk', ext: 'png' },
+  '충청남도': { name: 'chungnam', ext: 'png' },
+  '전북특별자치도': { name: 'jeonbuk', ext: 'png' },
+  '전라남도': { name: 'jeonnam', ext: 'png' },
+  '경상북도': { name: 'gyeongbuk', ext: 'png' },
+  '경상남도': { name: 'gyeongnam', ext: 'svg' },
+  '제주특별자치도': { name: 'jeju', ext: 'svg' }
+};
+
+// 지역별 이미지 매핑 함수  
+const getRegionImage = (location) => {
+  const parts = location.split(' ');
+  const region = parts[0].trim();
+  const district = parts[1] ? parts[1].trim() : '';
+  
+  try {
+    let fileInfo;
+    
+    // 서울특별시는 구별로 세분화
+    if (region === '서울특별시' && district && regionNameMap[district]) {
+      fileInfo = regionNameMap[district];
+    } 
+    // 다른 지역은 시/도 단위
+    else if (regionNameMap.hasOwnProperty(region)) {
+      fileInfo = regionNameMap[region];
+    }
+    else {
+      throw new Error('이미지 없음');
+    }
+    
+    return new URL(`../assets/images/re/${fileInfo.name}.${fileInfo.ext}`, import.meta.url).href;
+  } catch (error) {
+    return new URL('../assets/icons/image-placeholder.svg', import.meta.url).href;
+  }
+};
+
 const searchQuery = ref("");
 const showDropdown = ref(false);
 const activeTab = ref("all"); // 'all' 또는 'joined'
@@ -223,7 +298,7 @@ const filteredSuggestions = computed(() =>
     .map((c) => ({ 
       title: c.title, 
       subtitle: "", 
-      image: "", 
+      image: getRegionImage(c.title), // 지역별 이미지 매핑
       link: `/dashboard/community/${c.id}` // 실제 채팅방 링크로 변경
     }))
     .filter((r) => r.title.includes(searchQuery.value))
@@ -298,14 +373,24 @@ const regionOptions = computed(() =>
 // 전체 채팅방: 필터 & 정렬된 리스트
 const processedAllCommunities = computed(() => {
   let list = communityStore.communities.slice();
+  
+  // 실시간 검색 필터링
+  if (searchQuery.value.trim()) {
+    list = list.filter((c) => c.title.includes(searchQuery.value.trim()));
+  }
+  
+  // 지역 드롭다운 필터링
   if (selectedRegion.value) {
     list = list.filter((c) => c.title.startsWith(selectedRegion.value));
   }
+  
+  // 정렬
   if (sortOption.value === "popularity") {
     list.sort((a, b) => b.currentParticipants - a.currentParticipants);
   } else if (sortOption.value === "alpha") {
     list.sort((a, b) => a.title.localeCompare(b.title, "ko"));
   }
+  
   return list;
 });
 
@@ -357,7 +442,7 @@ watch(searchQuery, async (v) => {
 });
 
 // 필터링/정렬/탭 변경 시 페이지 리셋
-watch([selectedRegion, sortOption, joinedSortOption, activeTab], () => {
+watch([searchQuery, selectedRegion, sortOption, joinedSortOption, activeTab], () => {
   page.value = 0;
 });
 async function openDropdown() {
@@ -382,6 +467,17 @@ function goChat(id) {
     params: { id },
   });
 }
+
+// 리스트 제목 동적 생성
+const getListTitle = () => {
+  const baseTitle = activeTab.value === 'all' ? '온동네 커뮤니티' : '참여중인 채팅방';
+  
+  if (activeTab.value === 'all' && searchQuery.value.trim()) {
+    return `"${searchQuery.value}" 검색 결과 (${currentList.value.length}개)`;
+  }
+  
+  return baseTitle;
+};
 </script>
 
 <style scoped>

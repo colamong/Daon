@@ -5,11 +5,11 @@
     class="bg-white rounded-xl shadow-md w-64 h-64 flex flex-col justify-between hover:shadow-lg transition-shadow"
   >
     <!-- 이미지 영역 -->
-    <div class="flex justify-center items-center h-2/3">
+    <div class="flex justify-center items-center flex-1 p-6">
       <img
         :src="resolvedImage"
         alt="대표 이미지"
-        class="w-20 h-20 object-contain opacity-30"
+        class="w-40 h-40 object-contain"
       />
     </div>
 

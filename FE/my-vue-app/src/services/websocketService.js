@@ -113,6 +113,7 @@ class WebSocketService {
           text: chatMessage.message,
           userId: chatMessage.userId,
           userName: chatMessage.userName,
+          userProfileImg: chatMessage.userProfileImg,
           timestamp: chatMessage.sentAt,
           isMine: false,
         })
@@ -169,6 +170,7 @@ class WebSocketService {
         text: msg.message,      // ← text
         userId: msg.userId,
         userName: msg.userName,
+        userProfileImg: msg.userProfileImg,
         timestamp: msg.sentAt,  // ← timestamp
         isMine: false,
       })
