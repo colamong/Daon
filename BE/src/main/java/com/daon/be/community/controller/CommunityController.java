@@ -65,8 +65,9 @@ public class CommunityController {
 
     @GetMapping("/{communityId}/messages")
     public ResponseEntity<ApiResponse<List<ChatMessageResponseDto>>> getMessages(
-            @PathVariable Long communityId) {
-        List<ChatMessageResponseDto> response = chatMessageService.getMessagesByCommunityId(communityId);
+            @PathVariable Long communityId,
+            @RequestParam Long userId) {
+        List<ChatMessageResponseDto> response = chatMessageService.getMessagesByCommunityIdForUser(communityId, userId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

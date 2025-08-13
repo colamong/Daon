@@ -11,5 +11,7 @@ public interface ChatMessageService {
     
     List<ChatMessageResponseDto> getMessagesByCommunityId(Long communityId);
     
+    List<ChatMessageResponseDto> getMessagesByCommunityIdForUser(Long communityId, Long userId);
+    
     List<ChatMessageResponseDto> getMessagesByUserId(Long userId);
 }

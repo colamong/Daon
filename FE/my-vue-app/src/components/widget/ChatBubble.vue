@@ -6,7 +6,7 @@
     <!-- 프로필 이미지: 내 메시지는 안 보임 -->
     <img
       v-if="!isMine"
-      :src="imagePlaceholder"
+      :src="profileImageSrc"
       alt="user"
       class="w-10 h-10 rounded-full object-cover"
     />
@@ -54,10 +54,17 @@ const props = defineProps({
   message: String,
   timestamp: String,
   userName: String,
+  userProfileImg: String,
 })
 
 // 시간 포맷팅
 const formattedTime = computed(() => {
   return formatChatTime(props.timestamp)
+})
+
+// 프로필 이미지 처리
+const profileImageSrc = computed(() => {
+  // userProfileImg가 있으면 사용, 없으면 기본 이미지
+  return props.userProfileImg || imagePlaceholder
 })
 </script>

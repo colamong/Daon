@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -17,4 +18,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     List<ChatMessage> findByCommunityIdOrderBySentAtDesc(Long communityId);
     
     List<ChatMessage> findByUserIdOrderBySentAtDesc(Long userId);
+    
+    // 특정 시간 이후의 메시지만 조회
+    List<ChatMessage> findByCommunityIdAndSentAtGreaterThanEqualOrderBySentAtAsc(Long communityId, LocalDateTime sentAt);
 }
