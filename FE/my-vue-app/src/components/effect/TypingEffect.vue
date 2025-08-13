@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, onUnmounted } from "vue";
 
 const props = defineProps({
   text: {
@@ -61,6 +61,7 @@ const emit = defineEmits(["typing-complete", "play-audio"]);
 
 const typingComplete = ref(false);
 const safeText = computed(() => props.text || "");
+const typingAudio = ref(null);
 
 const animationDuration = computed(() => {
   const charCount = safeText.value.length;
@@ -71,10 +72,36 @@ const playAudio = () => {
   emit("play-audio");
 };
 
+// 타이핑 효과음 시작
+const startTypingSound = () => {
+  try {
+    typingAudio.value = new Audio('/src/assets/effects/typing.mp3');
+    typingAudio.value.loop = true;
+    typingAudio.value.volume = 0.3;
+    typingAudio.value.playbackRate = 2.0;
+    typingAudio.value.play().catch(error => {
+      console.warn('타이핑 효과음 재생 실패:', error);
+    });
+  } catch (error) {
+    console.warn('타이핑 효과음 로드 실패:', error);
+  }
+};
+
+// 타이핑 효과음 중단
+const stopTypingSound = () => {
+  if (typingAudio.value) {
+    typingAudio.value.pause();
+    typingAudio.value.currentTime = 0;
+    typingAudio.value = null;
+  }
+};
+
 onMounted(() => {
   if (props.autoStart) {
+    startTypingSound();
     setTimeout(() => {
       typingComplete.value = true;
+      stopTypingSound();
       emit("typing-complete");
     }, animationDuration.value * 1000);
   }
@@ -84,15 +111,23 @@ watch(
   () => props.text,
   () => {
     typingComplete.value = false;
+    stopTypingSound(); // 이전 사운드 중단
     if (props.autoStart && props.text) {
+      startTypingSound();
       setTimeout(() => {
         typingComplete.value = true;
+        stopTypingSound();
         emit("typing-complete");
       }, animationDuration.value * 1000);
     }
   },
   { immediate: false }
 );
+
+// 컴포넌트 해제 시 사운드 정리
+onUnmounted(() => {
+  stopTypingSound();
+});
 </script>
 
 <style scoped>
