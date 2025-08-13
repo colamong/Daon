@@ -259,11 +259,14 @@ const regionNameMap = {
 
 // 지역별 이미지 매핑 함수  
 const getRegionImage = (location) => {
+  console.log('🔍 Location:', location);
+  
   const parts = location.split(' ');
-  const region = parts[0].trim();
+  const region = parts[0].trim(); // 공백 제거
   const district = parts[1] ? parts[1].trim() : '';
   
-  console.log('🔍 Location:', location, 'Region:', region);
+  console.log('🔍 Region:', `"${region}"`, 'District:', `"${district}"`);
+  console.log('🔍 매핑 객체에 해당 키 존재?', Object.keys(regionNameMap).includes(region));
   
   try {
     let fileInfo;
@@ -271,24 +274,25 @@ const getRegionImage = (location) => {
     // 서울특별시는 구별로 세분화
     if (region === '서울특별시' && district && regionNameMap[district]) {
       fileInfo = regionNameMap[district];
+      console.log('✅ 서울 구별 매핑:', fileInfo);
     } 
-    // 다른 지역은 시/도 단위
+    // 다른 지역은 시/도 단위 - 키가 정확히 매칭되는지 확인
     else if (regionNameMap.hasOwnProperty(region)) {
       fileInfo = regionNameMap[region];
-      console.log('✅ 매핑된 파일:', fileInfo);
+      console.log('✅ 시도 매핑:', fileInfo);
     }
     else {
       console.log('❌ 매핑 실패');
+      console.log('🔍 가능한 키들:', Object.keys(regionNameMap));
       throw new Error('이미지 없음');
     }
     
-    // Vite의 정적 자원 import 방식 사용
-    const imagePath = new URL(`../assets/images/re/${fileInfo.name}.${fileInfo.ext}`, import.meta.url).href;
-    console.log('🖼️ 최종 경로:', imagePath);
+    const imagePath = `/images/re/${fileInfo.name}.${fileInfo.ext}`;
+    console.log('🖼️ 최종 이미지 경로:', imagePath);
     return imagePath;
   } catch (error) {
-    console.log('🚫 기본 이미지 사용:', error.message);
-    return new URL('../assets/icons/image-placeholder.svg', import.meta.url).href;
+    console.log('🚫 에러 발생:', error.message);
+    return '/src/assets/icons/image-placeholder.svg';
   }
 };
 
