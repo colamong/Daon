@@ -116,7 +116,8 @@
         >비밀번호 확인</label
       >
       <div
-        class="flex items-center border border-gray-200 rounded-lg overflow-hidden font-paper"
+        class="flex items-center border rounded-lg overflow-hidden font-paper"
+        :class="passwordMatchBorderClass"
       >
         <div class="px-3">
           <img
@@ -131,8 +132,36 @@
           type="password"
           placeholder="Password"
           required
-          class="flex-1 py-2 pr-3 text-sm focus:outline-none"
+          class="flex-1 py-2 text-sm focus:outline-none"
         />
+        <div v-if="showPasswordMatchIcon" class="px-3">
+          <!-- 일치하지 않을 때 빨간 X -->
+          <svg
+            v-if="!passwordsMatch && confirmPassword.length > 0"
+            class="w-5 h-5 text-red-500"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <!-- 일치할 때 초록 체크 -->
+          <svg
+            v-if="passwordsMatch && confirmPassword.length > 0"
+            class="w-5 h-5 text-green-500"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
       </div>
     </div>
 
@@ -186,7 +215,9 @@ import { useAuthStore } from "@/store/auth";
 import { useRouter } from "vue-router";
 import { useNotification } from "@/composables/useNotification.js";
 import { nationService } from "@/services/nationService.js";
+import { userService } from "@/services/userService.js";
 import signupImage from "@/assets/images/signup.png";
+import defaultUserIcon from "@/assets/images/user_icon.png";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -208,14 +239,27 @@ const email = computed(() =>
     : `${emailLocal.value}@${domainOption.value}`
 );
 
+// 비밀번호 일치 확인 관련 computed
+const passwordsMatch = computed(() => {
+  if (!password.value || !confirmPassword.value) return false;
+  return password.value === confirmPassword.value;
+});
+
+const showPasswordMatchIcon = computed(() => {
+  return confirmPassword.value.length > 0 && password.value.length > 0;
+});
+
+const passwordMatchBorderClass = computed(() => {
+  if (!showPasswordMatchIcon.value) return 'border-gray-200';
+  return passwordsMatch.value ? 'border-green-500' : 'border-red-500';
+});
+
 // 국가 목록 로드
 async function loadCountries() {
   try {
     const nations = await nationService.getNations();
     countryOptions.value = nations;
-    console.log("국가 목록 로드 완료:", nations);
   } catch (error) {
-    console.error("국가 목록 로드 실패:", error);
     showError(error.message, "국가 목록 로드 실패");
     // 국가 목록 로드 실패 시 기본 옵션 제공
     countryOptions.value = [
@@ -227,6 +271,25 @@ async function loadCountries() {
 onMounted(() => {
   loadCountries();
 });
+
+// 기본 프로필 이미지 업로드 함수
+async function uploadDefaultProfileImage() {
+  try {
+    // 기본 이미지를 fetch로 가져와서 File 객체로 변환
+    const response = await fetch(defaultUserIcon);
+    const blob = await response.blob();
+    const file = new File([blob], 'user_icon.png', { type: 'image/png' });
+    
+    // userService를 사용해서 이미지 업로드
+    await userService.uploadProfileImage(file);
+    
+    // auth store의 사용자 정보도 업데이트
+    await auth.getCurrentUser();
+    
+  } catch (error) {
+    // 기본 이미지 업로드 실패는 회원가입을 막지 않음
+  }
+}
 
 async function handleSignUp() {
   // 입력 값 검증
@@ -267,9 +330,6 @@ async function handleSignUp() {
       password: password.value,
       nationCode: country.value || "KR", // camelCase로 수정
     };
-    console.log("회원가입 요청 데이터:", signupData);
-    console.log("선택된 국가 값:", country.value);
-    console.log("국가 옵션 목록:", countryOptions.value);
     await auth.signup(signupData);
 
     // 회원가입 성공 후 자동 로그인
@@ -281,13 +341,15 @@ async function handleSignUp() {
     // 로그인 후 사용자 정보 가져오기
     await auth.getCurrentUser();
 
+    // 기본 프로필 이미지 업로드 (백그라운드에서 실행)
+    await uploadDefaultProfileImage();
+
+    // 이미지 업로드 후 사용자 정보 다시 로드
+    await auth.getCurrentUser();
+
     showSuccess("회원가입이 완료되었습니다!", "환영합니다");
     router.push({ name: "Dashboard" });
   } catch (error) {
-    console.error("회원가입 오류:", error);
-    console.log("Error status:", error.response?.status);
-    console.log("Error data:", error.response?.data);
-    console.log("Error message:", error.message);
 
     let errorMessage = "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.";
 

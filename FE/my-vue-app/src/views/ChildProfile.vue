@@ -19,23 +19,33 @@
 
       <!-- 아이가 있는 경우 -->
       <div v-else class="space-y-8">
-        <!-- 아이 선택 탭 (여러 명인 경우) -->
-        <div
-          v-if="childrenList.length > 1"
-          class="flex justify-center space-x-4 mb-8"
-        >
+        <!-- 아이 선택 탭 -->
+        <div class="flex justify-center items-center space-x-4 mb-8">
+          <!-- 아이 탭들 -->
+          <div v-if="childrenList.length > 0" class="flex space-x-4">
+            <button
+              v-for="(child, index) in childrenList"
+              :key="child.id"
+              @click="selectedChildIndex = index"
+              class="px-6 py-3 rounded-lg font-paperBold transition-colors"
+              :class="{
+                'bg-purple-500 text-white': selectedChildIndex === index,
+                'bg-gray-200 text-gray-700 hover:bg-gray-300':
+                  selectedChildIndex !== index,
+              }"
+            >
+              {{ child.name }}
+            </button>
+          </div>
+          
+          <!-- 아이 추가 버튼 -->
           <button
-            v-for="(child, index) in childrenList"
-            :key="child.id"
-            @click="selectedChildIndex = index"
-            class="px-6 py-3 rounded-lg font-paperBold transition-colors"
-            :class="{
-              'bg-purple-500 text-white': selectedChildIndex === index,
-              'bg-gray-200 text-gray-700 hover:bg-gray-300':
-                selectedChildIndex !== index,
-            }"
+            @click="goToRegister"
+            class="bg-gray-200 hover:bg-green-500 text-gray-700 hover:text-white px-4 py-3 rounded-lg font-paperBold transition-colors flex items-center gap-2"
+            title="새 아이 추가"
           >
-            {{ child.name }}
+            <span class="text-lg">+</span>
+            <span>아이 추가</span>
           </button>
         </div>
 

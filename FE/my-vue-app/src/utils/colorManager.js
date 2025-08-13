@@ -116,10 +116,4 @@ export function ensureAllChildrenHaveColors() {
 // 디버깅용 - 현재 색상 현황 출력
 export function debugColors() {
   const children = JSON.parse(localStorage.getItem('children') || '[]')
-  console.log('=== 현재 아이들 색상 현황 ===')
-  children.forEach(child => {
-    console.log(`${child.name}: ${child.color || '색상 없음'}`)
-  })
-  console.log('사용된 색상:', getUsedColors())
-  console.log('사용 가능한 색상:', COLOR_PALETTE.filter(color => !getUsedColors().includes(color)))
 }

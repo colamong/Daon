@@ -16,7 +16,7 @@ class WebSocketService {
   // WebSocket 연결
   async connect() {
     if (this.client && this.client.connected) {
-      console.log('Already connected to WebSocket')
+      log('Already connected to WebSocket')
       return
     }
 
@@ -28,33 +28,33 @@ class WebSocketService {
         : (import.meta?.env?.VITE_API_BASE_URL || 'https://i13a706.p.ssafy.io/stt')
       
       const wsUrl = `${WS_BASE_URL}/ws`
-      console.log('WebSocket connecting to:', wsUrl)
+      log('WebSocket connecting to:', wsUrl)
       
       const socket = new SockJS(wsUrl)
 
       this.client = new Client({
         webSocketFactory: () => socket,
-        debug: (str) => console.log('STOMP Debug:', str),
+        debug: (str) => log('STOMP Debug:', str),
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
       })
 
       this.client.onConnect = (frame) => {
-        console.log('WebSocket Connected:', frame)
+        log('WebSocket Connected:', frame)
         this.isConnected.value = true
         this.connectionCallbacks.forEach((cb) => cb(true))
       }
 
       this.client.onStompError = (frame) => {
-        console.error('WebSocket STOMP Error:', frame.headers['message'])
-        console.error('Error details:', frame.body)
+        error('WebSocket STOMP Error:', frame.headers['message'])
+        error('Error details:', frame.body)
         this.isConnected.value = false
         this.connectionCallbacks.forEach((cb) => cb(false))
       }
 
       this.client.onDisconnect = () => {
-        console.log('WebSocket Disconnected')
+        log('WebSocket Disconnected')
         this.isConnected.value = false
         this.currentCommunityId.value = null
       }
@@ -69,7 +69,7 @@ class WebSocketService {
         })
       })
     } catch (error) {
-      console.error('WebSocket connection error:', error)
+      error('WebSocket connection error:', error)
       throw error
     }
   }
@@ -119,11 +119,11 @@ class WebSocketService {
 
         this.messageCallbacks.forEach((cb) => cb(chatMessage))
       } catch (error) {
-        console.error('Error parsing message:', error)
+        error('Error parsing message:', error)
       }
     })
 
-    console.log(`Subscribed to community ${communityId}`)
+    log(`Subscribed to community ${communityId}`)
   }
 
   // 메시지 전송 (시그니처 원래대로: communityId, message, userId)
@@ -142,7 +142,7 @@ class WebSocketService {
       body: JSON.stringify(messageData),
     })
 
-    console.log('Message sent:', messageData)
+    log('Message sent:', messageData)
   }
 
   // 연결 상태 콜백 등록

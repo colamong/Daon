@@ -165,7 +165,6 @@ async function fetchMonthlyDiaries() {
     const childId = currentChildId.value;
     
     if (!childId) {
-      console.warn('childId가 없어서 다이어리 조회를 건너뜁니다.');
       diaries.value = [];
       return;
     }
@@ -173,19 +172,14 @@ async function fetchMonthlyDiaries() {
     const year = currentDate.value.getFullYear();
     const month = currentDate.value.getMonth() + 1;
     
-    console.log('요청 파라미터:', { childId, year, month });
     const response = await childService.getMonthlyDiaries(childId, year, month);
-    console.log('응답 결과:', response);
-    console.log('response 타입:', typeof response, 'isArray:', Array.isArray(response));
     
     // API 응답을 diaries 형태로 변환
     // response가 배열이 아니라 단일 객체일 수도 있으므로 처리
     const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
-    console.log('responseArray:', responseArray);
     
     diaries.value = responseArray
       .map(diary => {
-        console.log('변환 중인 diary:', diary);
         return {
           date: diary.createdAt ? diary.createdAt.split('T')[0] : diary.date, // YYYY-MM-DD 형식으로 변환
           imageUrl: diary.imageUrl,
@@ -194,10 +188,8 @@ async function fetchMonthlyDiaries() {
       })
       .sort((a, b) => new Date(a.date) - new Date(b.date)); // 날짜순 정렬
       
-    console.log('최종 변환된 diaries:', diaries.value);
       
   } catch (error) {
-    console.error('다이어리 조회 오류:', error);
     diaries.value = [];
   }
 }
@@ -208,7 +200,6 @@ const diariesMap = computed(() => {
     acc[d.date] = d;
     return acc;
   }, {});
-  console.log('diariesMap 계산됨:', map);
   return map;
 });
 
@@ -344,7 +335,6 @@ const calendarOptions = reactive({
         });
         info.el.appendChild(wrap);
         
-        console.log(`${key} 이미지 렌더링 완료 (${attempts}번째 시도)`);
       } else if (attempts < maxAttempts) {
         // 데이터가 없으면 100ms 후 다시 시도
         setTimeout(checkAndRender, 100);

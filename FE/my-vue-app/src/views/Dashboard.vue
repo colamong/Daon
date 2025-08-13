@@ -38,6 +38,7 @@
             events.map((ev) => ({ ...ev, date: ev.eventDate || ev.date }))
           "
           @update-month="onMonthChange"
+          @date-selected="onDateSelected"
         />
       </div>
 
@@ -51,7 +52,11 @@
           >
             + 일정 추가
           </button>
-          <AddEventModal v-model="modalVisible" @add-event="handleAddEvent" />
+          <AddEventModal 
+            v-model="modalVisible" 
+            :initial-date="selectedDate"
+            @add-event="handleAddEvent" 
+          />
         </div>
         <div class="flex-1 overflow-y-auto overflow-x-visible pr-2 py-2">
           <template v-if="filteredEvents.length">
@@ -293,12 +298,12 @@ const { showWarning, showInfo } = useNotification();
 /* 일정 상태 */
 const events = ref([]);
 const selectedMonth = ref(dayjs().format("YYYY-MM"));
+const selectedDate = ref(null);
 
 async function loadEvents(year, month) {
   try {
     events.value = await fetchMonthlyEvents(year, month);
   } catch (e) {
-    console.error("일정 불러오기 실패:", e);
   }
 }
 
@@ -345,7 +350,6 @@ onMounted(async () => {
       await childStore.loadChildren();
     }
   } catch (e) {
-    console.warn("직접 자녀 목록 로드 실패:", e?.message || e);
   }
 
   if (
@@ -388,9 +392,17 @@ function onMonthChange(newYm) {
 /* 일정 모달/CRUD */
 const modalVisible = ref(false);
 function openModal() {
+  selectedDate.value = null;
   modalVisible.value = true;
 }
 function openScheduleModal() {
+  selectedDate.value = null;
+  modalVisible.value = true;
+}
+
+/* 날짜 선택 */
+function onDateSelected(date) {
+  selectedDate.value = dayjs(date).format("YYYY-MM-DD");
   modalVisible.value = true;
 }
 
@@ -460,7 +472,6 @@ async function loadTodayActivity() {
 
     todayActivity.value = found || null;
   } catch (e) {
-    console.error("월별 다이어리 조회 실패:", e);
     todayActivity.value = null;
   } finally {
     isLoadingActivity.value = false;

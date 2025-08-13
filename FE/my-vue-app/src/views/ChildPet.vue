@@ -308,10 +308,10 @@ function playLevelUpSound() {
     const audio = new Audio(lvlUpSound);
     audio.volume = 0.7; // 볼륨 조절
     audio.play().catch((e) => {
-      console.warn("레벨업 사운드 재생 실패:", e);
+      warn("레벨업 사운드 재생 실패:", e);
     });
   } catch (error) {
-    console.warn("레벨업 사운드 로드 실패:", error);
+    warn("레벨업 사운드 로드 실패:", error);
   }
 }
 
@@ -390,7 +390,7 @@ async function loadPenguinData(animate = false) {
       }
     }
   } catch (e) {
-    console.error("펭귄 데이터 로드 실패:", e);
+    error("펭귄 데이터 로드 실패:", e);
   }
 }
 
@@ -415,7 +415,7 @@ async function goBack() {
     }
     router.push({ name: "ChildMain", params: { childId: currentChildId } });
   } catch (e) {
-    console.error("펭귄 메뉴로 가기 중 오류:", e);
+    error("펭귄 메뉴로 가기 중 오류:", e);
     router.push({ name: "ChildMain", params: { childId: currentChildId } });
   } finally {
     isLoading.value = false;
@@ -445,7 +445,7 @@ async function unlockAudio() {
     await silent.play().catch(() => {});
     silent.pause();
   } catch (e) {
-    console.warn("unlockAudio warn:", e);
+    warn("unlockAudio warn:", e);
   }
 }
 
@@ -478,7 +478,7 @@ async function startConversation() {
 
     await getFirstQuestion();
   } catch (e) {
-    console.error("대화 시작 오류:", e);
+    error("대화 시작 오류:", e);
     alert("대화를 시작할 수 없습니다: " + e.message);
   }
 }
@@ -508,7 +508,7 @@ async function getFirstQuestion() {
       response.audioUrl
     );
   } catch (e) {
-    console.error("첫 번째 질문 받기 오류:", e);
+    error("첫 번째 질문 받기 오류:", e);
     alert("첫 번째 질문을 받을 수 없습니다: " + e.message);
   }
 }
@@ -539,13 +539,13 @@ async function getNextQuestion(previousAnswer) {
       response.audioUrl
     );
   } catch (e) {
-    console.error("다음 질문 받기 오류:", e);
+    error("다음 질문 받기 오류:", e);
     const fallback = "서버 연결에 문제가 있어요. 다음 질문으로 넘어갈게요.";
     conversationState.value.currentQuestion = fallback;
     try {
       await speakQuestion(fallback);
     } catch (err) {
-      console.error("TTS 오류:", err);
+      error("TTS 오류:", err);
     }
   }
 }
@@ -564,7 +564,7 @@ async function speakQuestion(question, audioUrl = null) {
       );
     }
   } catch (e) {
-    console.error("TTS 오류:", e);
+    error("TTS 오류:", e);
   } finally {
     conversationState.value.isSpeaking = false;
   }
@@ -600,7 +600,7 @@ async function listenForAnswer() {
     };
 
     rec.onerror = (e) => {
-      console.error("STT error:", e.error);
+      error("STT error:", e.error);
       if (!resolved) reject(new Error(e.error || "stt_error"));
     };
 
@@ -614,7 +614,7 @@ async function listenForAnswer() {
       rec.start(); // ⏺️ 녹음 시작
     } catch (err) {
       // 연속 호출 방지
-      console.warn("rec.start() blocked:", err);
+      warn("rec.start() blocked:", err);
       conversationState.value.isListening = false;
       reject(err);
     }
@@ -657,7 +657,7 @@ async function finishConversation(finalAnswer) {
         response.prompt ||
         closingMessage;
     } catch (e) {
-      console.error("마지막 답변 제출 오류:", e);
+      error("마지막 답변 제출 오류:", e);
       closingMessage =
         "서버 연결에 문제가 있었지만 대화가 완료되었어요. 수고했어요!";
     }
@@ -674,7 +674,7 @@ async function finishConversation(finalAnswer) {
     await loadPenguinData(true); // 애니메이션과 함께 로드
     conversationState.value.isActive = false;
   } catch (e) {
-    console.error("대화 마무리 오류:", e);
+    error("대화 마무리 오류:", e);
     conversationState.value.isActive = false;
     try {
       await speakQuestion("대화가 완료되었습니다. 수고했어요!");
@@ -704,7 +704,7 @@ async function handleKeyPress(event) {
       // 다음 단계로 진행
       await processAnswer();
     } catch (e) {
-      console.error("음성 인식 실패:", e);
+      error("음성 인식 실패:", e);
       alert("음성 인식에 실패했어요. 다시 시도해 주세요.");
     }
   }
@@ -731,7 +731,7 @@ onMounted(async () => {
     rec.continuous = false; // 한 문장 말하면 자동 종료
     recognitionRef.value = rec;
   } else {
-    console.warn(
+    warn(
       "이 브라우저는 Web Speech API(SpeechRecognition)를 지원하지 않습니다."
     );
   }

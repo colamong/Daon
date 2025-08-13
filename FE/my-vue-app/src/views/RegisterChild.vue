@@ -138,6 +138,8 @@ import { childService } from "@/services/childService.js";
 import BaseImageUpload from "@/components/form/BaseImageUpload.vue";
 import BaseRadioGroup from "@/components/form/BaseRadioGroup.vue";
 import BaseCheckboxGroup from "@/components/form/BaseCheckboxGroup.vue";
+import boyImage from "@/assets/images/boy.png";
+import girlImage from "@/assets/images/girl.png";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -227,6 +229,33 @@ function addNewInterest() {
   newInterest.value = "";
 }
 
+// 성별에 따른 기본 이미지 업로드 함수
+async function uploadDefaultChildImage(userId, childId, gender) {
+  try {
+    
+    // 성별에 따른 이미지 선택
+    const imageUrl = gender === 'MALE' ? boyImage : girlImage;
+    const fileName = gender === 'MALE' ? 'boy.png' : 'girl.png';
+    
+    
+    // 이미지를 fetch로 가져와서 File 객체로 변환
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`이미지 fetch 실패: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    const file = new File([blob], fileName, { type: 'image/png' });
+    
+    
+    // childService를 사용해서 이미지 업로드
+    await childService.uploadChildImage(userId, childId, file);
+    
+  } catch (error) {
+    // 기본 이미지 업로드 실패는 아이 등록을 막지 않음
+  }
+}
+
 async function handleRegisterChild() {
   if (!childData.name.trim()) {
     showError("아이의 이름을 입력해주세요.", "입력 오류");
@@ -255,9 +284,15 @@ async function handleRegisterChild() {
     });
     const childId = registerRes?.childId;
 
-    // 2) 이미지가 있으면 멀티파트 업로드
-    if (childId && childData.profileFile) {
-      await childService.uploadChildImage(userId, childId, childData.profileFile);
+    // 2) 이미지 업로드 처리
+    if (childId) {
+      if (childData.profileFile) {
+        // 사용자가 업로드한 이미지가 있으면 그것을 사용
+        await childService.uploadChildImage(userId, childId, childData.profileFile);
+      } else {
+        // 이미지가 없으면 성별에 따른 기본 이미지 업로드
+        await uploadDefaultChildImage(userId, childId, childData.gender);
+      }
     }
 
     // 3) 목록 새로고침 & 이동
@@ -265,7 +300,6 @@ async function handleRegisterChild() {
     showSuccess(`${childData.name}의 정보가 성공적으로 등록되었습니다!`, "등록 완료");
     router.push({ name: "Dashboard" });
   } catch (error) {
-    console.error("아이 등록 실패:", error);
     showError(error?.response?.data?.error || error.message || "아이 등록에 실패했습니다. 다시 시도해주세요.", "등록 실패");
   } finally {
     loading.value = false;

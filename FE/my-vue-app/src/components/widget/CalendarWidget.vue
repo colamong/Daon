@@ -49,16 +49,16 @@
         <div
           v-if="day.isCurrentMonth"
           @click="selectDate(day.date)"
-          class="cursor-pointer flex flex-col items-center justify-center relative"
+          class="cursor-pointer flex flex-col items-center justify-center relative group"
         >
           <!-- 기본 날짜 표시만 유지 -->
           <div>
             <div
-              class="rounded-full flex items-center justify-center"
+              class="rounded-full flex items-center justify-center transition-all duration-200"
               :class="day.isToday ? 'bg-blue-100' : ''"
-              :style="ringStyle(day.date)"
+              :style="hoverStyle(day.date)"
             >
-              <span class="text-base font-paper">{{ day.date.getDate() }}</span>
+              <span class="text-base font-paper relative z-10">{{ day.date.getDate() }}</span>
             </div>
           </div>
         </div>
@@ -81,8 +81,9 @@
 <script setup>
 import { ref, computed } from "vue";
 import dayjs from "dayjs";
+import { cardColors } from "@/data/cardColors.js";
 
-const emit = defineEmits(["update-month"]);
+const emit = defineEmits(["update-month", "date-selected"]);
 const props = defineProps({
   events: { type: Array, required: true },
 });
@@ -125,55 +126,47 @@ function nextMonth() {
   emit("update-month", current.value.format("YYYY-MM"));
 }
 function selectDate(date) {
-  /* 필요한 경우 */
+  emit("date-selected", date);
 }
-
-// 일정 색과 맞추기 위한 컬러 리스트
-const colorList = [
-  "#FF8A80",
-  "#FFB74D",
-  "#FFD54F",
-  "#81C784",
-  "#4FC3F7",
-  "#BA68C8",
-  "#90A4AE",
-  "#F06292",
-  "#A1887F",
-  "#7986CB",
-  "#AED581",
-  "#4DB6AC",
-  "#FFF176",
-  "#E57373",
-  "#64B5F6",
-  "#DCE775",
-];
 
 function getScheduleColor(date) {
   const ev = props.events.find((e) => dayjs(e.date).isSame(date, "day"));
   if (!ev) return null;
   const idx = dayjs(date).date() - 1;
-  return colorList[idx % colorList.length];
+  return cardColors[idx % cardColors.length];
 }
 
 
-// 원 테두리 및 크기 조정
-function ringStyle(date) {
+// 원 테두리 및 호버 효과
+function hoverStyle(date) {
   const c = getScheduleColor(date);
   if (c) {
     return {
-      width: "2.5rem", // 48px
+      width: "2.5rem",
       height: "2.5rem",
       boxShadow: `0 0 0 2px ${c}`,
+      '--hover-color': c,
+      '--hover-text-color': 'white'
     };
   }
   return {
-    width: "2.5rem", // 40px
+    width: "2.5rem",
     height: "2.5rem",
+    '--hover-color': '#e5e7eb',
+    '--hover-text-color': 'black'
   };
 }
 
 </script>
 
 <style scoped>
-/* 필요시 추가 */
+.group:hover .rounded-full {
+  background-color: var(--hover-color) !important;
+  transform: scale(1.1);
+}
+
+.group:hover .rounded-full span {
+  color: var(--hover-text-color);
+  font-weight: 600;
+}
 </style>
