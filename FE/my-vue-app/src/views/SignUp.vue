@@ -116,7 +116,8 @@
         >비밀번호 확인</label
       >
       <div
-        class="flex items-center border border-gray-200 rounded-lg overflow-hidden font-paper"
+        class="flex items-center border rounded-lg overflow-hidden font-paper"
+        :class="passwordMatchBorderClass"
       >
         <div class="px-3">
           <img
@@ -131,8 +132,36 @@
           type="password"
           placeholder="Password"
           required
-          class="flex-1 py-2 pr-3 text-sm focus:outline-none"
+          class="flex-1 py-2 text-sm focus:outline-none"
         />
+        <div v-if="showPasswordMatchIcon" class="px-3">
+          <!-- 일치하지 않을 때 빨간 X -->
+          <svg
+            v-if="!passwordsMatch && confirmPassword.length > 0"
+            class="w-5 h-5 text-red-500"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <!-- 일치할 때 초록 체크 -->
+          <svg
+            v-if="passwordsMatch && confirmPassword.length > 0"
+            class="w-5 h-5 text-green-500"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
       </div>
     </div>
 
@@ -207,6 +236,21 @@ const email = computed(() =>
     ? `${emailLocal.value}@${customDomain.value}`
     : `${emailLocal.value}@${domainOption.value}`
 );
+
+// 비밀번호 일치 확인 관련 computed
+const passwordsMatch = computed(() => {
+  if (!password.value || !confirmPassword.value) return false;
+  return password.value === confirmPassword.value;
+});
+
+const showPasswordMatchIcon = computed(() => {
+  return confirmPassword.value.length > 0 && password.value.length > 0;
+});
+
+const passwordMatchBorderClass = computed(() => {
+  if (!showPasswordMatchIcon.value) return 'border-gray-200';
+  return passwordsMatch.value ? 'border-green-500' : 'border-red-500';
+});
 
 // 국가 목록 로드
 async function loadCountries() {
