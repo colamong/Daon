@@ -36,7 +36,7 @@
     <div class="grid grid-cols-2 gap-8 mt-8" v-if="currentTheme">
       <!-- 왼쪽: 테마 이미지 -->
       <div
-        class="bg-gray-100 rounded-xl overflow-hidden w-full h-80 flex items-center justify-center"
+        class="bg-blue-100/50 rounded-xl overflow-hidden w-full h-80 flex items-center justify-center"
       >
         <img
           :src="currentTheme.image"
