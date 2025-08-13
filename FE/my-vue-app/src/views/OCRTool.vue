@@ -61,7 +61,7 @@ async function onTranslateRequested(payload) {
       },
     });
   } catch (error) {
-    console.error("OCR 처리 실패:", error);
+    error("OCR 처리 실패:", error);
     alert(error.message || "OCR 처리 중 오류가 발생했습니다.");
   } finally {
     isLoading.value = false;

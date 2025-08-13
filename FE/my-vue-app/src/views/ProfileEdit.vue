@@ -175,7 +175,7 @@ async function loadCurrentProfile() {
       formData.profileImage = currentProfile.profileImage;
     }
   } catch (error) {
-    console.error('프로필 로드 실패:', error);
+    error('프로필 로드 실패:', error);
     showError('프로필 정보를 불러오는 중 오류가 발생했습니다.', '로드 실패');
   }
 }
@@ -185,7 +185,7 @@ async function loadCountries() {
     const nations = await nationService.getNations();
     countryOptions.value = nations;
   } catch (error) {
-    console.error('국가 목록 로드 실패:', error);
+    error('국가 목록 로드 실패:', error);
     showError('국가 목록을 불러오는 중 오류가 발생했습니다.', '로드 실패');
   }
 }
@@ -225,7 +225,7 @@ async function handleImageChange(event) {
 
     showSuccess("프로필 사진이 변경되었습니다.", "업로드 완료");
   } catch (err) {
-    console.error(err);
+    error(err);
     showError("이미지 업로드에 실패했습니다. 다시 시도해주세요.", "업로드 실패");
   } finally {
     uploadingImage.value = false;
@@ -267,7 +267,7 @@ async function handleUpdateProfile() {
     showSuccess("프로필이 성공적으로 업데이트되었습니다!", "수정 완료");
     router.push({ name: "Dashboard" });
   } catch (error) {
-    console.error("프로필 업데이트 실패:", error);
+    error("프로필 업데이트 실패:", error);
     showError(error?.message || "프로필 업데이트에 실패했습니다. 다시 시도해주세요.", "업데이트 실패");
   } finally {
     loading.value = false;

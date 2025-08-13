@@ -124,7 +124,7 @@ async function stopAndUpload() {
   // 업로드
   const file = new File([blob], 'speech.wav', { type: 'audio/wav' })
   const res = await evaluatePronunciation(props.questionId, file)
-  console.log('[Pronunciation] evaluate response:', res) 
+ 
 
   // 백엔드 점수가 0~1이면 100점 환산
   const raw = res?.score

@@ -340,10 +340,8 @@ const playSuccessSound = () => {
     const audio = new Audio('/src/assets/effects/answer.mp3')
     audio.volume = 0.7
     audio.play().catch(error => {
-      console.warn('효과음 재생 실패:', error)
     })
   } catch (error) {
-    console.warn('효과음 로드 실패:', error)
   }
 }
 
