@@ -99,7 +99,7 @@
       ref="profileCard"
       @mouseenter="showProfileCard"
       @mouseleave="hideProfileCard"
-      class="font-paper fixed top-28 right-8 h-80 w-76 bg-purple-200 rounded-xl shadow-lg z-[1000] border-2 border-violet-900"
+      class="font-paper fixed top-20 right-8 h-80 w-76 bg-purple-200 rounded-xl shadow-lg z-[1000] border-2 border-violet-900"
     >
       <!-- 컨텐츠 래퍼 -->
       <div
