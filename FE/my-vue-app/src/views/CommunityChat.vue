@@ -167,9 +167,9 @@ const handleSendMessage = async (message) => {
 
 // 메시지 히스토리 로드 (초기 로딩용)
 const loadMessages = async () => {
-  if (!currentCommunity.value) return;
+  if (!currentCommunity.value || !authStore.user?.id) return;
   try {
-    const messages = await communityService.getMessages(currentCommunity.value.id);
+    const messages = await communityService.getMessages(currentCommunity.value.id, authStore.user.id);
     chatMessages.value = messages || [];
     // WebSocket 서비스에도 메시지 설정
     websocketService.setMessages(messages || []);

@@ -74,10 +74,10 @@ export const communityService = {
     }
   },
 
-  // 커뮤니티 메시지 히스토리 조회
-  async getMessages(communityId) {
+  // 커뮤니티 메시지 히스토리 조회 (사용자 참여 시점부터)
+  async getMessages(communityId, userId) {
     try {
-      const response = await axiosInstance.get(`${BASE_URL}/${communityId}/messages`)
+      const response = await axiosInstance.get(`${BASE_URL}/${communityId}/messages?userId=${userId}`)
       return response.data.data
     } catch (error) {
       console.error('Failed to fetch messages:', error)

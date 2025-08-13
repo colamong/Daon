@@ -145,11 +145,11 @@ export const useCommunityStore = defineStore('community', () => {
     }
   }
 
-  const fetchMessages = async (communityId) => {
+  const fetchMessages = async (communityId, userId) => {
     try {
       loading.value = true
       error.value = null
-      const data = await communityService.getMessages(communityId)
+      const data = await communityService.getMessages(communityId, userId)
       messages.value = data || [] // 호환용
       // 방별 저장소 채우기 + 중복세트 초기화
       messagesByRoom[communityId] = data || []
