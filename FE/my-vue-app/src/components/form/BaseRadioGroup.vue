@@ -1,16 +1,18 @@
 <template>
   <div class="w-full">
     <!-- 상단 라벨 -->
-    <label v-if="label" class="block mb-2 text-base font-bold text-black">
+    <label v-if="label" class="block mb-2 text-lg font-paperBold text-black">
       {{ label }}
     </label>
 
     <!-- 라디오 버튼들 -->
-    <div class="flex gap-6 bg-white rounded-xl px-6 py-4 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+    <div
+      class="flex gap-6 bg-white rounded-xl px-6 py-4 border-2 border-gray-300 shadow-[0_0_10px_rgba(0,0,0,0.05)]"
+    >
       <label
         v-for="(option, index) in options"
         :key="index"
-        class="flex items-center gap-2 cursor-pointer select-none text-lg text-black"
+        class="flex items-center gap-2 cursor-pointer select-none text-lg font-paper text-black"
       >
         <span>{{ option.label }}</span>
 
@@ -27,7 +29,8 @@
         <div
           class="w-6 h-6 flex items-center justify-center border-2 rounded-md"
           :class="{
-            'bg-blue-600 border-blue-600 text-white': localValue === option.value,
+            'bg-blue-600 border-blue-600 text-white':
+              localValue === option.value,
             'border-[#1C1C1C] bg-white': localValue !== option.value,
           }"
         >
@@ -41,7 +44,11 @@
             stroke="currentColor"
             stroke-width="3"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
         </div>
       </label>
@@ -55,7 +62,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed } from "vue";
 
 const props = defineProps({
   modelValue: [String, Number],
@@ -68,11 +75,11 @@ const props = defineProps({
   error: String,
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(["update:modelValue"]);
 
 const localValue = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
+  set: (val) => emit("update:modelValue", val),
 });
 </script>
 

@@ -18,7 +18,10 @@
           <form @submit.prevent="handleRegisterChild" class="space-y-8">
             <!-- 이름 -->
             <div>
-              <label for="childName" class="block text-lg font-paperBold text-black mb-3">
+              <label
+                for="childName"
+                class="block text-lg font-paperBold text-black mb-3"
+              >
                 이름
               </label>
               <input
@@ -33,7 +36,10 @@
 
             <!-- 생년월일 -->
             <div>
-              <label for="birthDate" class="block text-lg font-paperBold text-black mb-3">
+              <label
+                for="birthDate"
+                class="block text-lg font-paperBold text-black mb-3"
+              >
                 생년월일
               </label>
               <div class="flex gap-2">
@@ -70,57 +76,68 @@
             <!-- 성별 -->
             <div>
               <BaseRadioGroup
+                class=""
                 v-model="childData.gender"
                 label="성별"
                 name="gender"
                 :options="genderOptions"
               />
             </div>
+          </form>
+        </div>
+      </div>
 
-            <!-- 관심사 -->
-            <div>
-              <BaseCheckboxGroup
-                v-model="childData.interests"
-                label="관심사"
-                :options="interestOptions"
+      <!-- 하단 관심사 영역 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 px-8 mt-12">
+        <!-- 좌측: 관심사 -->
+        <div>
+          <BaseCheckboxGroup
+            v-model="childData.interests"
+            label="관심사"
+            :options="interestOptions"
+          />
+        </div>
+
+        <!-- 우측: 추가하고 싶은 관심사 + 등록 버튼 -->
+        <div class="space-y-8">
+          <!-- 추가하고 싶은 관심사 -->
+          <div>
+            <label
+              for="newInterest"
+              class="block text-lg font-paperBold text-black mb-3"
+            >
+              추가하고 싶은 관심사
+            </label>
+            <div class="flex gap-2">
+              <input
+                id="newInterest"
+                v-model="newInterest"
+                type="text"
+                placeholder="새로운 관심사를 입력하세요"
+                class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg"
+                @keypress.enter.prevent="addNewInterest"
               />
-            </div>
-
-            <!-- 추가하고 싶은 관심사 -->
-            <div>
-              <label for="newInterest" class="block text-lg font-paperBold text-black mb-3">
-                추가하고 싶은 관심사
-              </label>
-              <div class="flex gap-2">
-                <input
-                  id="newInterest"
-                  v-model="newInterest"
-                  type="text"
-                  placeholder="새로운 관심사를 입력하세요"
-                  class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg"
-                  @keypress.enter.prevent="addNewInterest"
-                />
-                <button
-                  type="button"
-                  @click="addNewInterest"
-                  class="px-6 py-3 bg-purple-500 text-white font-paperBold text-lg rounded-lg hover:bg-purple-600 transition-colors"
-                >
-                  추가
-                </button>
-              </div>
-            </div>
-
-            <!-- 등록하기 버튼 -->
-            <div class="pt-6">
               <button
-                type="submit"
-                :disabled="loading"
-                class="w-full py-4 bg-purple-500 text-white font-paperBold text-lg rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                type="button"
+                @click="addNewInterest"
+                class="px-6 py-3 bg-purple-500 text-white font-paperBold text-lg rounded-lg hover:bg-purple-600 transition-colors"
               >
-                {{ loading ? "등록 중..." : "등록하기" }}
+                추가
               </button>
             </div>
-          </form>
+          </div>
+
+          <!-- 등록하기 버튼 -->
+          <div class="pt-6">
+            <button
+              type="button"
+              @click="handleRegisterChild"
+              :disabled="loading"
+              class="w-full py-4 bg-purple-500 text-white font-paperBold text-lg rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {{ loading ? "등록 중..." : "등록하기" }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -130,10 +147,10 @@
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
 import { useRouter } from "vue-router";
-import { useNotification } from '@/composables/useNotification.js';
+import { useNotification } from "@/composables/useNotification.js";
 import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
-import { assignColorToChild } from '@/utils/colorManager.js'; // 사용 중이면 유지
+import { assignColorToChild } from "@/utils/colorManager.js"; // 사용 중이면 유지
 import { childService } from "@/services/childService.js";
 import BaseImageUpload from "@/components/form/BaseImageUpload.vue";
 import BaseRadioGroup from "@/components/form/BaseRadioGroup.vue";
@@ -161,9 +178,9 @@ const childData = reactive({
   profileFile: null, // File 객체
 });
 
-// 년도 옵션 (현재년도부터 20년 전까지)
+// 년도 옵션 (현재년도부터 15년 전까지)
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 20 }, (_, i) => currentYear - i);
+const years = Array.from({ length: 15 }, (_, i) => currentYear - i);
 
 // 해당 월의 일수 계산
 const daysInMonth = computed(() => {
@@ -196,7 +213,6 @@ const interestOptions = ref([
   { label: "춤", value: "춤" },
   { label: "게임", value: "게임" },
   { label: "책읽기", value: "책읽기" },
-  { label: "요리", value: "요리" },
 ]);
 
 // 이미지 업로드 콜백: File만 저장 (Base64 변환 금지)
@@ -211,7 +227,8 @@ function addNewInterest() {
     return;
   }
   const exists = interestOptions.value.find(
-    (option) => option.value.toLowerCase() === newInterest.value.trim().toLowerCase()
+    (option) =>
+      option.value.toLowerCase() === newInterest.value.trim().toLowerCase()
   );
   if (exists) {
     showWarning("이미 존재하는 관심사입니다.", "중복된 관심사");
@@ -232,32 +249,35 @@ function addNewInterest() {
 // 성별에 따른 기본 이미지 업로드 함수
 async function uploadDefaultChildImage(userId, childId, gender) {
   try {
-    console.log('=== 아이 기본 이미지 업로드 시작 ===');
-    console.log('성별:', gender);
-    
+    console.log("=== 아이 기본 이미지 업로드 시작 ===");
+    console.log("성별:", gender);
+
     // 성별에 따른 이미지 선택
-    const imageUrl = gender === 'MALE' ? boyImage : girlImage;
-    const fileName = gender === 'MALE' ? 'boy.png' : 'girl.png';
-    
-    console.log('선택된 이미지:', imageUrl);
-    
+    const imageUrl = gender === "MALE" ? boyImage : girlImage;
+    const fileName = gender === "MALE" ? "boy.png" : "girl.png";
+
+    console.log("선택된 이미지:", imageUrl);
+
     // 이미지를 fetch로 가져와서 File 객체로 변환
     const response = await fetch(imageUrl);
     if (!response.ok) {
       throw new Error(`이미지 fetch 실패: ${response.status}`);
     }
-    
+
     const blob = await response.blob();
-    const file = new File([blob], fileName, { type: 'image/png' });
-    
-    console.log('File 객체 생성 완료:', { name: file.name, size: file.size, type: file.type });
-    
+    const file = new File([blob], fileName, { type: "image/png" });
+
+    console.log("File 객체 생성 완료:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+    });
+
     // childService를 사용해서 이미지 업로드
     await childService.uploadChildImage(userId, childId, file);
-    console.log('아이 기본 프로필 이미지 업로드 완료');
-    
+    console.log("아이 기본 프로필 이미지 업로드 완료");
   } catch (error) {
-    console.warn('아이 기본 프로필 이미지 업로드 실패:', error);
+    console.warn("아이 기본 프로필 이미지 업로드 실패:", error);
     // 기본 이미지 업로드 실패는 아이 등록을 막지 않음
   }
 }
@@ -294,7 +314,11 @@ async function handleRegisterChild() {
     if (childId) {
       if (childData.profileFile) {
         // 사용자가 업로드한 이미지가 있으면 그것을 사용
-        await childService.uploadChildImage(userId, childId, childData.profileFile);
+        await childService.uploadChildImage(
+          userId,
+          childId,
+          childData.profileFile
+        );
       } else {
         // 이미지가 없으면 성별에 따른 기본 이미지 업로드
         await uploadDefaultChildImage(userId, childId, childData.gender);
@@ -303,11 +327,19 @@ async function handleRegisterChild() {
 
     // 3) 목록 새로고침 & 이동
     await childStore.loadChildren();
-    showSuccess(`${childData.name}의 정보가 성공적으로 등록되었습니다!`, "등록 완료");
+    showSuccess(
+      `${childData.name}의 정보가 성공적으로 등록되었습니다!`,
+      "등록 완료"
+    );
     router.push({ name: "Dashboard" });
   } catch (error) {
     console.error("아이 등록 실패:", error);
-    showError(error?.response?.data?.error || error.message || "아이 등록에 실패했습니다. 다시 시도해주세요.", "등록 실패");
+    showError(
+      error?.response?.data?.error ||
+        error.message ||
+        "아이 등록에 실패했습니다. 다시 시도해주세요.",
+      "등록 실패"
+    );
   } finally {
     loading.value = false;
   }
@@ -315,5 +347,22 @@ async function handleRegisterChild() {
 </script>
 
 <style scoped>
-/* 필요시 추가 스타일 */
+/* 드롭다운 최대 높이 제한 */
+.select-dropdown {
+  /* 브라우저별 드롭다운 높이 제한 */
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  appearance: menulist;
+}
+
+/* 드롭다운 옵션이 표시될 때의 최대 높이 설정 (일부 브라우저에서만 작동) */
+.select-dropdown option {
+  max-height: 80px;
+}
+
+/* 브라우저에서 지원하는 경우 드롭다운 높이 제한 */
+.select-dropdown:focus {
+  max-height: 80px;
+  overflow-y: auto;
+}
 </style>
