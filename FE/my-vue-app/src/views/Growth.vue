@@ -992,8 +992,11 @@ onMounted(async () => {
   // 전역 함수로 등록 (달력의 HTML 버튼에서 호출하기 위해)
   window.openEmotionReport = openEmotionReport;
 
-  // 기본적으로 아무것도 선택하지 않음 - 사용자가 직접 선택해야 함
-  // selectedChildrenForReport.value = []; // 이미 빈 배열이므로 아무것도 하지 않음
+  // 기본적으로 모든 아이를 선택된 상태로 설정
+  selectedChildrenForReport.value = childrenList.value.map(child => child.name);
+  
+  // 모든 아이가 선택된 상태로 다이어리 로드
+  await onSelectedChildrenChange();
 });
 </script>
 
