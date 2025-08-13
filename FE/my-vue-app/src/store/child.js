@@ -33,7 +33,6 @@ export const useChildStore = defineStore("child", {
         const userId = auth.user?.id;
 
         if (!userId) {
-          console.warn("사용자 ID가 없습니다.");
           this.children = [];
           this.selectedChildId = null;
           return;
@@ -50,7 +49,6 @@ export const useChildStore = defineStore("child", {
               // 부모용 관심사 API 호출
               interests = await childService.getChildInterestsForParent(userId, child.childId);
             } catch (error) {
-              console.warn(`아이 ${child.name}의 관심사 로드 실패:`, error);
               interests = [];
             }
 
@@ -86,7 +84,6 @@ export const useChildStore = defineStore("child", {
           this.selectedChildId = this.children.length > 0 ? this.children[0].id : null;
         }
       } catch (error) {
-        console.error("아이 목록 불러오기 실패:", error);
         this.children = [];
         this.selectedChildId = null;
       }
@@ -165,7 +162,6 @@ export const useChildStore = defineStore("child", {
       const idx = this.children.findIndex((c) => c.id === childId);
       if (idx !== -1) {
         this.children[idx].hasTodayDiary = hasTodayDiary;
-        console.log(`아이 ${childId}의 당일 그림일기 상태 업데이트:`, hasTodayDiary);
 
         const today = new Date().toDateString();
         const auth = useAuthStore();
@@ -228,7 +224,6 @@ export const useChildStore = defineStore("child", {
 
       localStorage.removeItem(diaryStatusKey);
       localStorage.removeItem(conversationIdKey);
-      console.log("당일 그림일기 상태 및 conversationId 초기화 완료");
     },
 
     // 날짜 변경 체크 및 초기화

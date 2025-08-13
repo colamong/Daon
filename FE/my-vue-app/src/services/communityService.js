@@ -9,7 +9,7 @@ export const communityService = {
       const response = await axiosInstance.get(BASE_URL)
       return response.data.data
     } catch (error) {
-      console.error('Failed to fetch communities:', error)
+      error('Failed to fetch communities:', error)
       throw error
     }
   },
@@ -21,7 +21,7 @@ export const communityService = {
       const response = await axiosInstance.get(`${BASE_URL}/search?title=${encodedTitle}`)
       return response.data.data
     } catch (error) {
-      console.error('Failed to search communities:', error)
+      error('Failed to search communities:', error)
       throw error
     }
   },
@@ -32,7 +32,7 @@ export const communityService = {
       const response = await axiosInstance.get(`${BASE_URL}/active?userId=${userId}`)
       return response.data.data
     } catch (error) {
-      console.error('Failed to fetch active communities:', error)
+      error('Failed to fetch active communities:', error)
       throw error
     }
   },
@@ -45,7 +45,7 @@ export const communityService = {
       })
       return response.data.data
     } catch (error) {
-      console.error('Failed to join community:', error)
+      error('Failed to join community:', error)
       throw error
     }
   },
@@ -58,7 +58,7 @@ export const communityService = {
       })
       return response.data.data
     } catch (error) {
-      console.error('Failed to leave community:', error)
+      error('Failed to leave community:', error)
       throw error
     }
   },
@@ -69,7 +69,7 @@ export const communityService = {
       const response = await axiosInstance.get(`${BASE_URL}/${communityId}/participants`)
       return response.data.data
     } catch (error) {
-      console.error('Failed to fetch participants:', error)
+      error('Failed to fetch participants:', error)
       throw error
     }
   },
@@ -80,7 +80,7 @@ export const communityService = {
       const response = await axiosInstance.get(`${BASE_URL}/${communityId}/messages`)
       return response.data.data
     } catch (error) {
-      console.error('Failed to fetch messages:', error)
+      error('Failed to fetch messages:', error)
       throw error
     }
   }
