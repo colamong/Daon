@@ -15,30 +15,35 @@
       <button
         @click="goChildMain"
         class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
+        data-tutorial="penguin"
       >
         펭구랑 놀자
       </button>
       <button
         @click="goChildProfile"
         class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
+        data-tutorial="profile"
       >
         아이 프로필
       </button>
       <button
         @click="goOCRTool"
         class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
+        data-tutorial="document"
       >
         문서 도우미
       </button>
       <button
         @click="goCommunityChat"
         class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
+        data-tutorial="community"
       >
         온동네
       </button>
       <button
         @click="goLearningHelper"
         class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
+        data-tutorial="growth"
       >
         상황별 학습
       </button>

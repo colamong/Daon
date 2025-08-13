@@ -1,23 +1,27 @@
 <template>
   <section class="px-6 py-8 max-w-4xl mx-auto mb-10">
-    <BaseFileUpload 
-      mode="file" 
-      @translate="onTranslateRequested" 
+    <BaseFileUpload
+      mode="file"
+      @translate="onTranslateRequested"
       @upload:file="onFileUploaded"
       :disabled="isLoading"
     />
-    
+
     <!-- 로딩 알림 -->
-    <div 
-      v-if="isLoading" 
+    <div
+      v-if="isLoading"
       class="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md"
     >
       <div class="flex items-center">
-        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
-        <p class="text-blue-700 font-medium">OCR 처리 및 번역 중입니다... 잠시만 기다려주세요.</p>
+        <div
+          class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"
+        ></div>
+        <p class="text-blue-700 font-medium">
+          번역 중입니다... 잠시만 기다려주세요.
+        </p>
       </div>
     </div>
-    
+
     <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
       <BaseCard variant="ocr1" class="!bg-white" />
       <BaseCard variant="ocr2" class="!bg-white" />
@@ -49,15 +53,15 @@ async function onTranslateRequested(payload) {
 
   try {
     isLoading.value = true;
-    
+
     const result = await ocrService.uploadAndOcr(currentFile.value);
-    
+
     router.push({
       name: "OCRResult",
       query: {
         image: payload.image || "",
         file: payload.file || "",
-        result: JSON.stringify(result)
+        result: JSON.stringify(result),
       },
     });
   } catch (error) {

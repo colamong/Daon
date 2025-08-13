@@ -276,6 +276,11 @@
       :report-data="todayActivity"
       :show-navigation="false"
     />
+
+    <!-- 네비게이션 튜토리얼 모달 -->
+    <NavigationTutorialModal
+      v-model="showTutorialModal"
+    />
   </div>
 </template>
 
@@ -289,6 +294,7 @@ import CalendarWidget from "@/components/widget/CalendarWidget.vue";
 import ScheduleCard from "@/components/card/ScheduleCard.vue";
 import BaseCard from "@/components/card/BaseCard.vue";
 import EmotionReportModal from "@/components/modal/EmotionReportModal.vue";
+import NavigationTutorialModal from "@/components/modal/NavigationTutorialModal.vue";
 import { useAuthStore } from "@/store/auth";
 import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
@@ -353,6 +359,18 @@ onMounted(async () => {
   } else if (typeof childStore.loadChildren === "function") {
     const userId = auth.user?.id;
     if (userId) await childStore.loadChildren(userId);
+  }
+
+  // 첫 회원가입 후 튜토리얼 자동 실행
+  if (router.currentRoute.value.query.firstLogin === 'true') {
+    // 쿼리 파라미터 제거하고 페이지 상단으로 스크롤
+    router.replace({ name: 'Dashboard' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // 스크롤 후 튜토리얼 모달 표시
+    setTimeout(() => {
+      showTutorialModal.value = true;
+    }, 800);
   }
 
   // 스토어가 비어있을 때 직접 로드 보정 (child store에서 이미 새로운 API를 사용하므로 단순화)
@@ -494,6 +512,7 @@ async function loadTodayActivity() {
 
 /* 감정 리포트 모달 */
 const showEmotionReportModal = ref(false);
+const showTutorialModal = ref(false);
 
 function openTodayReport() {
   if (hasActivity.value && todayActivity.value) {
