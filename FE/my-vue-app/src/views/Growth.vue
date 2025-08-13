@@ -126,18 +126,18 @@ const isSettingReportData = ref(false);
 // selectedReportData 안전 설정 함수
 function setSelectedReportData(data) {
   if (isSettingReportData.value) {
-  ('이미 설정 중이므로 무시됨');
+    console.log('이미 설정 중이므로 무시됨');
     return;
   }
   
   isSettingReportData.value = true;
-('=== selectedReportData 안전 설정 시작 ===');
-('설정할 데이터:', data);
+  console.log('=== selectedReportData 안전 설정 시작 ===');
+  console.log('설정할 데이터:', data);
   
   selectedReportData.value = data;
   
-('=== selectedReportData 안전 설정 완료 ===');
-('최종 설정된 값:', selectedReportData.value);
+  console.log('=== selectedReportData 안전 설정 완료 ===');
+  console.log('최종 설정된 값:', selectedReportData.value);
   
   // 50ms 후에 잠금 해제 (다른 자동 실행 방지)
   setTimeout(() => {
@@ -157,10 +157,10 @@ const currentDate = ref(new Date());
 
 // 월별 다이어리 조회
 async function fetchMonthlyDiaries() {
-('fetchMonthlyDiaries 호출됨, 선택된 아이들:', selectedChildrenForReport.value);
+  console.log('fetchMonthlyDiaries 호출됨, 선택된 아이들:', selectedChildrenForReport.value);
   
   if (selectedChildrenForReport.value.length === 0) {
-  ('선택된 아이가 없어서 모든 데이터 초기화');
+    console.log('선택된 아이가 없어서 모든 데이터 초기화');
     diaries.value = [];
     
     // 수동으로 캐시된 computed properties 초기화
@@ -168,7 +168,7 @@ async function fetchMonthlyDiaries() {
     allSelectedReports.value = [];
     reportsByDate.value = {};
     
-  ('모든 데이터 초기화 완료');
+    console.log('모든 데이터 초기화 완료');
     return;
   }
   
@@ -197,7 +197,7 @@ async function fetchMonthlyDiaries() {
           
           allDiaries.push(...childDiaries);
         } catch (error) {
-    error(`${childName}의 다이어리 조회 실패:`, error);
+          console.error(`${childName}의 다이어리 조회 실패:`, error);
         }
       }
     }
@@ -210,7 +210,7 @@ async function fetchMonthlyDiaries() {
     updateReportsByDate();
     
   } catch (error) {
-error('다이어리 조회 오류:', error);
+    console.error('다이어리 조회 오류:', error);
     diaries.value = [];
     // 에러 시에도 캐시 초기화
     diariesByDate.value = {};
@@ -245,16 +245,16 @@ const allSelectedReports = ref([]);
 
 // 리포트 데이터 수동 업데이트 함수
 function updateAllSelectedReports() {
-('=== allSelectedReports 수동 업데이트 시작 ===');
-('원본 diaries.value:', diaries.value);
-('사용 가능한 childrenList.value:', childrenList.value);
+  console.log('=== allSelectedReports 수동 업데이트 시작 ===');
+  console.log('원본 diaries.value:', diaries.value);
+  console.log('사용 가능한 childrenList.value:', childrenList.value);
   
   const reports = diaries.value.map((diary, index) => {
     // childId로 올바른 아이 이름 찾기
     const child = childrenList.value.find(c => c.id === diary.childId);
     if (!child) {
-warn(`다이어리 ${index}: childId ${diary.childId}에 대한 아이를 찾을 수 없음`);
-    ('사용 가능한 아이들:', childrenList.value.map(c => ({ id: c.id, name: c.name })));
+      console.warn(`다이어리 ${index}: childId ${diary.childId}에 대한 아이를 찾을 수 없음`);
+      console.log('사용 가능한 아이들:', childrenList.value.map(c => ({ id: c.id, name: c.name })));
     }
     const correctChildName = child ? child.name : `Unknown-${diary.childId}`;
     
@@ -267,7 +267,7 @@ warn(`다이어리 ${index}: childId ${diary.childId}에 대한 아이를 찾을
       diaryText: diary.diaryText || diary.text || diary.content || ''
     };
     
-  (`리포트 ${index} 생성:`, {
+    console.log(`리포트 ${index} 생성:`, {
       diary: { childId: diary.childId, date: diary.date, childName: diary.childName },
       foundChild: child,
       finalReport: { childId: report.childId, childName: report.childName, date: report.date }
@@ -276,7 +276,7 @@ warn(`다이어리 ${index}: childId ${diary.childId}에 대한 아이를 찾을
     return report;
   });
   
-('allSelectedReports 최종 계산 완료:', reports.map(r => ({ date: r.date, childId: r.childId, childName: r.childName })));
+  console.log('allSelectedReports 최종 계산 완료:', reports.map(r => ({ date: r.date, childId: r.childId, childName: r.childName })));
   allSelectedReports.value = reports;
 }
 
@@ -307,7 +307,7 @@ function updateReportsByDate() {
     groups[date].sort((a, b) => a.childId - b.childId);
   });
   
-('날짜별 리포트 그룹:', groups);
+  console.log('날짜별 리포트 그룹:', groups);
   reportsByDate.value = groups;
 }
 
@@ -316,97 +316,97 @@ const allowNavigation = ref(false);
 
 // 이전 리포트 찾기 로직
 function findPreviousReport() {
-('!!! findPreviousReport 호출됨 - 호출 스택:', new Error().stack);
+  console.log('!!! findPreviousReport 호출됨 - 호출 스택:', new Error().stack);
   
   // 자동 호출 차단 - 사용자가 직접 버튼 누를 때만 허용
   if (!allowNavigation.value) {
-  ('자동 호출 차단됨 - findPreviousReport');
+    console.log('자동 호출 차단됨 - findPreviousReport');
     return null;
   }
   
   if (!selectedReportData.value) {
-  ('이전 리포트 찾기: selectedReportData 없음');
+    console.log('이전 리포트 찾기: selectedReportData 없음');
     return null;
   }
   
   const currentDate = selectedReportData.value.date;
   const currentChildId = selectedReportData.value.childId;
   
-('=== 이전 리포트 찾기 시작 ===');
-('현재 리포트:', { currentDate, currentChildId });
-('사용 가능한 reportsByDate:', reportsByDate.value);
+  console.log('=== 이전 리포트 찾기 시작 ===');
+  console.log('현재 리포트:', { currentDate, currentChildId });
+  console.log('사용 가능한 reportsByDate:', reportsByDate.value);
   
   // 1. 같은 날짜에서 더 작은 childId 찾기
   const sameDate = reportsByDate.value[currentDate] || [];
-('같은 날짜의 리포트들:', sameDate);
+  console.log('같은 날짜의 리포트들:', sameDate);
   
   const prevInSameDate = sameDate
     .filter(report => {
       const isSmaller = report.childId < currentChildId;
-    (`이전 찾기 - childId 비교: ${report.childId} < ${currentChildId} = ${isSmaller} (report: ${report.childName})`);
+      console.log(`이전 찾기 - childId 비교: ${report.childId} < ${currentChildId} = ${isSmaller} (report: ${report.childName})`);
       return isSmaller;
     })
     .sort((a, b) => b.childId - a.childId)[0]; // 가장 큰 ID부터
   
   if (prevInSameDate) {
-  ('같은 날짜에서 이전 리포트 발견:', prevInSameDate);
+    console.log('같은 날짜에서 이전 리포트 발견:', prevInSameDate);
     return prevInSameDate;
   }
   
   // 2. 이전 날짜들에서 가장 최근 날짜의 가장 큰 childId 찾기
   const dates = Object.keys(reportsByDate.value).sort((a, b) => new Date(b) - new Date(a));
-('정렬된 날짜들:', dates);
+  console.log('정렬된 날짜들:', dates);
   
   for (const date of dates) {
-  (`날짜 비교: ${date} < ${currentDate} = ${date < currentDate}`);
+    console.log(`날짜 비교: ${date} < ${currentDate} = ${date < currentDate}`);
     if (date < currentDate) {
       const reportsInDate = reportsByDate.value[date];
       const lastReport = reportsInDate[reportsInDate.length - 1]; // 가장 큰 childId
-    ('이전 날짜에서 리포트 발견:', { date, lastReport });
+      console.log('이전 날짜에서 리포트 발견:', { date, lastReport });
       return lastReport;
     }
   }
   
-('이전 리포트 없음');
+  console.log('이전 리포트 없음');
   return null;
 }
 
 // 다음 리포트 찾기 로직
 function findNextReport() {
-('!!! findNextReport 호출됨 - 호출 스택:', new Error().stack);
+  console.log('!!! findNextReport 호출됨 - 호출 스택:', new Error().stack);
   
   // 자동 호출 차단 - 사용자가 직접 버튼 누를 때만 허용
   if (!allowNavigation.value) {
-  ('자동 호출 차단됨 - findNextReport');
+    console.log('자동 호출 차단됨 - findNextReport');
     return null;
   }
   
   if (!selectedReportData.value) {
-  ('다음 리포트 찾기: selectedReportData 없음');
+    console.log('다음 리포트 찾기: selectedReportData 없음');
     return null;
   }
   
   const currentDate = selectedReportData.value.date;
   const currentChildId = selectedReportData.value.childId;
   
-('=== 다음 리포트 찾기 시작 ===');
-('현재 리포트:', { currentDate, currentChildId });
-('사용 가능한 reportsByDate:', reportsByDate.value);
+  console.log('=== 다음 리포트 찾기 시작 ===');
+  console.log('현재 리포트:', { currentDate, currentChildId });
+  console.log('사용 가능한 reportsByDate:', reportsByDate.value);
   
   // 1. 같은 날짜에서 더 큰 childId 찾기
   const sameDate = reportsByDate.value[currentDate] || [];
-('같은 날짜의 리포트들:', sameDate);
+  console.log('같은 날짜의 리포트들:', sameDate);
   
   const nextInSameDate = sameDate
     .filter(report => {
       const isBigger = report.childId > currentChildId;
-    (`다음 찾기 - childId 비교: ${report.childId} > ${currentChildId} = ${isBigger} (report: ${report.childName})`);
+      console.log(`다음 찾기 - childId 비교: ${report.childId} > ${currentChildId} = ${isBigger} (report: ${report.childName})`);
       return isBigger;
     })
     .sort((a, b) => a.childId - b.childId)[0]; // 가장 작은 ID부터
   
   if (nextInSameDate) {
-  ('같은 날짜에서 다음 리포트 발견:', {
+    console.log('같은 날짜에서 다음 리포트 발견:', {
       childName: nextInSameDate.childName,
       childId: nextInSameDate.childId,
       date: nextInSameDate.date
@@ -416,14 +416,14 @@ function findNextReport() {
   
   // 2. 다음 날짜들에서 가장 가까운 날짜의 가장 작은 childId 찾기
   const dates = Object.keys(reportsByDate.value).sort((a, b) => new Date(a) - new Date(b));
-('정렬된 날짜들:', dates);
+  console.log('정렬된 날짜들:', dates);
   
   for (const date of dates) {
-  (`날짜 비교: ${date} > ${currentDate} = ${date > currentDate}`);
+    console.log(`날짜 비교: ${date} > ${currentDate} = ${date > currentDate}`);
     if (date > currentDate) {
       const reportsInDate = reportsByDate.value[date];
       const firstReport = reportsInDate[0]; // 가장 작은 childId
-    ('다음 날짜에서 리포트 발견:', { 
+      console.log('다음 날짜에서 리포트 발견:', { 
         date, 
         firstReport: {
           childName: firstReport.childName,
@@ -435,7 +435,7 @@ function findNextReport() {
     }
   }
   
-('다음 리포트 없음');
+  console.log('다음 리포트 없음');
   return null;
 }
 
@@ -447,21 +447,21 @@ const hasNextReport = ref(false);
 function resetNavigationButtons() {
   hasPreviousReport.value = false;
   hasNextReport.value = false;
-('네비게이션 버튼 상태 초기화');
+  console.log('네비게이션 버튼 상태 초기화');
 }
 
 // 네비게이션 버튼 상태 계산 함수 (사용자가 버튼 클릭할 때만 호출)
 function calculateNavigationState() {
-('네비게이션 상태 계산 요청됨');
+  console.log('네비게이션 상태 계산 요청됨');
   
   if (!selectedReportData.value || !selectedReportData.value.date || !selectedReportData.value.childId) {
-  ('네비게이션 상태 계산 불가: 데이터 부족');
+    console.log('네비게이션 상태 계산 불가: 데이터 부족');
     hasPreviousReport.value = false;
     hasNextReport.value = false;
     return;
   }
   
-('네비게이션 상태 계산 시작:', {
+  console.log('네비게이션 상태 계산 시작:', {
     currentChild: selectedReportData.value.childName,
     currentChildId: selectedReportData.value.childId,
     currentDate: selectedReportData.value.date
@@ -477,14 +477,14 @@ function calculateNavigationState() {
     const nextReport = findNextReport();
     hasNextReport.value = nextReport !== null;
     
-  ('네비게이션 상태 계산 완료:', {
+    console.log('네비게이션 상태 계산 완료:', {
       hasPrev: hasPreviousReport.value,
       hasNext: hasNextReport.value,
       prevReport: prevReport ? { childName: prevReport.childName, date: prevReport.date } : null,
       nextReport: nextReport ? { childName: nextReport.childName, date: nextReport.date } : null
     });
   } catch (error) {
-error('네비게이션 상태 계산 오류:', error);
+    console.error('네비게이션 상태 계산 오류:', error);
     hasPreviousReport.value = false;
     hasNextReport.value = false;
   } finally {
@@ -540,7 +540,7 @@ const calendarOptions = {
       
       // 선택된 아이가 없으면 아무것도 렌더링하지 않음
       if (selectedChildrenForReport.value.length === 0) {
-      ('선택된 아이가 없어서 렌더링 건너뜀');
+        console.log('선택된 아이가 없어서 렌더링 건너뜀');
         return;
       }
       
@@ -561,7 +561,7 @@ const calendarOptions = {
         reportsForDate.forEach((report, index) => {
           // 최대 3개까지만 표시
           if (index < 3) {
-          (`버튼 ${index} 생성:`, {
+            console.log(`버튼 ${index} 생성:`, {
               childName: report.childName,
               childId: report.childId,
               date: key,
@@ -595,7 +595,7 @@ const calendarOptions = {
             // 버튼에 데이터를 직접 저장
             button.setAttribute('data-child-name', report.childName);
             button.setAttribute('data-child-id', report.childId);
-          (`버튼 속성 설정:`, {
+            console.log(`버튼 속성 설정:`, {
               'data-child-name': report.childName,
               'data-child-id': report.childId
             });
@@ -607,20 +607,20 @@ const calendarOptions = {
               const clickedChildName = e.target.getAttribute('data-child-name');
               const clickedChildId = parseInt(e.target.getAttribute('data-child-id'));
               
-            ('=== 버튼 클릭 시작 ===');
-            ('클릭한 버튼 정보:', {
+              console.log('=== 버튼 클릭 시작 ===');
+              console.log('클릭한 버튼 정보:', {
                 clickedChildName,
                 clickedChildId,
                 clickedDate: key
               });
               
               // 핸심: 이미 가지고 있는 reportsForDate에서 해당 아이의 리포트 찾기
-            ('타겟 찾기 전 reportsForDate:', reportsForDate);
-            ('찾는 childId:', clickedChildId, 'type:', typeof clickedChildId);
+              console.log('타겟 찾기 전 reportsForDate:', reportsForDate);
+              console.log('찾는 childId:', clickedChildId, 'type:', typeof clickedChildId);
               
               // 모든 리포트의 childId와 비교
               reportsForDate.forEach((r, idx) => {
-              (`리포트 ${idx}:`, {
+                console.log(`리포트 ${idx}:`, {
                   childId: r.childId,
                   childName: r.childName,
                   type: typeof r.childId,
@@ -629,24 +629,24 @@ const calendarOptions = {
               });
               
               const targetReport = reportsForDate.find(r => r.childId === clickedChildId);
-            ('찾은 타겟 리포트:', targetReport);
+              console.log('찾은 타겟 리포트:', targetReport);
               
               if (!targetReport) {
-error('타겟 리포트를 찾지 못함!');
-              ('사용된 검색 조건:', { clickedChildId, type: typeof clickedChildId });
-              ('사용가능한 리포트들:', reportsForDate.map(r => ({ childId: r.childId, childName: r.childName, type: typeof r.childId })));
+                console.error('타겟 리포트를 찾지 못함!');
+                console.log('사용된 검색 조건:', { clickedChildId, type: typeof clickedChildId });
+                console.log('사용가능한 리포트들:', reportsForDate.map(r => ({ childId: r.childId, childName: r.childName, type: typeof r.childId })));
                 return; // 여기서 중단
               }
               
               if (targetReport) {
-              ('=== 타겟 리포트 발견, API 호출 시작 ===');
+                console.log('=== 타겟 리포트 발견, API 호출 시작 ===');
                 try {
                   // API로 원본 다이어리 데이터 가져오기
                   const clickedDate = new Date(key);
                   const year = clickedDate.getFullYear();
                   const month = clickedDate.getMonth() + 1;
                   
-                ('API 요청:', { childId: clickedChildId, year, month });
+                  console.log('API 요청:', { childId: clickedChildId, year, month });
                   const response = await childService.getMonthlyDiaries(clickedChildId, year, month);
                   const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
                   
@@ -656,7 +656,7 @@ error('타겟 리포트를 찾지 못함!');
                     return diaryDate === key;
                   });
                   
-                ('찾은 오늘 다이어리:', todayDiary);
+                  console.log('찾은 오늘 다이어리:', todayDiary);
                   
                   if (todayDiary) {
                     selectedReportDate.value = key;
@@ -669,11 +669,11 @@ error('타겟 리포트를 찾지 못함!');
                       childId: targetReport.childId // 반드시 타겟의 childId
                     };
                     
-                  ('=== selectedReportData 설정 예정 ===');
-                  ('설정할 데이터:', finalData);
+                    console.log('=== selectedReportData 설정 예정 ===');
+                    console.log('설정할 데이터:', finalData);
                     setSelectedReportData(finalData);
-                  ('=== selectedReportData 설정 완료 ===');
-                  ('타겟 리포트로 최종 설정:', {
+                    console.log('=== selectedReportData 설정 완료 ===');
+                    console.log('타겟 리포트로 최종 설정:', {
                       targetChildName: targetReport.childName,
                       targetChildId: targetReport.childId,
                       finalData
@@ -681,20 +681,20 @@ error('타겟 리포트를 찾지 못함!');
                     
                     // 모달 열고 네비게이션 상태 계산
                     showEmotionReportModal.value = true;
-                  ('모달 열음');
+                    console.log('모달 열음');
                     
                     // 버튼 상태 계산 (사용자가 클릭한 후에만)
                     calculateNavigationState();
                     
-                  ('=== 버튼 클릭 성공 완료 ===');
+                    console.log('=== 버튼 클릭 성공 완료 ===');
                   } else {
-    warn('해당 날짜의 다이어리를 찾을 수 없음');
+                    console.warn('해당 날짜의 다이어리를 찾을 수 없음');
                   }
                 } catch (error) {
-  error('해당 아이의 다이어리 조회 실패:', error);
+                  console.error('해당 아이의 다이어리 조회 실패:', error);
                 }
               } else {
-error('!!! 타겟 리포트를 찾지 못함 - 이것이 문제의 원인일 수 있음 !!!');
+                console.error('!!! 타겟 리포트를 찾지 못함 - 이것이 문제의 원인일 수 있음 !!!');
                 // targetReport를 찾지 못했을 때 어떤 일이 일어나는지 확인
                 // 아마도 여기서 fallback 로직이 실행되어 첫 번째 리포트가 나올 수 있음
                 return; // 여기서 완전히 중단
@@ -752,7 +752,7 @@ error('!!! 타겟 리포트를 찾지 못함 - 이것이 문제의 원인일 수
                 const child = childrenList.value.find(c => c.id === additionalReport.childId);
                 const correctChildName = child ? child.name : `아이${additionalReport.childId}`;
                 
-              ('더보기 버튼 - 아이 정보:', {
+                console.log('더보기 버튼 - 아이 정보:', {
                   additionalReport, child, correctChildName,
                   availableChildren: childrenList.value.map(c => ({ id: c.id, name: c.name }))
                 });
@@ -768,7 +768,7 @@ error('!!! 타겟 리포트를 찾지 못함 - 이것이 문제의 원인일 수
                 calculateNavigationState();
               }
             } catch (error) {
-        error('추가 리포트 조회 실패:', error);
+              console.error('추가 리포트 조회 실패:', error);
             }
           });
           
@@ -849,7 +849,7 @@ async function openEmotionReport(dateStr) {
         const child = childrenList.value.find(c => c.id === report.childId);
         const correctChildName = child ? child.name : `아이${report.childId}`;
         
-      ('날짜 클릭 - 아이 정보:', {
+        console.log('날짜 클릭 - 아이 정보:', {
           report, child, correctChildName,
           availableChildren: childrenList.value.map(c => ({ id: c.id, name: c.name }))
         });
@@ -865,14 +865,14 @@ async function openEmotionReport(dateStr) {
         calculateNavigationState();
       }
     } catch (error) {
-error('감정 리포트 조회 실패:', error);
+      console.error('감정 리포트 조회 실패:', error);
     }
   }
 }
 
 // 이전/다음 리포트 네비게이션 (사용자 버튼 클릭시에만)
 async function goToPreviousReport() {
-('사용자가 이전 리포트 버튼 클릭');
+  console.log('사용자가 이전 리포트 버튼 클릭');
   
   // 네비게이션 허용
   allowNavigation.value = true;
@@ -880,7 +880,7 @@ async function goToPreviousReport() {
   try {
     const prevReport = findPreviousReport();
     if (prevReport) {
-    ('이동할 이전 리포트:', prevReport);
+      console.log('이동할 이전 리포트:', prevReport);
       await loadReportData(prevReport);
       // 이동 후 새로운 위치에서 버튼 상태 다시 계산
       calculateNavigationState();
@@ -891,7 +891,7 @@ async function goToPreviousReport() {
 }
 
 async function goToNextReport() {
-('사용자가 다음 리포트 버튼 클릭');
+  console.log('사용자가 다음 리포트 버튼 클릭');
   
   // 네비게이션 허용
   allowNavigation.value = true;
@@ -899,7 +899,7 @@ async function goToNextReport() {
   try {
     const nextReport = findNextReport();
     if (nextReport) {
-    ('이동할 다음 리포트:', nextReport);
+      console.log('이동할 다음 리포트:', nextReport);
       await loadReportData(nextReport);
       // 이동 후 새로운 위치에서 버튼 상태 다시 계산
       calculateNavigationState();
@@ -911,29 +911,29 @@ async function goToNextReport() {
 
 // 리포트 데이터 로드 헬퍼 함수
 async function loadReportData(report) {
-('!!! loadReportData 호출됨 - 호출 스택:', new Error().stack);
+  console.log('!!! loadReportData 호출됨 - 호출 스택:', new Error().stack);
   
   try {
-  ('리포트 데이터 로드 시도:', report);
-  ('타겟 childId:', report.childId, '타겟 날짜:', report.date);
+    console.log('리포트 데이터 로드 시도:', report);
+    console.log('타겟 childId:', report.childId, '타겟 날짜:', report.date);
     
     const clickedDate = new Date(report.date);
     const year = clickedDate.getFullYear();
     const month = clickedDate.getMonth() + 1;
     
-  ('API 요청:', { childId: report.childId, year, month, date: report.date });
+    console.log('API 요청:', { childId: report.childId, year, month, date: report.date });
     
     // 핵심: 해당 아이의 데이터만 요청
     const response = await childService.getMonthlyDiaries(report.childId, year, month);
     const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
     
-  ('API 응답 데이터:', responseArray);
+    console.log('API 응답 데이터:', responseArray);
     
     // 해당 날짜의 다이어리 찾기 (이미 해당 childId의 데이터만 있으므로 날짜만 매칭)
     const todayDiary = responseArray.find(diary => {
       const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
       const match = diaryDate === report.date;
-    ('다이어리 매칭 검사:', {
+      console.log('다이어리 매칭 검사:', {
         diaryDate,
         targetDate: report.date,
         match,
@@ -942,7 +942,7 @@ async function loadReportData(report) {
       return match;
     });
     
-  ('찾은 최종 다이어리:', todayDiary);
+    console.log('찾은 최종 다이어리:', todayDiary);
     
     if (todayDiary) {
       selectedReportDate.value = report.date;
@@ -956,13 +956,13 @@ async function loadReportData(report) {
       };
       
       setSelectedReportData(finalData);
-    ('최종 설정된 selectedReportData:', finalData);
-    ('사용된 childName:', report.childName, '사용된 childId:', report.childId);
+      console.log('최종 설정된 selectedReportData:', finalData);
+      console.log('사용된 childName:', report.childName, '사용된 childId:', report.childId);
     } else {
-warn('해당 날짜의 다이어리를 찾을 수 없음:', report.date);
+      console.warn('해당 날짜의 다이어리를 찾을 수 없음:', report.date);
     }
   } catch (error) {
-error('리포트 데이터 로드 실패:', error);
+    console.error('리포트 데이터 로드 실패:', error);
   }
 }
 
@@ -977,7 +977,7 @@ function goBack() {
 
 // selectedChildrenForReport 변경 시 수동으로 호출할 함수
 async function onSelectedChildrenChange() {
-('선택된 아이들 변경됨:', selectedChildrenForReport.value);
+  console.log('선택된 아이들 변경됨:', selectedChildrenForReport.value);
   await fetchMonthlyDiaries();
   
   // 달력 완전 재마운트를 위해 키를 변경

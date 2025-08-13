@@ -259,7 +259,9 @@ async function loadCountries() {
   try {
     const nations = await nationService.getNations();
     countryOptions.value = nations;
+    console.log("국가 목록 로드 완료:", nations);
   } catch (error) {
+    console.error("국가 목록 로드 실패:", error);
     showError(error.message, "국가 목록 로드 실패");
     // 국가 목록 로드 실패 시 기본 옵션 제공
     countryOptions.value = [
@@ -282,11 +284,13 @@ async function uploadDefaultProfileImage() {
     
     // userService를 사용해서 이미지 업로드
     await userService.uploadProfileImage(file);
+    console.log('기본 프로필 이미지 업로드 완료');
     
     // auth store의 사용자 정보도 업데이트
     await auth.getCurrentUser();
     
   } catch (error) {
+    console.warn('기본 프로필 이미지 업로드 실패:', error);
     // 기본 이미지 업로드 실패는 회원가입을 막지 않음
   }
 }
@@ -330,6 +334,9 @@ async function handleSignUp() {
       password: password.value,
       nationCode: country.value || "KR", // camelCase로 수정
     };
+    console.log("회원가입 요청 데이터:", signupData);
+    console.log("선택된 국가 값:", country.value);
+    console.log("국가 옵션 목록:", countryOptions.value);
     await auth.signup(signupData);
 
     // 회원가입 성공 후 자동 로그인
@@ -350,6 +357,10 @@ async function handleSignUp() {
     showSuccess("회원가입이 완료되었습니다!", "환영합니다");
     router.push({ name: "Dashboard" });
   } catch (error) {
+    console.error("회원가입 오류:", error);
+    console.log("Error status:", error.response?.status);
+    console.log("Error data:", error.response?.data);
+    console.log("Error message:", error.message);
 
     let errorMessage = "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.";
 

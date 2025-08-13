@@ -10,6 +10,7 @@ export const formatChatTime = (dateTimeString) => {
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
   } catch (error) {
+    console.error('시간 포맷팅 오류:', error);
     return '';
   }
 };
@@ -24,10 +25,12 @@ export const formatChatDate = (dateTimeString) => {
     const day = date.getDate().toString().padStart(2, '0');
     return `${month}/${day}`;
   } catch (error) {
+    console.error('날짜 포맷팅 오류:', error);
     return '';
   }
 };
 
 // TypeScript 초안
 export const example = () => {
+  console.log('Hello from TS');
 };
