@@ -1,9 +1,3 @@
-# main.py
-"""
-- WAV만 허용(프론트에서 RecordRTC 등으로 16kHz mono WAV 업로드 전제)
-- Spring에서 정답 문장 조회 → STT → 유연 채점 → 결과 반환
-"""
-
 import os
 import tempfile
 import logging
@@ -14,7 +8,7 @@ from stt_service import transcribe_wav, calc_similarity, get_ref_text
 
 app = FastAPI()
 
-# CORS (프론트 도메인 추가)
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:8080"],
@@ -23,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# WAV만 받음 (FFmpeg 없이 운영)
+# WAV만 받음
 ALLOWED_MIMES = {"audio/wav", "audio/x-wav"}
 
 logger = logging.getLogger("uvicorn.error")
@@ -67,7 +61,7 @@ async def evaluate_pronunciation(
 
         # 6) 결과 반환
         return {
-            "score": score,             # int 0~100
+            "score": score,           
             "transcribed": stt_text,
             "reference": ref_text
         }

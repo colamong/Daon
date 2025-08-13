@@ -5,3 +5,7 @@ torchaudio
 torch
 python-multipart
 soundfile
+
+# ---- (필수 추가) 한국어 G2P ----
+g2pk>=0.9
+jamo>=0.4

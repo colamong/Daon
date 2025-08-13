@@ -1,193 +1,246 @@
+from __future__ import annotations
+
+import os
 import re
 import unicodedata
+from typing import List, Sequence, Tuple
+
 import requests
-from difflib import SequenceMatcher
-
 import torch
-import torchaudio
+import torchaudio as ta
 from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
+from g2pk import G2p
 
-# torchaudio backend 설정 (libsndfile)
-torchaudio.set_audio_backend("soundfile")
 
-# Spring API (정답 문장 조회)
-SPRING_API_BASE = "http://localhost:8080"  # 또는 EC2 주소
+SPRING_API_BASE = os.getenv("SPRING_API_BASE", "http://localhost:8080")
+STT_MODEL_NAME = os.getenv("KOR_STT_MODEL", "kresnik/wav2vec2-large-xlsr-korean")
+TARGET_SR = 16_000  # 모델 학습 샘플레이트
 
-def get_ref_text(question_id: int) -> str:
-    """정답 문장을 Spring에서 조회"""
-    url = f"{SPRING_API_BASE}/api/study/choice/correct/{question_id}"
-    res = requests.get(url)
-    if res.status_code != 200:
-        raise Exception(f"Spring에서 정답 문장을 가져오지 못했습니다. Status: {res.status_code}")
-    return res.text
+# lazy-singleton
+_processor: Wav2Vec2Processor | None = None
+_model: Wav2Vec2ForCTC | None = None
+_g2p = G2p()  # 경량, 즉시 생성해도 무방
 
-# 모델 로딩 
-processor = Wav2Vec2Processor.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
-model = Wav2Vec2ForCTC.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
-model.eval()
 
-def transcribe_wav(file_path: str) -> str:
-    """WAV 파일을 16kHz mono로 맞춰 ASR 수행"""
-    # 1) 로드
-    waveform, sample_rate = torchaudio.load(file_path)  # [ch, time]
+def _load_stt_model() -> tuple[Wav2Vec2Processor, Wav2Vec2ForCTC]:
+    """
+    팩토리 메서드: Wav2Vec2 모델/프로세서를 1회 로딩.
+    """
+    global _processor, _model
+    if _processor is None or _model is None:
+        _processor = Wav2Vec2Processor.from_pretrained(STT_MODEL_NAME)
+        _model = Wav2Vec2ForCTC.from_pretrained(STT_MODEL_NAME)
+        _model.eval()
+    return _processor, _model
 
-    # 2) mono 변환 (필요 시)
-    if waveform.shape[0] > 1:
-        waveform = torch.mean(waveform, dim=0, keepdim=True)
 
-    # 3) 16kHz 리샘플
-    if sample_rate != 16000:
-        resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
-        waveform = resampler(waveform)
+# 1) STT (음성→텍스트)
+def transcribe_wav(wav_path: str) -> str:
+    if not os.path.exists(wav_path):
+        raise FileNotFoundError(f"음성 파일이 존재하지 않습니다: {wav_path}")
 
-    # 4) 모델 입력
-    inputs = processor(waveform.squeeze().numpy(), return_tensors="pt", sampling_rate=16000)
+    proc, mdl = _load_stt_model()
 
-    # 5) 추론
+    # torchaudio는 backend=soundfile이면 비압축/다수 포맷 로딩 가능
+    wav, sr = ta.load(wav_path)  # shape: [channels, time]
+    if wav.size(0) > 1:
+        wav = wav.mean(dim=0, keepdim=True)  # 모노화
+    if sr != TARGET_SR:
+        wav = ta.functional.resample(wav, orig_freq=sr, new_freq=TARGET_SR)
+
+    # 모델 입력
+    audio = wav.squeeze(0).numpy()
     with torch.no_grad():
-        logits = model(inputs.input_values).logits
-    predicted_ids = torch.argmax(logits, dim=-1)
-    transcription = processor.batch_decode(predicted_ids)[0]
+        inputs = proc(audio, sampling_rate=TARGET_SR, return_tensors="pt")
+        logits = mdl(**inputs).logits
+        pred_ids = torch.argmax(logits, dim=-1)
+        text = proc.batch_decode(pred_ids)[0]
 
-    return transcription.strip()
+    # 약간의 정규화(소문자, 특수문자 정리)
+    text = unicodedata.normalize("NFC", text.strip())
+    text = re.sub(r"[^0-9a-z가-힣\s]", " ", text.lower())
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
-# 유사도 채점
-def _normalize(text: str) -> str:
-    """한글 NFC, 소문자, 특수문자 제거, 공백 정리"""
-    t = unicodedata.normalize("NFC", (text or "").strip()).lower()
-    t = re.sub(r"[^0-9a-z가-힣\s]", " ", t)
-    t = re.sub(r"\s+", " ", t)
-    return t.strip()
-
-# 흔한 조사/정중어미
-_PARTICLES = r"(은|는|이|가|을|를|에|에서|으로|와|과|에게|께|한테|도|만|까지|부터|조차|라도|마저)"
-_POLITE_ENDINGS = r"(입니다|습니까|습니다|어요|에요|예요|였어요|였습니까|다)$"
-
-def _soft_korean_simplify(text: str) -> str:
+# 2) 참조 문장 조회
+def get_ref_text(question_id: int) -> str:
     """
-    의미 손상 최소화하며 채점 완화:
-    - 단어 경계로 조사 제거
-    - 단어별 정중/평서형 어미 약하게 제거
+    Spring API에서 문제ID의 정답 문장을 조회.
+    - GET {SPRING_API_BASE}/api/study/choice/correct/{question_id}
     """
-    t = _normalize(text)
-    t = re.sub(fr"\b{_PARTICLES}\b", " ", t)
-    words = []
-    for w in t.split():
-        w2 = re.sub(_POLITE_ENDINGS, "", w)
-        if w2:
-            words.append(w2)
-    return " ".join(words)
+    url = f"{SPRING_API_BASE}/api/study/choice/correct/{question_id}"
+    res = requests.get(url, timeout=5)
+    if res.status_code != 200:
+        raise RuntimeError(f"정답 문장 조회 실패 (status={res.status_code})")
+    return res.text or ""
 
-def _char_sim(a: str, b: str) -> float:
-    """문자 단위(공백 제거) 시퀀스 유사도"""
-    return SequenceMatcher(None, a.replace(" ", ""), b.replace(" ", "")).ratio()
+# 3) 발음 유사도(도메인 로직)
+CHO: List[str] = [
+    "ᄀ","ᄁ","ᄂ","ᄃ","ᄄ","ᄅ","ᄆ","ᄇ","ᄈ","ᄉ","ᄊ","ᄋ","ᄌ","ᄍ","ᄎ","ᄏ","ᄐ","ᄑ","ᄒ"
+]
+JUNG: List[str] = [
+    "ᅡ","ᅢ","ᅣ","ᅤ","ᅥ","ᅦ","ᅧ","ᅨ","ᅩ","ᅪ","ᅫ","ᅬ","ᅭ","ᅮ","ᅯ","ᅰ","ᅱ","ᅲ","ᅳ","ᅴ","ᅵ"
+]
+JONG: List[str] = [
+    "", "ᆨ","ᆩ","ᆪ","ᆫ","ᆬ","ᆭ","ᆮ","ᆯ","ᆰ","ᆱ","ᆲ","ᆳ","ᆴ","ᆵ","ᆶ",
+    "ᆷ","ᆸ","ᆹ","ᆺ","ᆻ","ᆼ","ᆽ","ᆾ","ᆿ","ᇀ","ᇁ","ᇂ"
+]
 
-def _word_sim(a: str, b: str) -> float:
-    """단어 시퀀스 유사도"""
-    return SequenceMatcher(None, a.split(), b.split()).ratio()
+CHO_SET = set(CHO)
+JUNG_SET = set(JUNG)
+JONG_SET = set(JONG[1:]) 
 
-def _jaccard_ngram(a: str, b: str, n: int = 2) -> float:
-    """문자 n-gram 자카드 (작은 오탈자에 관대)"""
-    def grams(s: str):
-        s2 = s.replace(" ", "")
-        return {s2[i:i+n] for i in range(max(len(s2) - n + 1, 0))}
-    A, B = grams(a), grams(b)
-    if not A and not B: return 1.0
-    if not A or not B:  return 0.0
-    return len(A & B) / len(A | B)
+def is_cho(ch: str) -> bool: return ch in CHO_SET
+def is_jung(ch: str) -> bool: return ch in JUNG_SET
+def is_jong(ch: str) -> bool: return ch in JONG_SET
 
-CHO = [chr(c) for c in range(0x1100, 0x1113)]       # 19
-JUNG = [chr(c) for c in range(0x1161, 0x1176)]      # 21
-JONG = [""] + [chr(c) for c in range(0x11A8, 0x11C3)]  # 28 (빈 종성 포함)
+# 종성 7자 중화 (ㄱ/ㄴ/ㄷ/ㄹ/ㅁ/ㅂ/ㅇ)
+JONG_BASE = {
+    "": "",
+    "ᆨ":"ᆨ","ᆩ":"ᆨ","ᆪ":"ᆨ","ᆿ":"ᆨ",
+    "ᆫ":"ᆫ","ᆬ":"ᆫ","ᆭ":"ᆫ",
+    "ᆮ":"ᆮ","ᆺ":"ᆮ","ᆻ":"ᆮ","ᆽ":"ᆮ","ᆾ":"ᆮ","ᇀ":"ᆮ",
+    "ᆯ":"ᆯ","ᆰ":"ᆯ","ᆱ":"ᆯ","ᆲ":"ᆯ","ᆳ":"ᆯ","ᆴ":"ᆯ","ᆵ":"ᆯ","ᆶ":"ᆯ",
+    "ᆷ":"ᆷ",
+    "ᆸ":"ᆸ","ᆹ":"ᆸ","ᇁ":"ᆸ",
+    "ᆼ":"ᆼ",
+    "ᇂ":"ᇂ"
+}
 
-def _to_jamo(s: str) -> str:
-    """가-힣을 초/중/종성으로 분해하여 문자열로 변환"""
-    out = []
+# 초성 계열 기저(평/경/격 통합)
+CHO_BASE = {
+    "ᄀ":"ᄀ","ᄁ":"ᄀ","ᄏ":"ᄀ",
+    "ᄃ":"ᄃ","ᄄ":"ᄃ","ᄐ":"ᄃ",
+    "ᄇ":"ᄇ","ᄈ":"ᄇ","ᄑ":"ᄇ",
+    "ᄉ":"ᄉ","ᄊ":"ᄉ",
+    "ᄌ":"ᄌ","ᄍ":"ᄌ","ᄎ":"ᄌ",
+    "ᄂ":"ᄂ","ᄅ":"ᄅ","ᄆ":"ᄆ","ᄋ":"ᄋ","ᄒ":"ᄒ"
+}
+
+# 모음 근접군
+VOWEL_NEAR = [
+    {"ᅢ","ᅦ"},
+    {"ᅬ","ᅫ","ᅰ"},
+    {"ᅴ","ᅵ"},
+]
+
+def _normalize_pron(s: str) -> str:
+    """G2P로 발음열 생성 → 불필요 기호 제거/공백 정리"""
+    s = _g2p(s or "")
+    s = unicodedata.normalize("NFC", s.strip())
+    s = re.sub(r"[^0-9a-z가-힣\s]", " ", s.lower())
+    s = re.sub(r"\s+", " ", s)
+    return s.strip()
+
+def _to_jamo_triplets(s: str) -> List[Tuple[str, str, str]]:
+    """한글 문자열 → [(초,중,종)] 목록. 한글 외 문자는 중성 칸으로."""
+    triplets: List[Tuple[str, str, str]] = []
     for ch in s:
         code = ord(ch)
         if 0xAC00 <= code <= 0xD7A3:
             n = code - 0xAC00
-            cho = n // 588
-            jung = (n % 588) // 28
-            jong = n % 28
-            out.append(CHO[cho])
-            out.append(JUNG[jung])
-            if JONG[jong]:
-                out.append(JONG[jong])
+            ci = n // 588
+            vi = (n % 588) // 28
+            ti = n % 28
+            c = CHO[ci]
+            v = JUNG[vi]
+            t = JONG[ti]
+            t = JONG_BASE.get(t, t)
+            triplets.append((c, v, t))
         else:
-            out.append(ch)
-    return "".join(out)
+            if ch.strip():
+                triplets.append(("", ch, ""))
+    return triplets
 
-def _jamo_sim(a: str, b: str) -> float:
-    """자모 단위 시퀀스 유사도(발음유사에 관대)"""
-    ja = _to_jamo(a.replace(" ", ""))
-    jb = _to_jamo(b.replace(" ", ""))
-    return SequenceMatcher(None, ja, jb).ratio()
+def _vowel_sim_cost(a: str, b: str) -> float:
+    if a == b: return 0.0
+    for g in VOWEL_NEAR:
+        if a in g and b in g:
+            return 0.25
+    return 1.0
 
-def _word_coverage(ref: str, hyp: str) -> float:
-    """참고문장(ref) 대비 인식문장(hyp)의 '단어 일치 커버리지'(순서 감안)"""
-    r, h = ref.split(), hyp.split()
-    if not r:
+def _cons_sim_cost(a: str, b: str, pos: str) -> float:
+    if a == b:
         return 0.0
-    sm = SequenceMatcher(None, r, h)
-    matched = sum(b.size for b in sm.get_matching_blocks())
-    return matched / len(r)
+    if a in {"ᄒ","ᇂ"} or b in {"ᄒ","ᇂ"}:
+        return 0.35
+    if {a, b} == {"ᄂ","ᄅ"} or {a, b} == {"ᆫ","ᆯ"}:
+        return 0.4
+    base_a = CHO_BASE.get(a, a) if pos == "C" else a
+    base_b = CHO_BASE.get(b, b) if pos == "C" else b
+    if base_a == base_b:
+        return 0.25 if pos == "C" else 0.35
+    return 0.8 if pos == "T" else 1.0
 
-def _char_coverage(ref: str, hyp: str) -> float:
-    """공백 무시한 '문자 LCS 커버리지' (띄어쓰기 영향 0)"""
-    r, h = list(ref.replace(" ", "")), list(hyp.replace(" ", ""))
-    if not r:
+def _ins_del_cost(symbol: str, pos: str) -> float:
+    if pos == "V":
+        return 0.9
+    if symbol in {"ᄒ","ᇂ"}:
+        return 0.35
+    return 0.7 if pos == "T" else 0.8
+
+def _weighted_levenshtein(a_tris: Sequence[Tuple[str, str, str]],
+                          b_tris: Sequence[Tuple[str, str, str]]) -> float:
+    """음절 단위 DP, 음절 내 자모치환 비용 합산 → 정규화 편집거리(0~1)"""
+    n, m = len(a_tris), len(b_tris)
+    dp = [[0.0]*(m+1) for _ in range(n+1)]
+
+    def syl_del_cost(t: Tuple[str, str, str]) -> float:
+        c, v, tt = t
+        return _ins_del_cost(c, "C") + _ins_del_cost(v, "V") + _ins_del_cost(tt, "T")
+
+    for i in range(1, n+1):
+        dp[i][0] = dp[i-1][0] + syl_del_cost(a_tris[i-1])
+    for j in range(1, m+1):
+        dp[0][j] = dp[0][j-1] + syl_del_cost(b_tris[j-1])
+
+    for i in range(1, n+1):
+        for j in range(1, m+1):
+            ac, av, at = a_tris[i-1]
+            bc, bv, bt = b_tris[j-1]
+            sub_cost = (
+                _cons_sim_cost(ac, bc, "C") +
+                _vowel_sim_cost(av, bv) +
+                _cons_sim_cost(at, bt, "T")
+            )
+            dp[i][j] = min(
+                dp[i-1][j] + syl_del_cost(a_tris[i-1]),
+                dp[i][j-1] + syl_del_cost(b_tris[j-1]),
+                dp[i-1][j-1] + sub_cost
+            )
+
+    if n == 0 and m == 0:
         return 0.0
-    sm = SequenceMatcher(None, r, h)
-    matched = sum(b.size for b in sm.get_matching_blocks())
-    return matched / len(r)
+    base = a_tris if n >= m else b_tris
+    denom = sum(syl_del_cost(t) for t in base)
+    return (dp[n][m] / denom) if denom > 0 else 0.0
 
-def calc_similarity(stt_text: str, ref_text: str) -> int:
-    """
-    띄어쓰기 감점 제거 버전:
-    - 모든 지표에서 공백 영향 제거
-    - 문자/bi-gram/자모 혼합(단어 유사도는 제외)
-    - 공백 무시 LCS 커버리지로 soft floor
-    - 감마 스케일
-    """
+def calc_pronunciation_score(stt_text: str, ref_text: str) -> int:
+    """발음 점수 0~100"""
     if not stt_text or not ref_text:
         return 0
+    stt_pron = _normalize_pron(stt_text)
+    ref_pron = _normalize_pron(ref_text)
+    a_tris = _to_jamo_triplets(stt_pron)
+    b_tris = _to_jamo_triplets(ref_pron)
+    dist = _weighted_levenshtein(a_tris, b_tris)
+    sim = 1.0 - dist
+    score = (sim ** 0.6) * 100.0
+    if stt_pron and ref_pron:
+        if stt_pron[0] == ref_pron[0]: score += 1.0
+        if stt_pron[-1] == ref_pron[-1]: score += 1.0
+    return int(max(0, min(100, round(score))))
 
-    # 전처리 (조사/정중어미 제거)
-    stt = _soft_korean_simplify(stt_text)
-    ref = _soft_korean_simplify(ref_text)
+def calc_similarity(stt_text: str, ref_text: str) -> int:
+    """기존 호환 래퍼"""
+    return calc_pronunciation_score(stt_text, ref_text)
 
-    # 공백 제거본
-    stt_ns = stt.replace(" ", "")
-    ref_ns = ref.replace(" ", "")
 
-    # 지표 (모두 공백 영향 없음)
-    c  = _char_sim(stt, ref)            # 내부에서 공백 제거
-    j2 = _jaccard_ngram(stt, ref, 2)    # 내부에서 공백 제거
-    js = _jamo_sim(stt, ref)            # 내부에서 공백 제거
-
-    # 가중 평균 (자모 비중↑: 발음 유사에 관대)
-    score = 0.30 * c + 0.20 * j2 + 0.50 * js
-
-    # 문두/문미 보너스도 공백 무시 기준으로
-    if ref_ns and stt_ns:
-        if stt_ns[0] == ref_ns[0]:
-            score += 0.02
-        if stt_ns[-1] == ref_ns[-1]:
-            score += 0.02
-
-    # 공백 무시 LCS 커버리지 기반 최저점 보장 (띄어쓰기와 무관)
-    cov = _char_coverage(ref, stt)   # ref 대비 매칭 비율
-    if cov >= 2/3:
-        score = max(score, 0.75)
-    elif cov >= 0.5:
-        score = max(score, 0.65)
-
-    score = min(1.0, score)
-
-    # 감마(γ)로 완만 상향 — 필요시 0.8~0.7로 내려 더 올릴 수 있음
-    GAMMA = 0.6
-    score = score ** GAMMA
-
-    return int(round(score * 100))
+# 명시적 내보내기
+__all__ = [
+    "transcribe_wav",
+    "calc_similarity",
+    "get_ref_text",
+    "calc_pronunciation_score",
+]
