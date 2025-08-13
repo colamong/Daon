@@ -140,8 +140,10 @@ function playHoverSound() {
     const audio = new Audio('/src/assets/effects/decide.mp3');
     audio.volume = 0.4;
     audio.play().catch(error => {
+      console.warn('호버 효과음 재생 실패:', error);
     });
   } catch (error) {
+    console.warn('호버 효과음 로드 실패:', error);
   }
 }
 </script>

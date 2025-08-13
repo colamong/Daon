@@ -41,19 +41,19 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const user = computed(() => {
-  log('ProfileCard - user:', auth.user)
+  console.log('ProfileCard - user:', auth.user)
   return auth.user
 })
 
 const userNationName = computed(() => {
-  log('ProfileCard - userNationName:', auth.userNationName)
-  log('ProfileCard - nations:', auth.nations?.length)
-  log('ProfileCard - nationCode:', auth.user?.nationCode)
+  console.log('ProfileCard - userNationName:', auth.userNationName)
+  console.log('ProfileCard - nations:', auth.nations?.length)
+  console.log('ProfileCard - nationCode:', auth.user?.nationCode)
   return auth.userNationName
 })
 
 onMounted(async () => {
-  log('ProfileCard mounted - 초기 상태:', {
+  console.log('ProfileCard mounted - 초기 상태:', {
     user: auth.user,
     token: auth.token,
     nationsCount: auth.nations?.length
@@ -67,11 +67,11 @@ onMounted(async () => {
     try {
       await auth.getCurrentUser()
     } catch (error) {
-      error('사용자 정보 로드 실패:', error)
+      console.error('사용자 정보 로드 실패:', error)
     }
   }
   
-  log('ProfileCard mounted 완료:', {
+  console.log('ProfileCard mounted 완료:', {
     user: auth.user,
     nationsCount: auth.nations?.length,
     userNationName: auth.userNationName
