@@ -42,6 +42,7 @@ import { useNotification } from '@/composables/useNotification.js';
 
 const props = defineProps({
   modelValue: Boolean,
+  initialDate: String,
 });
 
 const emit = defineEmits(["update:modelValue", "add-event"]);
@@ -54,7 +55,14 @@ const description = ref("");
 
 watch(
   () => props.modelValue,
-  (newVal) => (visible.value = newVal)
+  (newVal) => {
+    visible.value = newVal;
+    if (newVal && props.initialDate) {
+      date.value = props.initialDate;
+    } else if (newVal) {
+      date.value = new Date().toISOString().substr(0, 10);
+    }
+  }
 );
 
 watch(visible, (newVal) => emit("update:modelValue", newVal));

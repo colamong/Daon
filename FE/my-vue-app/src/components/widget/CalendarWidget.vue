@@ -82,7 +82,7 @@
 import { ref, computed } from "vue";
 import dayjs from "dayjs";
 
-const emit = defineEmits(["update-month"]);
+const emit = defineEmits(["update-month", "date-selected"]);
 const props = defineProps({
   events: { type: Array, required: true },
 });
@@ -125,7 +125,7 @@ function nextMonth() {
   emit("update-month", current.value.format("YYYY-MM"));
 }
 function selectDate(date) {
-  /* 필요한 경우 */
+  emit("date-selected", date);
 }
 
 // 일정 색과 맞추기 위한 컬러 리스트
