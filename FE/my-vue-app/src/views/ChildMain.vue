@@ -38,7 +38,8 @@
       >
         <div
           @click="goToPenguin"
-          class="block bg-purple-300 rounded-2xl overflow-hidden shadow hover:shadow-lg transition cursor-pointer"
+          @mouseenter="playHoverSound"
+          class="block bg-purple-300 rounded-2xl overflow-hidden shadow hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer hover-glow"
         >
           <div class="p-4">
             <h2
@@ -56,7 +57,8 @@
 
         <div
           @click="goToDrawing"
-          class="block bg-blue-400 rounded-2xl overflow-hidden shadow hover:shadow-lg transition cursor-pointer"
+          @mouseenter="playHoverSound"
+          class="block bg-blue-400 rounded-2xl overflow-hidden shadow hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer hover-glow"
         >
           <div class="p-4">
             <h2 class="text-4xl font-shark mb-2 text-center text-outline-white">
@@ -131,8 +133,40 @@ function goToDrawing() {
     });
   }
 }
+
+// 호버 시 효과음 재생
+function playHoverSound() {
+  try {
+    const audio = new Audio('/src/assets/effects/decide.mp3');
+    audio.volume = 0.4;
+    audio.play().catch(error => {
+      console.warn('호버 효과음 재생 실패:', error);
+    });
+  } catch (error) {
+    console.warn('호버 효과음 로드 실패:', error);
+  }
+}
 </script>
 
 <style scoped>
-/* 필요 시 스타일 작성 */
+.hover-glow:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 
+              0 0 20px rgba(255, 255, 255, 0.5),
+              inset 0 0 20px rgba(255, 255, 255, 0.2);
+  transform: translateY(-5px) scale(1.05);
+}
+
+/* 펭귀 버튼 전용 호버 효과 */
+.bg-purple-300.hover-glow:hover {
+  box-shadow: 0 20px 40px rgba(147, 51, 234, 0.4), 
+              0 0 25px rgba(196, 181, 253, 0.6),
+              inset 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+/* 그림일기 버튼 전용 호버 효과 */
+.bg-blue-400.hover-glow:hover {
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.4), 
+              0 0 25px rgba(147, 197, 253, 0.6),
+              inset 0 0 20px rgba(255, 255, 255, 0.3);
+}
 </style>
