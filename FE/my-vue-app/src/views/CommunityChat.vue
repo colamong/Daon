@@ -31,7 +31,7 @@
 
       <!-- 오른쪽: 참가중인 채팅방 목록 -->
       <div
-        class="w-80 h-[600px] px-6 py-4 bg-gradient-to-b from-blue-400 via-indigo-300 to-white rounded-lg shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] inline-flex flex-col justify-start items-start overflow-y-auto"
+        class="w-88 h-[600px] px-6 py-4 bg-gradient-to-b from-blue-400 via-indigo-300 to-white rounded-lg shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] inline-flex flex-col justify-start items-start overflow-y-auto"
       >
         <div class="self-stretch flex justify-between items-center mb-2">
           <div class="text-white text-2xl font-paperSemi">
@@ -86,6 +86,82 @@ const $router = useRouter();
 const communityStore = useCommunityStore();
 const authStore = useAuthStore();
 
+// 지역명 매핑 (실제 파일명에 맞춤)
+const regionNameMap = {
+  // 서울특별시 구 (서울은 구별로 세분화)
+  '강남구': { name: 'gangnam', ext: 'png' },
+  '강동구': { name: 'gangdong', ext: 'png' },
+  '강북구': { name: 'gangbuk', ext: 'png' },
+  '강서구': { name: 'gangseo', ext: 'png' },
+  '관악구': { name: 'gwanak', ext: 'png' },
+  '광진구': { name: 'gwangjin', ext: 'png' },
+  '구로구': { name: 'guro', ext: 'jpg' },
+  '금천구': { name: 'geumcheon', ext: 'png' },
+  '노원구': { name: 'nowon', ext: 'png' },
+  '도봉구': { name: 'dobong', ext: 'png' },
+  '동대문구': { name: 'dongdaemun', ext: 'png' },
+  '동작구': { name: 'dongjak', ext: 'png' },
+  '마포구': { name: 'mapo', ext: 'png' },
+  '서대문구': { name: 'seodaemun', ext: 'png' },
+  '서초구': { name: 'seocho', ext: 'png' },
+  '성동구': { name: 'seongdong', ext: 'png' },
+  '성북구': { name: 'seongbuk', ext: 'png' },
+  '송파구': { name: 'songpa', ext: 'png' },
+  '양천구': { name: 'yangcheon', ext: 'png' },
+  '영등포구': { name: 'yeongdeungpo', ext: 'png' },
+  '용산구': { name: 'yongsan', ext: 'png' },
+  '은평구': { name: 'eunpyeong', ext: 'png' },
+  '종로구': { name: 'jongno', ext: 'png' },
+  '중구': { name: 'junggu', ext: 'png' },
+  '중랑구': { name: 'jungnang', ext: 'png' },
+  
+  // 광역시/도 (시도 단위로 통일)
+  '부산광역시': { name: 'busan', ext: 'png' },
+  '대구광역시': { name: 'daegu', ext: 'png' },
+  '인천광역시': { name: 'incheon', ext: 'png' },
+  '광주광역시': { name: 'gwangju', ext: 'jpg' },
+  '대전광역시': { name: 'daegeon', ext: 'png' },
+  '울산광역시': { name: 'ulsan', ext: 'svg' },
+  '세종시': { name: 'sejong', ext: 'jpg' },
+  '경기도': { name: 'gyeongido', ext: 'jpg' },
+  '강원특별자치도': { name: 'gangwon', ext: 'jpg' },
+  '충청북도': { name: 'chungbuk', ext: 'png' },
+  '충청남도': { name: 'chungnam', ext: 'png' },
+  '전북특별자치도': { name: 'jeonbuk', ext: 'png' },
+  '전라남도': { name: 'jeonnam', ext: 'png' },
+  '경상북도': { name: 'gyeongbuk', ext: 'png' },
+  '경상남도': { name: 'gyeongnam', ext: 'svg' },
+  '제주특별자치도': { name: 'jeju', ext: 'svg' }
+};
+
+// 지역별 이미지 매핑 함수  
+const getRegionImage = (location) => {
+  const parts = location.split(' ');
+  const region = parts[0].trim();
+  const district = parts[1] ? parts[1].trim() : '';
+  
+  try {
+    let fileInfo;
+    
+    // 서울특별시는 구별로 세분화
+    if (region === '서울특별시' && district && regionNameMap[district]) {
+      fileInfo = regionNameMap[district];
+    } 
+    // 다른 지역은 시/도 단위
+    else if (regionNameMap.hasOwnProperty(region)) {
+      fileInfo = regionNameMap[region];
+    }
+    else {
+      throw new Error('이미지 없음');
+    }
+    
+    // Vite의 정적 자원 import 방식 사용
+    return new URL(`../assets/images/re/${fileInfo.name}.${fileInfo.ext}`, import.meta.url).href;
+  } catch (error) {
+    return new URL('../assets/icons/image-placeholder.svg', import.meta.url).href;
+  }
+};
+
 // 상태
 const currentCommunity = ref(null);
 const chatMessages = ref([]);
@@ -106,7 +182,7 @@ const joinedRooms = computed(() => {
   return communityStore.joinedCommunities.map((community) => ({
     id: community.id,
     location: community.title,
-    image: "", // 기본 이미지 사용
+    image: getRegionImage(community.title), // 지역별 이미지 매핑
   }));
 });
 
@@ -167,13 +243,12 @@ const handleSendMessage = async (message) => {
 
 // 메시지 히스토리 로드 (초기 로딩용)
 const loadMessages = async () => {
-  if (!currentCommunity.value) return;
+  if (!currentCommunity.value || !authStore.user?.id) return;
   try {
-    const messages = await communityService.getMessages(currentCommunity.value.id);
+    const messages = await communityService.getMessages(currentCommunity.value.id, authStore.user.id);
     chatMessages.value = messages || [];
     // WebSocket 서비스에도 메시지 설정
     websocketService.setMessages(messages || []);
-    console.log("메시지 히스토리 로드 완료:", chatMessages.value.length, "개");
   } catch (error) {
     console.error("메시지 목록 로드 실패:", error);
   }
@@ -202,13 +277,13 @@ const connectWebSocket = async () => {
             message: wsMsg.text, // websocketService에서는 text 필드 사용
             userId: wsMsg.userId,
             userName: wsMsg.userName,
+            userProfileImg: wsMsg.userProfileImg,
             sentAt: wsMsg.timestamp // websocketService에서는 timestamp 필드 사용
           });
         }
       });
     });
     
-    console.log("WebSocket 연결 완료");
   } catch (error) {
     console.error("WebSocket 연결 실패:", error);
     isConnected.value = false;
@@ -257,7 +332,6 @@ const loadCommunityData = async () => {
     
     // 현재 커뮤니티 구독
     websocketService.subscribeToCommunity(communityId);
-    console.log(`커뮤니티 ${communityId} 구독 완료`);
   } catch (error) {
     console.error("채팅방 로드 실패:", error);
     alert("채팅방을 불러오는데 실패했습니다.");

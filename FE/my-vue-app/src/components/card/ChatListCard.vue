@@ -2,7 +2,7 @@
 <template>
   <router-link
     :to="link"
-    class="flex items-center w-full max-w-sm rounded-xl shadow border bg-white px-4 py-3"
+    class="flex items-center w-full max-w-md rounded-xl shadow border bg-white px-4 py-3"
   >
     <!-- 이미지 -->
     <img
@@ -12,7 +12,7 @@
     />
 
     <!-- 지역명 -->
-    <div class="flex-1 text-lg font-paperBold text-black">
+    <div class="flex-1 text-base font-paperBold text-black">
       {{ location }}
     </div>
 
