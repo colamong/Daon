@@ -249,7 +249,6 @@ const loadMessages = async () => {
     chatMessages.value = messages || [];
     // WebSocket 서비스에도 메시지 설정
     websocketService.setMessages(messages || []);
-    console.log("메시지 히스토리 로드 완료:", chatMessages.value.length, "개");
   } catch (error) {
     console.error("메시지 목록 로드 실패:", error);
   }
@@ -278,13 +277,13 @@ const connectWebSocket = async () => {
             message: wsMsg.text, // websocketService에서는 text 필드 사용
             userId: wsMsg.userId,
             userName: wsMsg.userName,
+            userProfileImg: wsMsg.userProfileImg,
             sentAt: wsMsg.timestamp // websocketService에서는 timestamp 필드 사용
           });
         }
       });
     });
     
-    console.log("WebSocket 연결 완료");
   } catch (error) {
     console.error("WebSocket 연결 실패:", error);
     isConnected.value = false;
@@ -333,7 +332,6 @@ const loadCommunityData = async () => {
     
     // 현재 커뮤니티 구독
     websocketService.subscribeToCommunity(communityId);
-    console.log(`커뮤니티 ${communityId} 구독 완료`);
   } catch (error) {
     console.error("채팅방 로드 실패:", error);
     alert("채팅방을 불러오는데 실패했습니다.");

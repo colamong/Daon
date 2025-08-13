@@ -16,6 +16,7 @@ public class ChatMessageResponseDto {
     private Long communityId;
     private Long userId;
     private String userName;
+    private String userProfileImg;
     private String message;
     private LocalDateTime sentAt;
     
@@ -24,6 +25,7 @@ public class ChatMessageResponseDto {
         this.communityId = chatMessage.getCommunity().getId();
         this.userId = chatMessage.getUser().getId();
         this.userName = chatMessage.getUser().getNickname();
+        this.userProfileImg = chatMessage.getUser().getProfileImg();
         this.message = chatMessage.getMessage();
         this.sentAt = chatMessage.getSentAt();
     }
