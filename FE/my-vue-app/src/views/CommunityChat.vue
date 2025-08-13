@@ -31,7 +31,7 @@
 
       <!-- 오른쪽: 참가중인 채팅방 목록 -->
       <div
-        class="w-80 h-[600px] px-6 py-4 bg-gradient-to-b from-blue-400 via-indigo-300 to-white rounded-lg shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] inline-flex flex-col justify-start items-start overflow-y-auto"
+        class="w-88 h-[600px] px-6 py-4 bg-gradient-to-b from-blue-400 via-indigo-300 to-white rounded-lg shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] inline-flex flex-col justify-start items-start overflow-y-auto"
       >
         <div class="self-stretch flex justify-between items-center mb-2">
           <div class="text-white text-2xl font-paperSemi">

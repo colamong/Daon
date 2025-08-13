@@ -83,7 +83,7 @@
     <!-- 정렬 & 필터 바 -->
     <div class="flex items-center justify-between">
       <h3 class="text-2xl font-bold">
-        {{ activeTab === 'all' ? '온동네 커뮤니티' : '참여중인 채팅방' }}
+        {{ getListTitle() }}
       </h3>
       <div v-if="activeTab === 'all'" class="flex items-center space-x-4">
         <button
@@ -259,14 +259,9 @@ const regionNameMap = {
 
 // 지역별 이미지 매핑 함수  
 const getRegionImage = (location) => {
-  console.log('🔍 Location:', location);
-  
   const parts = location.split(' ');
-  const region = parts[0].trim(); // 공백 제거
+  const region = parts[0].trim();
   const district = parts[1] ? parts[1].trim() : '';
-  
-  console.log('🔍 Region:', `"${region}"`, 'District:', `"${district}"`);
-  console.log('🔍 매핑 객체에 해당 키 존재?', Object.keys(regionNameMap).includes(region));
   
   try {
     let fileInfo;
@@ -274,25 +269,18 @@ const getRegionImage = (location) => {
     // 서울특별시는 구별로 세분화
     if (region === '서울특별시' && district && regionNameMap[district]) {
       fileInfo = regionNameMap[district];
-      console.log('✅ 서울 구별 매핑:', fileInfo);
     } 
-    // 다른 지역은 시/도 단위 - 키가 정확히 매칭되는지 확인
+    // 다른 지역은 시/도 단위
     else if (regionNameMap.hasOwnProperty(region)) {
       fileInfo = regionNameMap[region];
-      console.log('✅ 시도 매핑:', fileInfo);
     }
     else {
-      console.log('❌ 매핑 실패');
-      console.log('🔍 가능한 키들:', Object.keys(regionNameMap));
       throw new Error('이미지 없음');
     }
     
-    const imagePath = `/images/re/${fileInfo.name}.${fileInfo.ext}`;
-    console.log('🖼️ 최종 이미지 경로:', imagePath);
-    return imagePath;
+    return new URL(`../assets/images/re/${fileInfo.name}.${fileInfo.ext}`, import.meta.url).href;
   } catch (error) {
-    console.log('🚫 에러 발생:', error.message);
-    return '/src/assets/icons/image-placeholder.svg';
+    return new URL('../assets/icons/image-placeholder.svg', import.meta.url).href;
   }
 };
 
@@ -310,7 +298,7 @@ const filteredSuggestions = computed(() =>
     .map((c) => ({ 
       title: c.title, 
       subtitle: "", 
-      image: "", 
+      image: getRegionImage(c.title), // 지역별 이미지 매핑
       link: `/dashboard/community/${c.id}` // 실제 채팅방 링크로 변경
     }))
     .filter((r) => r.title.includes(searchQuery.value))
@@ -385,9 +373,18 @@ const regionOptions = computed(() =>
 // 전체 채팅방: 필터 & 정렬된 리스트
 const processedAllCommunities = computed(() => {
   let list = communityStore.communities.slice();
+  
+  // 실시간 검색 필터링
+  if (searchQuery.value.trim()) {
+    list = list.filter((c) => c.title.includes(searchQuery.value.trim()));
+  }
+  
+  // 지역 드롭다운 필터링
   if (selectedRegion.value) {
     list = list.filter((c) => c.title.startsWith(selectedRegion.value));
   }
+  
+  // 정렬
   if (sortOption.value === "popularity") {
     list.sort((a, b) => b.currentParticipants - a.currentParticipants);
   } else if (sortOption.value === "alpha") {
@@ -444,7 +441,7 @@ watch(searchQuery, async (v) => {
 });
 
 // 필터링/정렬/탭 변경 시 페이지 리셋
-watch([selectedRegion, sortOption, joinedSortOption, activeTab], () => {
+watch([searchQuery, selectedRegion, sortOption, joinedSortOption, activeTab], () => {
   page.value = 0;
 });
 async function openDropdown() {
@@ -469,6 +466,17 @@ function goChat(id) {
     params: { id },
   });
 }
+
+// 리스트 제목 동적 생성
+const getListTitle = () => {
+  const baseTitle = activeTab.value === 'all' ? '온동네 커뮤니티' : '참여중인 채팅방';
+  
+  if (activeTab.value === 'all' && searchQuery.value.trim()) {
+    return `"${searchQuery.value}" 검색 결과 (${currentList.value.length}개)`;
+  }
+  
+  return baseTitle;
+};
 </script>
 
 <style scoped>
