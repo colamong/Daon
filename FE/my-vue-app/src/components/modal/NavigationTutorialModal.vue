@@ -134,7 +134,7 @@ const tutorialSteps = [
       "🐧 펭귄과 대화를 통해 아이들이 즐겁게 하루를 기록합니다.",
       "🖼️ 아이의 하루를 그림으로 확인해보세요.",
     ],
-    image: "/src/assets/images/pet.gif",
+    image: new URL("@/assets/images/pet.gif", import.meta.url).href,
   },
   {
     target: '[data-tutorial="profile"]',
@@ -147,7 +147,7 @@ const tutorialSteps = [
       "📈 아이의 활동을 확인하고 소통해보세요",
       "⚙️ 아이의 관심사에 맞는 맞춤 설정을 할 수 있습니다.",
     ],
-    image: "/src/assets/images/child_register.gif",
+    image: new URL("@/assets/images/child_register.gif", import.meta.url).href,
   },
   {
     target: '[data-tutorial="document"]',
@@ -160,7 +160,7 @@ const tutorialSteps = [
       "📝 가정통신문부터 다양한 공문서까지.",
       "🤖 번역과 요약을 한번에!.",
     ],
-    image: "/src/assets/images/ocr.gif",
+    image: new URL("@/assets/images/ocr.gif", import.meta.url).href,
   },
   {
     target: '[data-tutorial="community"]',
@@ -173,7 +173,7 @@ const tutorialSteps = [
       "💬 육아 고민과 유용한 정보를 공유해보세요.",
       "🎆 경험을 나누고 서로 도움을 받을 수 있어요.",
     ],
-    image: "/src/assets/images/chat.gif",
+    image: new URL("@/assets/images/chat.gif", import.meta.url).href,
   },
   {
     target: '[data-tutorial="growth"]',
@@ -185,7 +185,7 @@ const tutorialSteps = [
       "🎯 특정 테마를 집중적으로 학습할 수 있어요.",
       "📈 발음 평가도 제공합니다.",
     ],
-    image: "/src/assets/images/learning.gif",
+    image: new URL("@/assets/images/learning.gif", import.meta.url).href,
   },
   {
     target: "",
@@ -197,7 +197,7 @@ const tutorialSteps = [
       "🔄 튜토리얼의 도움이 필요하면 다시 확인해보세요.",
       "✨ 언제나 더 나은 사용 경험을 위해 준비되어 있습니다!",
     ],
-    image: "/src/assets/images/retry.gif",
+    image: new URL("@/assets/images/retry.gif", import.meta.url).href,
   },
 ];
 
