@@ -1,9 +1,7 @@
 <template>
   <div v-if="modelValue">
     <!-- 오버레이 -->
-    <div
-      class="fixed inset-0 bg-black bg-opacity-50 z-40"
-    ></div>
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-40"></div>
 
     <!-- BaseModal 스타일을 따온 커스텀 모달 (오버레이 없음) -->
     <div
@@ -19,7 +17,7 @@
         <div
           class="flex items-center justify-between px-4 py-2 bg-blue-100 border-b border-blue-200"
         >
-          <h3 class="text-lg font-semibold text-gray-800">
+          <h3 class="text-lg font-paperSemi text-gray-800">
             {{ currentStepData.title }} - 이용 가이드
           </h3>
           <!-- 컨트롤 버튼들 -->
@@ -108,7 +106,14 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+} from "vue";
 import IconButton from "@/components/button/IconButton.vue";
 
 const props = defineProps({
@@ -224,7 +229,7 @@ const updateHighlight = async () => {
   const allButtons = document.querySelectorAll("[data-tutorial]");
   allButtons.forEach((btn) => {
     btn.classList.remove("tutorial-highlight");
-    btn.style.pointerEvents = '';
+    btn.style.pointerEvents = "";
   });
 
   const step = tutorialSteps[currentStep.value];
@@ -240,7 +245,7 @@ const updateHighlight = async () => {
 
   // 현재 단계 버튼에 하이라이트 클래스 추가 및 클릭 방지
   targetElement.classList.add("tutorial-highlight");
-  targetElement.style.pointerEvents = 'none';
+  targetElement.style.pointerEvents = "none";
 };
 
 // example 순환 시작
@@ -302,7 +307,7 @@ const closeTutorial = () => {
   const allButtons = document.querySelectorAll("[data-tutorial]");
   allButtons.forEach((btn) => {
     btn.classList.remove("tutorial-highlight");
-    btn.style.pointerEvents = '';
+    btn.style.pointerEvents = "";
   });
 
   emit("update:modelValue", false);
@@ -314,7 +319,7 @@ watch(
   (newValue) => {
     if (newValue) {
       // 스크롤 방지
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
       currentStep.value = 0;
       // 좀 더 여유를 두고 하이라이트 적용
       setTimeout(() => {
@@ -323,7 +328,7 @@ watch(
       }, 300);
     } else {
       // 스크롤 복원
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
       stopExampleRotation();
     }
   }
@@ -349,7 +354,7 @@ onMounted(() => {
 
 // 컴포넌트 언마운트 시 스크롤 복원
 onBeforeUnmount(() => {
-  document.body.style.overflow = '';
+  document.body.style.overflow = "";
 });
 </script>
 

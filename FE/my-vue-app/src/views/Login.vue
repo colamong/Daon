@@ -6,8 +6,8 @@
     <!-- 로고 + 제목 -->
     <div class="flex flex-col items-center space-y-2">
       <img 
-        :src="loginImage" 
-        alt="로그인 이미지" 
+        src="@/assets/images/daon_logo.png" 
+        alt="다온 로고" 
         class="w-20 h-20 object-contain"
       />
       <h2 class="text-2xl font-semibold text-black font-paper">로그인</h2>
@@ -130,7 +130,6 @@ import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { useNotification } from "@/composables/useNotification.js";
-import loginImage from "@/assets/images/login.png";
 
 const router = useRouter();
 const auth = useAuthStore();
