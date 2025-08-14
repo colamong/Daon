@@ -3,7 +3,6 @@
     <!-- 오버레이 -->
     <div
       class="fixed inset-0 bg-black bg-opacity-50 z-40"
-      style="pointer-events: none"
     ></div>
 
     <!-- BaseModal 스타일을 따온 커스텀 모달 (오버레이 없음) -->
@@ -109,7 +108,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
 import IconButton from "@/components/button/IconButton.vue";
 
 const props = defineProps({
@@ -124,6 +123,18 @@ const emit = defineEmits(["update:modelValue"]);
 // 튜토리얼 스텝 데이터
 const tutorialSteps = [
   {
+    target: "",
+    title: "튜토리얼 다시 재생",
+    icon: "🔄",
+    description: "튜토리얼을 다시 볼 수 있습니다.",
+    example: [
+      "💡 언제든지 튜토리얼을 다시 볼 수 있어요.",
+      "🔄 튜토리얼의 도움이 필요하면 다시 확인해보세요.",
+      "✨ 언제나 더 나은 사용 경험을 위해 준비되어 있습니다!",
+    ],
+    image: new URL("@/assets/images/retry.gif", import.meta.url).href,
+  },
+  {
     target: '[data-tutorial="penguin"]',
     title: "펭구랑 놀자",
     icon: "🎮",
@@ -136,19 +147,19 @@ const tutorialSteps = [
     ],
     image: new URL("@/assets/images/pet.gif", import.meta.url).href,
   },
-  {
-    target: '[data-tutorial="profile"]',
-    title: "아이 프로필",
-    icon: "👤",
-    description:
-      "자녀의 학습 현황, 관심사, 성장 기록을 관리할 수 있는 개인화된 공간입니다.",
-    example: [
-      "💡 아이를 등록하고 아이의 활동을 기록하고 관찰하세요.",
-      "📈 아이의 활동을 확인하고 소통해보세요",
-      "⚙️ 아이의 관심사에 맞는 맞춤 설정을 할 수 있습니다.",
-    ],
-    image: new URL("@/assets/images/child_register.gif", import.meta.url).href,
-  },
+  // {
+  //   target: '[data-tutorial="profile"]',
+  //   title: "아이 프로필",
+  //   icon: "👤",
+  //   description:
+  //     "자녀의 학습 현황, 관심사, 성장 기록을 관리할 수 있는 개인화된 공간입니다.",
+  //   example: [
+  //     "💡 아이를 등록하고 아이의 활동을 기록하고 관찰하세요.",
+  //     "📈 아이의 활동을 확인하고 소통해보세요",
+  //     "⚙️ 아이의 관심사에 맞는 맞춤 설정을 할 수 있습니다.",
+  //   ],
+  //   image: new URL("@/assets/images/child_register.gif", import.meta.url).href,
+  // },
   {
     target: '[data-tutorial="document"]',
     title: "문서 도우미",
@@ -187,18 +198,6 @@ const tutorialSteps = [
     ],
     image: new URL("@/assets/images/learning.gif", import.meta.url).href,
   },
-  {
-    target: "",
-    title: "튜토리얼 다시 재생",
-    icon: "🔄",
-    description: "튜토리얼을 다시 볼 수 있습니다.",
-    example: [
-      "💡 언제든지 튜토리얼을 다시 볼 수 있어요.",
-      "🔄 튜토리얼의 도움이 필요하면 다시 확인해보세요.",
-      "✨ 언제나 더 나은 사용 경험을 위해 준비되어 있습니다!",
-    ],
-    image: new URL("@/assets/images/retry.gif", import.meta.url).href,
-  },
 ];
 
 const currentStep = ref(0);
@@ -221,10 +220,11 @@ const currentExample = computed(() => {
 const updateHighlight = async () => {
   await nextTick();
 
-  // 기존 하이라이트 제거
+  // 기존 하이라이트 제거 및 클릭 이벤트 복원
   const allButtons = document.querySelectorAll("[data-tutorial]");
   allButtons.forEach((btn) => {
     btn.classList.remove("tutorial-highlight");
+    btn.style.pointerEvents = '';
   });
 
   const step = tutorialSteps[currentStep.value];
@@ -238,8 +238,9 @@ const updateHighlight = async () => {
     return;
   }
 
-  // 현재 단계 버튼에 하이라이트 클래스 추가
+  // 현재 단계 버튼에 하이라이트 클래스 추가 및 클릭 방지
   targetElement.classList.add("tutorial-highlight");
+  targetElement.style.pointerEvents = 'none';
 };
 
 // example 순환 시작
@@ -297,20 +298,23 @@ const skipTutorial = () => {
 // 튜토리얼 닫기
 const closeTutorial = () => {
   stopExampleRotation();
-  // 모든 하이라이트 제거
+  // 모든 하이라이트 제거 및 클릭 이벤트 복원
   const allButtons = document.querySelectorAll("[data-tutorial]");
   allButtons.forEach((btn) => {
     btn.classList.remove("tutorial-highlight");
+    btn.style.pointerEvents = '';
   });
 
   emit("update:modelValue", false);
 };
 
-// 모달이 열릴 때 하이라이트 적용
+// 모달이 열릴 때 하이라이트 적용 및 스크롤 방지
 watch(
   () => props.modelValue,
   (newValue) => {
     if (newValue) {
+      // 스크롤 방지
+      document.body.style.overflow = 'hidden';
       currentStep.value = 0;
       // 좀 더 여유를 두고 하이라이트 적용
       setTimeout(() => {
@@ -318,6 +322,8 @@ watch(
         startExampleRotation();
       }, 300);
     } else {
+      // 스크롤 복원
+      document.body.style.overflow = '';
       stopExampleRotation();
     }
   }
@@ -339,6 +345,11 @@ onMounted(() => {
   };
 
   return cleanup;
+});
+
+// 컴포넌트 언마운트 시 스크롤 복원
+onBeforeUnmount(() => {
+  document.body.style.overflow = '';
 });
 </script>
 

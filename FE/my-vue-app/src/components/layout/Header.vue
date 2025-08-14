@@ -20,13 +20,6 @@
         펭구랑 놀자
       </button>
       <button
-        @click="goChildProfile"
-        class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
-        data-tutorial="profile"
-      >
-        아이 프로필
-      </button>
-      <button
         @click="goOCRTool"
         class="text-xl font-paper text-black hover:font-paperBold hover:text-blue-600"
         data-tutorial="document"
