@@ -58,11 +58,15 @@ build-fe:
   stage: build_fe
   rules:
     - when: never
+  script:
+    - echo "Skipping build-fe job (disabled)"
 
 package-fe:
   stage: package_fe
   rules:
     - when: never
+  script:
+    - echo "Skipping package-fe job (disabled)"
 
 deploy-frontend:
   stage: deploy_fe
