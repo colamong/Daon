@@ -21,8 +21,7 @@
       <!-- 선택된 아이 이름 표시 (구름 모양) -->
       <CloudShape
         v-if="currentChild && currentChild.name"
-        bg-color="rgba(255, 255, 255, 0.7)"
-        class="shadow-lg"
+        bg-color="rgba(255, 255, 255, 1)"
       >
         <div class="flex items-center gap-3">
           <img

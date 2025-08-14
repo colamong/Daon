@@ -1,6 +1,19 @@
 <template>
-  <div class="cloud-container">
-    <slot></slot>
+  <div class="cloud-wrapper">
+    <svg class="cloud-svg" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
+      <path d="M60,110 
+               C30,110 30,80 50,80 
+               C40,40 80,40 100,65 
+               C130,25 180,25 210,65 
+               C240,40 280,40 290,80 
+               C310,80 310,110 290,110 
+               L60,110 Z" 
+            :fill="bgColor" 
+            />
+    </svg>
+    <div class="cloud-content">
+      <slot></slot>
+    </div>
   </div>
 </template>
 
@@ -15,36 +28,31 @@ const props = defineProps({
 </script>
 
 <style scoped>
-.cloud-container {
+.cloud-wrapper {
   position: relative;
-  background: v-bind(bgColor);
-  backdrop-filter: blur(4px);
-  border-radius: 50px;
-  padding: 12px 24px;
+  display: inline-block;
+  min-width: 400px;
+  height: 160px;
 }
 
-.cloud-container::before {
-  content: '';
+.cloud-svg {
   position: absolute;
-  top: -15px;
-  left: 15px;
-  width: 25px;
-  height: 25px;
-  background: v-bind(bgColor);
-  backdrop-filter: blur(4px);
-  border-radius: 50%;
-  box-shadow: 30px 0 0 12px v-bind(bgColor), 50px 0 0 8px v-bind(bgColor);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.cloud-container::after {
-  content: '';
+.cloud-content {
   position: absolute;
-  top: -10px;
-  right: 20px;
-  width: 18px;
-  height: 18px;
-  background: v-bind(bgColor);
-  backdrop-filter: blur(4px);
-  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80%;
+  text-align: center;
 }
 </style>
