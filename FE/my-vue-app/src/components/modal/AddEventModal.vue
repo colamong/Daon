@@ -3,7 +3,7 @@
     <template #header>일정 등록하기</template>
 
     <div class="px-4 py-2">
-      <label class="block mb-2 font-semibold">일정 제목:</label>
+      <label class="block mb-2 font-paperSemi">일정 제목:</label>
       <input
         v-model="title"
         type="text"
@@ -11,23 +11,23 @@
         class="w-full border rounded px-3 py-2 mb-4"
       />
 
-      <label class="block mb-2 font-semibold">기간:</label>
+      <label class="block mb-2 font-paperSemi">기간:</label>
       <input
         v-model="date"
         type="date"
         class="w-full border rounded px-3 py-2 mb-4"
       />
 
-      <label class="block mb-2 font-semibold">상세 내용:</label>
+      <label class="block mb-2 font-paperSemi">상세 내용:</label>
       <textarea
         v-model="description"
         placeholder="내용을 입력해주세요"
-        class="w-full border rounded px-3 py-2 h-40 resize-none"
+        class="w-full border rounded px-3 py-2 h-40 resize-none font-paper"
       ></textarea>
 
       <button
         @click="submitEvent"
-        class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        class="mt-4 px-4 py-2 bg-blue-600 text-white rounded font-paper hover:bg-blue-700"
       >
         일정 등록
       </button>
@@ -38,7 +38,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import BaseModal from "@/components/modal/BaseModal.vue";
-import { useNotification } from '@/composables/useNotification.js';
+import { useNotification } from "@/composables/useNotification.js";
 
 const props = defineProps({
   modelValue: Boolean,

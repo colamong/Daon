@@ -204,7 +204,7 @@
         <h3 class="text-xl font-shark text-gray-800 mb-2">
           그림일기를 만들고 있는 중입니다
         </h3>
-        <p class="text-rose-500 font-shark">>조금만 기다려 주세요 ✨ ></p>
+        <p class="text-rose-500 font-shark">조금만 기다려 주세요 ✨</p>
       </div>
     </div>
   </div>

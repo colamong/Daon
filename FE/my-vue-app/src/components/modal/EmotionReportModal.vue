@@ -15,10 +15,14 @@
       />
 
       <!-- 모달 내용 -->
-      <div class="bg-white rounded-xl overflow-hidden shadow-lg max-w-lg w-full min-w-[700px] min-h-[600px]">
+      <div
+        class="bg-white rounded-xl overflow-hidden shadow-lg max-w-lg w-full min-w-[700px] min-h-[600px]"
+      >
         <!-- 헤더 -->
-        <div class="flex items-center justify-between px-4 py-2 bg-blue-100 border-b border-blue-200">
-          <h3 class="text-lg font-semibold text-gray-800">
+        <div
+          class="flex items-center justify-between px-4 py-2 bg-blue-100 border-b border-blue-200"
+        >
+          <h3 class="text-lg font-paperSemi text-gray-800">
             {{ childName }} - {{ formatDate(reportDate) }} 감정 리포트
           </h3>
           <IconButton
@@ -34,10 +38,12 @@
           <div v-if="reportData" class="space-y-6">
             <!-- 그림일기 -->
             <div>
-              <h4 class="text-lg font-paperBold text-gray-800 mb-3">그림일기</h4>
+              <h4 class="text-lg font-paperBold text-gray-800 mb-3">
+                그림일기
+              </h4>
               <div class="bg-gray-50 rounded-lg p-4">
-                <img 
-                  :src="reportData.imageUrl || reportData.diaryImage" 
+                <img
+                  :src="reportData.imageUrl || reportData.diaryImage"
                   :alt="`${formatDate(reportDate)} 그림일기`"
                   class="w-full h-80 object-cover rounded-lg"
                 />
@@ -46,10 +52,16 @@
 
             <!-- 그림일기 내용 -->
             <div>
-              <h4 class="text-lg font-paperBold text-gray-800 mb-3">오늘의 이야기</h4>
+              <h4 class="text-lg font-paperBold text-gray-800 mb-3">
+                오늘의 이야기
+              </h4>
               <div class="bg-gray-50 rounded-lg p-4">
                 <p class="text-gray-700 font-paper leading-relaxed">
-                  {{ reportData.diaryText || reportData.text || '젤리를 좋아해 친구와 나누었어나, 친구가 다 가져가 속상함을 표현하였습니다.' }}
+                  {{
+                    reportData.diaryText ||
+                    reportData.text ||
+                    "젤리를 좋아해 친구와 나누었어나, 친구가 다 가져가 속상함을 표현하였습니다."
+                  }}
                 </p>
               </div>
             </div>
@@ -71,59 +83,59 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import IconButton from '@/components/button/IconButton.vue'
+import { computed } from "vue";
+import IconButton from "@/components/button/IconButton.vue";
 
 const props = defineProps({
   modelValue: {
     type: Boolean,
-    required: true
+    required: true,
   },
   childName: {
     type: String,
-    required: true
+    required: true,
   },
   reportDate: {
     type: String,
-    required: true
+    required: true,
   },
   reportData: {
     type: Object,
-    required: true
+    required: true,
   },
   showNavigation: {
     type: Boolean,
-    default: false
+    default: false,
   },
   hasPreviousReport: {
     type: Boolean,
-    default: false
+    default: false,
   },
   hasNextReport: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-const emit = defineEmits(['update:modelValue', 'previous', 'next'])
+const emit = defineEmits(["update:modelValue", "previous", "next"]);
 
 // 모달 외부 버튼 위치 계산 (모달 너비 700px 기준)
-const leftPosition = computed(() => "left-[calc(50%-350px-60px)]")
-const rightPosition = computed(() => "left-[calc(50%+350px+12px)]")
+const leftPosition = computed(() => "left-[calc(50%-350px-60px)]");
+const rightPosition = computed(() => "left-[calc(50%+350px+12px)]");
 
 function close() {
-  emit('update:modelValue', false)
+  emit("update:modelValue", false);
 }
 
 // 날짜 포맷팅 함수
 function formatDate(dateString) {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 </script>
 

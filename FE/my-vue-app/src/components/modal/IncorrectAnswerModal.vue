@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, ref } from 'vue'
 
 const props = defineProps({
   show: {
@@ -48,18 +48,51 @@ const closeModal = () => {
   emit('close')
 }
 
-// 오답 효과음 재생
-const playIncorrectSound = () => {
+// 사운드 미리 로딩
+const failAudio = ref(null)
+
+// 사운드 미리 로딩
+const loadFailSound = async () => {
   try {
-    const audio = new Audio('/src/assets/effects/fail.mp3')
-    audio.volume = 0.7
-    audio.play().catch(error => {
-      console.warn('오답 효과음 재생 실패:', error)
-    })
+    const failSoundModule = await import("@/assets/effects/fail.mp3")
+    failAudio.value = new Audio(failSoundModule.default)
+    failAudio.value.volume = 0.7
+    failAudio.value.preload = "auto"
   } catch (error) {
-    console.warn('오답 효과음 로드 실패:', error)
+    console.warn("오답 효과음 로드 실패:", error)
   }
 }
+
+// 오답 효과음 재생
+const playIncorrectSound = async () => {
+  if (!failAudio.value) {
+    console.warn("오답 효과음이 아직 로드되지 않았습니다.")
+    return
+  }
+  
+  try {
+    // 오디오 재설정 (이전 재생 중지)
+    failAudio.value.currentTime = 0
+    
+    const playPromise = failAudio.value.play()
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log("오답 효과음 재생 성공")
+        })
+        .catch((error) => {
+          console.warn("오답 효과음 재생 실패 - 사용자 상호작용 필요:", error)
+        })
+    }
+  } catch (error) {
+    console.warn("오답 효과음 재생 중 오류:", error)
+  }
+}
+
+// 컴포넌트 마운트 시 사운드 로드
+onMounted(async () => {
+  await loadFailSound()
+})
 
 // 모달이 표시될 때 효과음 재생
 watch(() => props.show, (newValue) => {
