@@ -21,5 +21,7 @@ public interface CommunityParticipationRepository extends JpaRepository<Communit
     
     Optional<CommunityParticipation> findByCommunityAndUserAndLeftAtIsNull(Community community, User user);
     
+    boolean existsByCommunityAndUser(Community community, User user);
+    
     Long countByCommunityIdAndLeftAtIsNull(Long communityId);
 }
