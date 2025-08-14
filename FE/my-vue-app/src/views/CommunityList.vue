@@ -148,7 +148,7 @@
     <section>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <div
-          v-for="post in currentList.slice(page * 12, (page + 1) * 12)"
+          v-for="post in currentList.slice(page * 9, (page + 1) * 9)"
           :key="post.id"
           class="cursor-pointer"
           @click="goChat(post.id)"
@@ -413,7 +413,7 @@ const currentList = computed(() => {
 
 // 페이징
 const page = ref(0);
-const itemsPerPage = 12;
+const itemsPerPage = 9;
 const totalPages = computed(() =>
   Math.ceil(currentList.value.length / itemsPerPage)
 );
