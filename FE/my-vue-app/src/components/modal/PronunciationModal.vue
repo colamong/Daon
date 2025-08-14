@@ -79,7 +79,8 @@
 <script setup>
 import { ref } from 'vue'
 import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
-import { evaluatePronunciation } from '@/services/pronunciationService'
+// 업로드 직전에 모노·16k WAV로 강제 정규화하는 API (ensureMono16kWav 내장)
+import { evaluatePronunciation } from '@/services/pronunciationService.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
@@ -93,43 +94,57 @@ const isRecording = ref(false)
 const recordingComplete = ref(false)
 const score = ref(0)
 
-let stream, recorder
+let stream = null
+let recorder = null
 
 async function toggleRecording() {
   if (isRecording.value) return
-  stream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
+  // 1) 모노/노이즈 억제 힌트로 입력 품질 고정 시도
+  stream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      channelCount: 1,          // 모노 요청
+      sampleRate: 16000,        // 샘플레이트 힌트(브라우저가 무시할 수 있음)
+      sampleSize: 16,
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true
+    }
+  })
+
+  // 2) localhost에서 점수가 잘 나왔던 녹음기 타입으로 고정
   recorder = new RecordRTC(stream, {
     type: 'audio',
-    mimeType: 'audio/wav',             // WAV로 인코딩
+    mimeType: 'audio/wav',
     recorderType: StereoAudioRecorder,
-    numberOfAudioChannels: 1,          // mono
-    desiredSampRate: 16000             // 16kHz (기기 따라 다를 수 있음)
+    numberOfAudioChannels: 1,   // 모노
+    desiredSampRate: 16000      // 16kHz 힌트
   })
 
   isRecording.value = true
   recorder.startRecording()
 
-  // 2초 녹음 후 자동 종료/업로드 (원하면 수동 종료 버튼으로 변경)
+  // 필요 시 수동 종료 버튼으로 바꿔도 됨
   setTimeout(stopAndUpload, 2000)
 }
 
 async function stopAndUpload() {
-  await new Promise(r => recorder.stopRecording(r))
-  const blob = recorder.getBlob() // audio/wav
+  // 3) 녹음 정지 + 짧은 플러시 대기
+  await new Promise(res => recorder.stopRecording(res))
+  await new Promise(r => setTimeout(r, 100))
+
+  const rawBlob = recorder.getBlob() // webm/wav 상관 없음(아래 API에서 정규화)
   stream.getTracks().forEach(t => t.stop())
   recorder.destroy()
   recorder = null
+  stream = null
 
-  // 업로드
-  const file = new File([blob], 'speech.wav', { type: 'audio/wav' })
-  const res = await evaluatePronunciation(props.questionId, file)
-  console.log('[Pronunciation] evaluate response:', res) 
+  // 4) 업로드 직전 pronunciationService.js 내부에서 ensureMono16kWav 실행됨
+  const res = await evaluatePronunciation(props.questionId, rawBlob)
+  console.log('[Pronunciation] evaluate response:', res)
 
-  // 백엔드 점수가 0~1이면 100점 환산
-  const raw = res?.score
-  const scaled = raw <= 1 ? Math.round(raw * 100) : Math.round(raw)
-  score.value = Number.isFinite(scaled) ? scaled : 0
+  // 5) 백엔드가 0~100 정수 점수 반환 
+  score.value = Number.isFinite(res?.score) ? res.score : 0
   recordingComplete.value = true
   isRecording.value = false
 }
@@ -146,12 +161,24 @@ function completeAssessment() {
 }
 
 function close() {
-  try { stream?.getTracks().forEach(t => t.stop()) } catch {}
-  if (recorder) { try { recorder.destroy() } catch {} }
+  try {
+    stream?.getTracks()?.forEach(t => t.stop())
+  } catch (e) {
+  }
+
+  if (recorder) {
+    try { recorder.destroy() } catch (e) { /* ignore */ }
+  }
+
+  recorder = null
+  stream = null
+
   retryRecording()
   emit('update:modelValue', false)
 }
+
 </script>
+
 
 
 <style scoped>
