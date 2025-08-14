@@ -112,6 +112,14 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    // 뒤로가기/앞으로가기 시 저장된 위치가 있으면 그 위치로
+    if (savedPosition) {
+      return savedPosition;
+    }
+    // 아니면 항상 상단으로
+    return { top: 0 };
+  },
 });
 
 router.beforeEach((to, from, next) => {
