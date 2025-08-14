@@ -290,6 +290,7 @@ const connectWebSocket = async () => {
               userName: wsMsg.userName,
               userProfileImg: wsMsg.userProfileImg,
               sentAt: wsMsg.timestamp, // websocketService에서는 timestamp 필드 사용
+              messageType: wsMsg.messageType || 'USER',
             });
           }
         });
