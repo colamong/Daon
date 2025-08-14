@@ -60,7 +60,7 @@ const cardStyle = computed(() => {
     },
     growth: {
       title: "성장 기록",
-      description: "아이의 하루를 상세히 기록",
+      description: "아이의 하루를 그림으로 기록",
       icon: new URL("@/assets/icons/diary.svg", import.meta.url).href,
       bg: "#E4F5EA",
     },

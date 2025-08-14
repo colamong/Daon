@@ -81,7 +81,7 @@
       <div class="flex flex-col gap-3 w-full md:w-[160px]">
         <div class="text-base font-semibold">고객지원</div>
         <ul class="text-sm leading-snug space-y-1">
-          <li><a href="#">자주 묻는 질문</a></li>
+          <li><span class="cursor-default">자주 묻는 질문</span></li>
           <li>
             <button
               @click="showTutorial"
@@ -90,8 +90,8 @@
               이용 가이드
             </button>
           </li>
-          <li><a href="#">공지사항</a></li>
-          <li><a href="#">문의하기</a></li>
+          <li><span class="cursor-default">공지사항</span></li>
+          <li><span class="cursor-default">문의하기</span></li>
         </ul>
       </div>
 

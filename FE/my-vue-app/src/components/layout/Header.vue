@@ -8,7 +8,7 @@
       <img 
         src="@/assets/images/daon_logo.png" 
         alt="다온 로고" 
-        class="w-8 h-8 object-contain"
+        class="w-12 h-12 object-contain"
       />
       <h3 class="text-2xl font-paper font-bold text-black hover:text-blue-600">
         다온(DA:ON)

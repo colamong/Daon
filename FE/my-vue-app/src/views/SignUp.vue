@@ -1,14 +1,14 @@
 <template>
   <form
     @submit.prevent="handleSignUp"
-    class="mx-auto w-full max-w-lg space-y-6 bg-white rounded-2xl shadow-lg p-8 m-10"
+    class="mx-auto w-full max-w-lg space-y-4 bg-white rounded-2xl shadow-lg p-6 m-6"
   >
     <!-- 로고 + 제목 -->
     <div class="flex flex-col items-center space-y-1">
       <img
-        :src="signupImage"
-        alt="회원가입 이미지"
-        class="!w-[100px] !h-[100px] object-contain"
+        src="@/assets/images/daon_logo.png"
+        alt="다온 로고"
+        class="!w-[80px] !h-[80px] object-contain"
       />
       <h2 class="text-2xl font-semibold text-black font-paper">회원가입</h2>
     </div>
@@ -231,7 +231,6 @@ import { useRouter } from "vue-router";
 import { useNotification } from "@/composables/useNotification.js";
 import { nationService } from "@/services/nationService.js";
 import { userService } from "@/services/userService.js";
-import signupImage from "@/assets/images/signup.png";
 import defaultUserIcon from "@/assets/images/user_icon.png";
 
 const auth = useAuthStore();

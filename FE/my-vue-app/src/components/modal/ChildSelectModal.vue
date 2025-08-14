@@ -27,18 +27,18 @@
 
         <!-- 아이 정보 -->
         <div class="ml-4 flex-1">
-          <p class="text-xl font-bold text-gray-800 mb-1">
+          <p class="text-xl font-paperBold text-gray-800 mb-1">
             이름 : {{ child.name }}
           </p>
-          <p class="text-base text-gray-600">
+          <p class="text-base text-sm text-gray-600">
             {{ calculateAge(child.birthDate) }}세
           </p>
           <p
             v-if="child.interests && child.interests.length > 0"
-            class="text-sm text-gray-500 mt-1"
+            class="text-m text-gray-500 mt-1"
           >
-            관심사: {{ child.interests.slice(0, 2).join(", ")
-            }}{{ child.interests.length > 2 ? " 외" : "" }}
+            관심사: {{ child.interests.slice(0, 5).join(", ")
+            }}{{ child.interests.length > 5 ? " 외" : "" }}
           </p>
         </div>
 
@@ -65,7 +65,7 @@
     <div class="mt-6 pt-4 border-t border-gray-200">
       <button
         @click="goToRegister"
-        class="w-full bg-purple-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-600 transition-colors flex items-center justify-center"
+        class="w-full bg-purple-500 text-white py-4 rounded-xl font-paperBold text-lg hover:bg-purple-600 transition-colors flex items-center justify-center"
       >
         <svg
           class="w-6 h-6 mr-2"

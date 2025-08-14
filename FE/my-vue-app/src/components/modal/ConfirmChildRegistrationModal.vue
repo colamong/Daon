@@ -32,10 +32,10 @@
 
       <!-- 메시지 -->
       <div class="text-center mb-6 font-paper">
-        <h3 class="text-lg font-bold text-gray-800 mb-2">
+        <h3 class="text-lg font-paperBold text-gray-800 mb-2">
           아이를 등록해주세요
         </h3>
-        <p class="text-gray-600">
+        <p class="text-gray-600 font-paper">
           펭구와 놀기 위해서는 아이를 먼저 등록해야 합니다.
         </p>
       </div>
@@ -44,13 +44,13 @@
       <div class="flex gap-3">
         <button
           @click="handleCancel"
-          class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+          class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-paperSemi hover:bg-gray-200 transition-colors"
         >
           취소
         </button>
         <button
           @click="handleConfirm"
-          class="flex-1 bg-purple-500 text-white py-3 rounded-lg font-semibold hover:bg-purple-600 transition-colors"
+          class="flex-1 bg-purple-500 text-white py-3 rounded-lg font-paperSemi hover:bg-purple-600 transition-colors"
         >
           등록하기
         </button>
