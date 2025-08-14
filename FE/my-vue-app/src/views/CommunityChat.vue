@@ -1,47 +1,38 @@
 <template>
   <div class="max-w-4xl mx-auto px-4 py-2 font-paper mb-10">
-    <div class="flex items-start space-x-6">
-      <!-- 왼쪽: Header + ChatWindow -->
-      <div class="flex-1 space-y-6">
-        <!-- Header -->
-        <div
-          v-if="currentRoom"
-          class="flex justify-between items-center p-4 bg-white rounded-lg shadow"
-        >
-          <h1 class="text-2xl font-bold">{{ currentRoom.location }}</h1>
-          <div class="flex items-center space-x-3">
-            <button
-              v-if="currentRoom.userJoined"
-              @click="showLeaveConfirm(currentRoom)"
-              class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
-            >
-              나가기
-            </button>
-          </div>
-        </div>
-
-        <!-- ChatWindow -->
+    <div
+      :class="
+        showChatList ? 'flex items-start space-x-6' : 'flex justify-center'
+      "
+    >
+      <!-- ChatWindow -->
+      <div :class="showChatList ? 'flex-1' : 'w-full max-w-xl'">
         <ChatWindow
           class="w-full"
           :messages="chatMessages"
           :currentUserId="authStore.user?.id || 0"
+          :roomTitle="currentRoom?.location || 'Chatbot Assistant'"
+          :showLeaveButton="!!currentRoom?.userJoined"
+          :showChatList="showChatList"
           @sendMessage="handleSendMessage"
+          @leave="showLeaveConfirm(currentRoom)"
+          @toggleList="toggleChatList"
+          @goToList="goToFullList"
         />
       </div>
 
       <!-- 오른쪽: 참가중인 채팅방 목록 -->
       <div
+        v-if="showChatList"
         class="w-88 h-[600px] px-6 py-4 bg-gradient-to-b from-blue-400 via-indigo-300 to-white rounded-lg shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] inline-flex flex-col justify-start items-start overflow-y-auto"
       >
         <div class="self-stretch flex justify-between items-center mb-2">
-          <div class="text-white text-2xl font-paperSemi">
-            나의 채팅방 목록
-          </div>
+          <div class="text-white text-2xl font-paperSemi">나의 채팅방 목록</div>
           <button
             @click="$router.push('/dashboard/community')"
             class="text-white text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg transition-colors"
           >
-            목록
+            전체 목록
           </button>
         </div>
         <div class="flex-1 overflow-y-auto space-y-4 pr-2">
@@ -60,8 +51,8 @@
     <!-- 나가기 확인 모달 -->
     <ConfirmModal
       v-model="showConfirmModal"
-      :title="`'${selectedRoom?.location}' 채팅방에서 나가시겠습니까?`"
-      message="나가시면 채팅방 목록에서 사라지며, 다시 참가하려면 새로 입장해야 합니다."
+      title="현재 채팅방에서 나가시겠습니까?"
+      message="나가시면 채팅방 목록에서 사라지며,<br>다시 참가하려면 새로 입장해야 합니다."
       confirm-text="나가기"
       cancel-text="취소"
       @confirm="confirmLeave"
@@ -89,76 +80,79 @@ const authStore = useAuthStore();
 // 지역명 매핑 (실제 파일명에 맞춤)
 const regionNameMap = {
   // 서울특별시 구 (서울은 구별로 세분화)
-  '강남구': { name: 'gangnam', ext: 'png' },
-  '강동구': { name: 'gangdong', ext: 'png' },
-  '강북구': { name: 'gangbuk', ext: 'png' },
-  '강서구': { name: 'gangseo', ext: 'png' },
-  '관악구': { name: 'gwanak', ext: 'png' },
-  '광진구': { name: 'gwangjin', ext: 'png' },
-  '구로구': { name: 'guro', ext: 'jpg' },
-  '금천구': { name: 'geumcheon', ext: 'png' },
-  '노원구': { name: 'nowon', ext: 'png' },
-  '도봉구': { name: 'dobong', ext: 'png' },
-  '동대문구': { name: 'dongdaemun', ext: 'png' },
-  '동작구': { name: 'dongjak', ext: 'png' },
-  '마포구': { name: 'mapo', ext: 'png' },
-  '서대문구': { name: 'seodaemun', ext: 'png' },
-  '서초구': { name: 'seocho', ext: 'png' },
-  '성동구': { name: 'seongdong', ext: 'png' },
-  '성북구': { name: 'seongbuk', ext: 'png' },
-  '송파구': { name: 'songpa', ext: 'png' },
-  '양천구': { name: 'yangcheon', ext: 'png' },
-  '영등포구': { name: 'yeongdeungpo', ext: 'png' },
-  '용산구': { name: 'yongsan', ext: 'png' },
-  '은평구': { name: 'eunpyeong', ext: 'png' },
-  '종로구': { name: 'jongno', ext: 'png' },
-  '중구': { name: 'junggu', ext: 'png' },
-  '중랑구': { name: 'jungnang', ext: 'png' },
-  
+  강남구: { name: "gangnam", ext: "png" },
+  강동구: { name: "gangdong", ext: "png" },
+  강북구: { name: "gangbuk", ext: "png" },
+  강서구: { name: "gangseo", ext: "png" },
+  관악구: { name: "gwanak", ext: "png" },
+  광진구: { name: "gwangjin", ext: "png" },
+  구로구: { name: "guro", ext: "jpg" },
+  금천구: { name: "geumcheon", ext: "png" },
+  노원구: { name: "nowon", ext: "png" },
+  도봉구: { name: "dobong", ext: "png" },
+  동대문구: { name: "dongdaemun", ext: "png" },
+  동작구: { name: "dongjak", ext: "png" },
+  마포구: { name: "mapo", ext: "png" },
+  서대문구: { name: "seodaemun", ext: "png" },
+  서초구: { name: "seocho", ext: "png" },
+  성동구: { name: "seongdong", ext: "png" },
+  성북구: { name: "seongbuk", ext: "png" },
+  송파구: { name: "songpa", ext: "png" },
+  양천구: { name: "yangcheon", ext: "png" },
+  영등포구: { name: "yeongdeungpo", ext: "png" },
+  용산구: { name: "yongsan", ext: "png" },
+  은평구: { name: "eunpyeong", ext: "png" },
+  종로구: { name: "jongno", ext: "png" },
+  중구: { name: "junggu", ext: "png" },
+  중랑구: { name: "jungnang", ext: "png" },
+
   // 광역시/도 (시도 단위로 통일)
-  '부산광역시': { name: 'busan', ext: 'png' },
-  '대구광역시': { name: 'daegu', ext: 'png' },
-  '인천광역시': { name: 'incheon', ext: 'png' },
-  '광주광역시': { name: 'gwangju', ext: 'jpg' },
-  '대전광역시': { name: 'daegeon', ext: 'png' },
-  '울산광역시': { name: 'ulsan', ext: 'svg' },
-  '세종시': { name: 'sejong', ext: 'jpg' },
-  '경기도': { name: 'gyeongido', ext: 'jpg' },
-  '강원특별자치도': { name: 'gangwon', ext: 'jpg' },
-  '충청북도': { name: 'chungbuk', ext: 'png' },
-  '충청남도': { name: 'chungnam', ext: 'png' },
-  '전북특별자치도': { name: 'jeonbuk', ext: 'png' },
-  '전라남도': { name: 'jeonnam', ext: 'png' },
-  '경상북도': { name: 'gyeongbuk', ext: 'png' },
-  '경상남도': { name: 'gyeongnam', ext: 'svg' },
-  '제주특별자치도': { name: 'jeju', ext: 'svg' }
+  부산광역시: { name: "busan", ext: "png" },
+  대구광역시: { name: "daegu", ext: "png" },
+  인천광역시: { name: "incheon", ext: "png" },
+  광주광역시: { name: "gwangju", ext: "jpg" },
+  대전광역시: { name: "daegeon", ext: "png" },
+  울산광역시: { name: "ulsan", ext: "svg" },
+  세종시: { name: "sejong", ext: "jpg" },
+  경기도: { name: "gyeongido", ext: "jpg" },
+  강원특별자치도: { name: "gangwon", ext: "jpg" },
+  충청북도: { name: "chungbuk", ext: "png" },
+  충청남도: { name: "chungnam", ext: "png" },
+  전북특별자치도: { name: "jeonbuk", ext: "png" },
+  전라남도: { name: "jeonnam", ext: "png" },
+  경상북도: { name: "gyeongbuk", ext: "png" },
+  경상남도: { name: "gyeongnam", ext: "svg" },
+  제주특별자치도: { name: "jeju", ext: "svg" },
 };
 
-// 지역별 이미지 매핑 함수  
+// 지역별 이미지 매핑 함수
 const getRegionImage = (location) => {
-  const parts = location.split(' ');
+  const parts = location.split(" ");
   const region = parts[0].trim();
-  const district = parts[1] ? parts[1].trim() : '';
-  
+  const district = parts[1] ? parts[1].trim() : "";
+
   try {
     let fileInfo;
-    
+
     // 서울특별시는 구별로 세분화
-    if (region === '서울특별시' && district && regionNameMap[district]) {
+    if (region === "서울특별시" && district && regionNameMap[district]) {
       fileInfo = regionNameMap[district];
-    } 
+    }
     // 다른 지역은 시/도 단위
     else if (regionNameMap.hasOwnProperty(region)) {
       fileInfo = regionNameMap[region];
+    } else {
+      throw new Error("이미지 없음");
     }
-    else {
-      throw new Error('이미지 없음');
-    }
-    
+
     // Vite의 정적 자원 import 방식 사용
-    return new URL(`../assets/images/re/${fileInfo.name}.${fileInfo.ext}`, import.meta.url).href;
+    return new URL(
+      `../assets/images/re/${fileInfo.name}.${fileInfo.ext}`,
+      import.meta.url
+    ).href;
   } catch (error) {
-    return new URL('../assets/icons/image-placeholder.svg', import.meta.url).href;
+    return new URL("../assets/icons/image-placeholder.svg", import.meta.url)
+      .href;
   }
 };
 
@@ -166,6 +160,7 @@ const getRegionImage = (location) => {
 const currentCommunity = ref(null);
 const chatMessages = ref([]);
 const isConnected = ref(false);
+const showChatList = ref(false);
 
 // 현재 방 정보
 const currentRoom = computed(() => {
@@ -202,6 +197,16 @@ const confirmLeave = () => {
     leaveRoom(selectedRoom.value.id);
     selectedRoom.value = null;
   }
+};
+
+// 채팅방 목록 토글
+const toggleChatList = () => {
+  showChatList.value = !showChatList.value;
+};
+
+// 전체 목록으로 이동
+const goToFullList = () => {
+  $router.push("/dashboard/community");
 };
 
 // 채팅방 나가기
@@ -245,7 +250,10 @@ const handleSendMessage = async (message) => {
 const loadMessages = async () => {
   if (!currentCommunity.value || !authStore.user?.id) return;
   try {
-    const messages = await communityService.getMessages(currentCommunity.value.id, authStore.user.id);
+    const messages = await communityService.getMessages(
+      currentCommunity.value.id,
+      authStore.user.id
+    );
     chatMessages.value = messages || [];
     // WebSocket 서비스에도 메시지 설정
     websocketService.setMessages(messages || []);
@@ -259,31 +267,33 @@ const connectWebSocket = async () => {
   try {
     await websocketService.connect();
     isConnected.value = true;
-    
+
     // 연결 상태 모니터링
     websocketService.onConnect((connected) => {
       isConnected.value = connected;
     });
-    
+
     // websocketService의 messages 배열 감시
-    watch(() => websocketService.messages.length, () => {
-      const wsMessages = websocketService.messages;
-      wsMessages.forEach(wsMsg => {
-        // 중복 체크
-        const exists = chatMessages.value.some(msg => msg.id === wsMsg.id);
-        if (!exists) {
-          chatMessages.value.push({
-            id: wsMsg.id,
-            message: wsMsg.text, // websocketService에서는 text 필드 사용
-            userId: wsMsg.userId,
-            userName: wsMsg.userName,
-            userProfileImg: wsMsg.userProfileImg,
-            sentAt: wsMsg.timestamp // websocketService에서는 timestamp 필드 사용
-          });
-        }
-      });
-    });
-    
+    watch(
+      () => websocketService.messages.length,
+      () => {
+        const wsMessages = websocketService.messages;
+        wsMessages.forEach((wsMsg) => {
+          // 중복 체크
+          const exists = chatMessages.value.some((msg) => msg.id === wsMsg.id);
+          if (!exists) {
+            chatMessages.value.push({
+              id: wsMsg.id,
+              message: wsMsg.text, // websocketService에서는 text 필드 사용
+              userId: wsMsg.userId,
+              userName: wsMsg.userName,
+              userProfileImg: wsMsg.userProfileImg,
+              sentAt: wsMsg.timestamp, // websocketService에서는 timestamp 필드 사용
+            });
+          }
+        });
+      }
+    );
   } catch (error) {
     console.error("WebSocket 연결 실패:", error);
     isConnected.value = false;
@@ -325,11 +335,11 @@ const loadCommunityData = async () => {
 
     // WebSocket 연결 및 채팅방 구독
     await connectWebSocket();
-    
+
     // 히스토리 로드
     chatMessages.value = [];
     await loadMessages();
-    
+
     // 현재 커뮤니티 구독
     websocketService.subscribeToCommunity(communityId);
   } catch (error) {
@@ -354,6 +364,8 @@ watch(
     if (newId && newId !== oldId) {
       // 방 이동 시 WebSocket 리셋
       chatMessages.value = [];
+      // 목록 토글 닫기
+      showChatList.value = false;
       await loadCommunityData();
     }
   }

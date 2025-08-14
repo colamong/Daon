@@ -15,8 +15,7 @@
           <h3 class="text-lg font-paperSemi mb-2 text-gray-800">
             {{ title }}
           </h3>
-          <p class="text-gray-600 mb-6">
-            {{ message }}
+          <p class="text-gray-600 mb-6" v-html="message">
           </p>
           
           <!-- 버튼 -->
