@@ -97,7 +97,7 @@ deploy-frontend:
     - export RELEASE_DIR="${TARGET}/releases/${RELEASE}"
 
     # 4) 서버에 릴리스 폴더 생성 후, 패키지 업로드 & 해제
-    - ssh ${SSH_USER}@${SSH_HOST} "mkdir -p '${RELEASE_DIR}'"
+    - ssh ${SSH_USER}@${SSH_HOST} "sudo mkdir -p '${RELEASE_DIR}'"
     - scp "dist-${RELEASE}.tar.gz" ${SSH_USER}@${SSH_HOST}:"${RELEASE_DIR}/"
     - ssh ${SSH_USER}@${SSH_HOST} "cd '${RELEASE_DIR}' && tar -xzf dist-${RELEASE}.tar.gz && rm dist-${RELEASE}.tar.gz"
 
