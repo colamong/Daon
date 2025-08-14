@@ -15,45 +15,14 @@
         </div>
         <div class="md:w-1/2 p-6 flex flex-col justify-center text-xl">
           <p class="text-gray-700 mb-2">
-            서로의 이야기를 나누고, 도움과 응원을 주고받는 곳.
-          </p>
-          <p class="text-gray-700 mb-2">새로운 환경에서 함께 모여</p>
-          <p class="text-gray-700 mb-5">정보를 나누고 서로의 경험을 나누며,</p>
-          <p class="text-gray-700">
-            서로에게 힘이 되어 주세요.
+            같은 지역 이웃들과 바로 연결되는 채팅방<br />
+            동네 맛집부터 생활 꿀팁까지,
+            <br />
+            실시간으로 나누고 물어보세요.
           </p>
         </div>
       </div>
     </section>
-
-    <!-- 탭 메뉴 -->
-    <div class="flex justify-center mb-8">
-      <div class="bg-gray-100 p-1 rounded-lg">
-        <button
-          @click="activeTab = 'all'"
-          :class="[
-            'px-6 py-2 rounded-md font-medium transition-colors',
-            activeTab === 'all'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          ]"
-        >
-          전체 채팅방
-        </button>
-        <button
-          @click="activeTab = 'joined'"
-          :class="[
-            'px-6 py-2 rounded-md font-medium transition-colors',
-            activeTab === 'joined'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          ]"
-        >
-          참여중인 채팅방
-        </button>
-      </div>
-    </div>
-
     <!-- 검색창 래퍼 -->
     <div
       ref="wrapper"
@@ -80,11 +49,42 @@
       </teleport>
     </div>
 
-    <!-- 정렬 & 필터 바 -->
-    <div class="flex items-center justify-between">
+    <!-- 리스트 제목 -->
+    <div class="text-center !mb-2">
       <h3 class="text-2xl font-bold">
         {{ getListTitle() }}
       </h3>
+    </div>
+
+    <!-- 탭 메뉴 & 필터 바 -->
+    <div class="flex items-center justify-between mb-8">
+      <!-- 탭 메뉴 (좌측) -->
+      <div class="bg-gray-100 p-1 rounded-lg">
+        <button
+          @click="activeTab = 'all'"
+          :class="[
+            'px-6 py-2 rounded-md font-medium transition-colors',
+            activeTab === 'all'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900',
+          ]"
+        >
+          전체 채팅방
+        </button>
+        <button
+          @click="activeTab = 'joined'"
+          :class="[
+            'px-6 py-2 rounded-md font-medium transition-colors',
+            activeTab === 'joined'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900',
+          ]"
+        >
+          참여중인 채팅방
+        </button>
+      </div>
+
+      <!-- 정렬 & 필터 바 (우측) -->
       <div v-if="activeTab === 'all'" class="flex items-center space-x-4">
         <button
           @click="sortOption = 'popularity'"
@@ -148,14 +148,14 @@
     <section>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <div
-          v-for="post in currentList.slice(page * 9, (page + 1) * 9)"
+          v-for="post in currentList.slice(page * 6, (page + 1) * 6)"
           :key="post.id"
-          class="cursor-pointer"
+          class="cursor-pointer mb-5"
           @click="goChat(post.id)"
         >
           <CommunityCard
             :location="post.title"
-            :date="''" 
+            :date="''"
             :image="getRegionImage(post.title)"
             :favorites="post.currentParticipants"
           />
@@ -212,75 +212,78 @@ const authStore = useAuthStore();
 // 지역명 매핑 (실제 파일명에 맞춤)
 const regionNameMap = {
   // 서울특별시 구 (서울은 구별로 세분화)
-  '강남구': { name: 'gangnam', ext: 'png' },
-  '강동구': { name: 'gangdong', ext: 'png' },
-  '강북구': { name: 'gangbuk', ext: 'png' },
-  '강서구': { name: 'gangseo', ext: 'png' },
-  '관악구': { name: 'gwanak', ext: 'png' },
-  '광진구': { name: 'gwangjin', ext: 'png' },
-  '구로구': { name: 'guro', ext: 'jpg' },
-  '금천구': { name: 'geumcheon', ext: 'png' },
-  '노원구': { name: 'nowon', ext: 'png' },
-  '도봉구': { name: 'dobong', ext: 'png' },
-  '동대문구': { name: 'dongdaemun', ext: 'png' },
-  '동작구': { name: 'dongjak', ext: 'png' },
-  '마포구': { name: 'mapo', ext: 'png' },
-  '서대문구': { name: 'seodaemun', ext: 'png' },
-  '서초구': { name: 'seocho', ext: 'png' },
-  '성동구': { name: 'seongdong', ext: 'png' },
-  '성북구': { name: 'seongbuk', ext: 'png' },
-  '송파구': { name: 'songpa', ext: 'png' },
-  '양천구': { name: 'yangcheon', ext: 'png' },
-  '영등포구': { name: 'yeongdeungpo', ext: 'png' },
-  '용산구': { name: 'yongsan', ext: 'png' },
-  '은평구': { name: 'eunpyeong', ext: 'png' },
-  '종로구': { name: 'jongno', ext: 'png' },
-  '중구': { name: 'junggu', ext: 'png' },
-  '중랑구': { name: 'jungnang', ext: 'png' },
-  
+  강남구: { name: "gangnam", ext: "png" },
+  강동구: { name: "gangdong", ext: "png" },
+  강북구: { name: "gangbuk", ext: "png" },
+  강서구: { name: "gangseo", ext: "png" },
+  관악구: { name: "gwanak", ext: "png" },
+  광진구: { name: "gwangjin", ext: "png" },
+  구로구: { name: "guro", ext: "jpg" },
+  금천구: { name: "geumcheon", ext: "png" },
+  노원구: { name: "nowon", ext: "png" },
+  도봉구: { name: "dobong", ext: "png" },
+  동대문구: { name: "dongdaemun", ext: "png" },
+  동작구: { name: "dongjak", ext: "png" },
+  마포구: { name: "mapo", ext: "png" },
+  서대문구: { name: "seodaemun", ext: "png" },
+  서초구: { name: "seocho", ext: "png" },
+  성동구: { name: "seongdong", ext: "png" },
+  성북구: { name: "seongbuk", ext: "png" },
+  송파구: { name: "songpa", ext: "png" },
+  양천구: { name: "yangcheon", ext: "png" },
+  영등포구: { name: "yeongdeungpo", ext: "png" },
+  용산구: { name: "yongsan", ext: "png" },
+  은평구: { name: "eunpyeong", ext: "png" },
+  종로구: { name: "jongno", ext: "png" },
+  중구: { name: "junggu", ext: "png" },
+  중랑구: { name: "jungnang", ext: "png" },
+
   // 광역시/도 (시도 단위로 통일)
-  '부산광역시': { name: 'busan', ext: 'png' },
-  '대구광역시': { name: 'daegu', ext: 'png' },
-  '인천광역시': { name: 'incheon', ext: 'png' },
-  '광주광역시': { name: 'gwangju', ext: 'jpg' },
-  '대전광역시': { name: 'daegeon', ext: 'png' },
-  '울산광역시': { name: 'ulsan', ext: 'svg' },
-  '세종시': { name: 'sejong', ext: 'jpg' },
-  '경기도': { name: 'gyeongido', ext: 'jpg' },
-  '강원특별자치도': { name: 'gangwon', ext: 'jpg' },
-  '충청북도': { name: 'chungbuk', ext: 'png' },
-  '충청남도': { name: 'chungnam', ext: 'png' },
-  '전북특별자치도': { name: 'jeonbuk', ext: 'png' },
-  '전라남도': { name: 'jeonnam', ext: 'png' },
-  '경상북도': { name: 'gyeongbuk', ext: 'png' },
-  '경상남도': { name: 'gyeongnam', ext: 'svg' },
-  '제주특별자치도': { name: 'jeju', ext: 'svg' }
+  부산광역시: { name: "busan", ext: "png" },
+  대구광역시: { name: "daegu", ext: "png" },
+  인천광역시: { name: "incheon", ext: "png" },
+  광주광역시: { name: "gwangju", ext: "jpg" },
+  대전광역시: { name: "daegeon", ext: "png" },
+  울산광역시: { name: "ulsan", ext: "svg" },
+  세종시: { name: "sejong", ext: "jpg" },
+  경기도: { name: "gyeongido", ext: "jpg" },
+  강원특별자치도: { name: "gangwon", ext: "jpg" },
+  충청북도: { name: "chungbuk", ext: "png" },
+  충청남도: { name: "chungnam", ext: "png" },
+  전북특별자치도: { name: "jeonbuk", ext: "png" },
+  전라남도: { name: "jeonnam", ext: "png" },
+  경상북도: { name: "gyeongbuk", ext: "png" },
+  경상남도: { name: "gyeongnam", ext: "svg" },
+  제주특별자치도: { name: "jeju", ext: "svg" },
 };
 
-// 지역별 이미지 매핑 함수  
+// 지역별 이미지 매핑 함수
 const getRegionImage = (location) => {
-  const parts = location.split(' ');
+  const parts = location.split(" ");
   const region = parts[0].trim();
-  const district = parts[1] ? parts[1].trim() : '';
-  
+  const district = parts[1] ? parts[1].trim() : "";
+
   try {
     let fileInfo;
-    
+
     // 서울특별시는 구별로 세분화
-    if (region === '서울특별시' && district && regionNameMap[district]) {
+    if (region === "서울특별시" && district && regionNameMap[district]) {
       fileInfo = regionNameMap[district];
-    } 
+    }
     // 다른 지역은 시/도 단위
     else if (regionNameMap.hasOwnProperty(region)) {
       fileInfo = regionNameMap[region];
+    } else {
+      throw new Error("이미지 없음");
     }
-    else {
-      throw new Error('이미지 없음');
-    }
-    
-    return new URL(`../assets/images/re/${fileInfo.name}.${fileInfo.ext}`, import.meta.url).href;
+
+    return new URL(
+      `../assets/images/re/${fileInfo.name}.${fileInfo.ext}`,
+      import.meta.url
+    ).href;
   } catch (error) {
-    return new URL('../assets/icons/image-placeholder.svg', import.meta.url).href;
+    return new URL("../assets/icons/image-placeholder.svg", import.meta.url)
+      .href;
   }
 };
 
@@ -293,28 +296,33 @@ const popperEl = ref(null);
 let popperInstance = null;
 
 // 검색 제안용
-const filteredSuggestions = computed(() =>
-  communityStore.communities
-    .map((c) => ({ 
-      title: c.title, 
-      subtitle: "", 
-      image: getRegionImage(c.title), // 지역별 이미지 매핑
-      link: `/dashboard/community/${c.id}` // 실제 채팅방 링크로 변경
-    }))
-    .filter((r) => r.title.includes(searchQuery.value))
-    .slice(0, 50) // 최대 50개까지 표시
+const filteredSuggestions = computed(
+  () => {
+    if (!searchQuery.value || searchQuery.value.trim().length === 0) {
+      return [];
+    }
+    return communityStore.communities
+      .map((c) => ({
+        title: c.title,
+        subtitle: "",
+        image: getRegionImage(c.title), // 지역별 이미지 매핑
+        link: `/dashboard/community/${c.id}`, // 실제 채팅방 링크로 변경
+      }))
+      .filter((r) => r.title.includes(searchQuery.value.trim()))
+      .slice(0, 50); // 최대 50개까지 표시
+  }
 );
 
 // Popper 인스턴스 생성 및 데이터 로드
 onMounted(async () => {
   // 커뮤니티 데이터 로드
   await communityStore.fetchAllCommunities();
-  
+
   // 사용자 ID가 있으면 참여중인 채팅방도 로드
   if (authStore.user?.id) {
     await communityStore.fetchJoinedCommunities(authStore.user.id);
   }
-  
+
   await nextTick();
   popperInstance = createPopper(
     searchInput.value.$el || searchInput.value,
@@ -367,30 +375,27 @@ const selectedRegion = ref("");
 
 // 지역 선택 드롭다운
 const regionOptions = computed(() =>
-  Array.from(new Set(communityStore.communities.map((c) => c.title.split(" ")[0])))
+  Array.from(
+    new Set(communityStore.communities.map((c) => c.title.split(" ")[0]))
+  )
 );
 
 // 전체 채팅방: 필터 & 정렬된 리스트
 const processedAllCommunities = computed(() => {
   let list = communityStore.communities.slice();
-  
-  // 실시간 검색 필터링
-  if (searchQuery.value.trim()) {
-    list = list.filter((c) => c.title.includes(searchQuery.value.trim()));
-  }
-  
-  // 지역 드롭다운 필터링
+
+  // 지역 드롭다운 필터링만 적용 (검색어 필터링 제거)
   if (selectedRegion.value) {
     list = list.filter((c) => c.title.startsWith(selectedRegion.value));
   }
-  
+
   // 정렬
   if (sortOption.value === "popularity") {
     list.sort((a, b) => b.currentParticipants - a.currentParticipants);
   } else if (sortOption.value === "alpha") {
     list.sort((a, b) => a.title.localeCompare(b.title, "ko"));
   }
-  
+
   return list;
 });
 
@@ -408,12 +413,14 @@ const processedJoinedCommunities = computed(() => {
 
 // 현재 탭에 따른 표시할 리스트
 const currentList = computed(() => {
-  return activeTab.value === 'all' ? processedAllCommunities.value : processedJoinedCommunities.value;
+  return activeTab.value === "all"
+    ? processedAllCommunities.value
+    : processedJoinedCommunities.value;
 });
 
 // 페이징
 const page = ref(0);
-const itemsPerPage = 9;
+const itemsPerPage = 6;
 const totalPages = computed(() =>
   Math.ceil(currentList.value.length / itemsPerPage)
 );
@@ -430,21 +437,26 @@ function nextPage() {
   if (page.value + 1 < totalPages.value) page.value++;
 }
 
-// 검색창 토글 & Popper 업데이트
+// 검색창 토글 & Popper 업데이트 (실시간 검색)
 watch(searchQuery, async (v) => {
-  if (v) {
+  if (v && v.trim().length > 0) {
     showDropdown.value = true;
     await nextTick();
-    popperInstance.update();
+    if (popperInstance) {
+      popperInstance.update();
+    }
   } else {
     showDropdown.value = false;
   }
 });
 
 // 필터링/정렬/탭 변경 시 페이지 리셋
-watch([searchQuery, selectedRegion, sortOption, joinedSortOption, activeTab], () => {
-  page.value = 0;
-});
+watch(
+  [searchQuery, selectedRegion, sortOption, joinedSortOption, activeTab],
+  () => {
+    page.value = 0;
+  }
+);
 async function openDropdown() {
   if (searchQuery.value) {
     showDropdown.value = true;
@@ -455,9 +467,9 @@ async function openDropdown() {
 async function handleSelect(item) {
   searchQuery.value = item.title;
   showDropdown.value = false;
-  
+
   // 선택된 채팅방으로 직접 이동
-  if (item.link && item.link !== '#') {
+  if (item.link && item.link !== "#") {
     router.push(item.link);
   }
 }
@@ -470,12 +482,9 @@ function goChat(id) {
 
 // 리스트 제목 동적 생성
 const getListTitle = () => {
-  const baseTitle = activeTab.value === 'all' ? '온동네 커뮤니티' : '참여중인 채팅방';
-  
-  if (activeTab.value === 'all' && searchQuery.value.trim()) {
-    return `"${searchQuery.value}" 검색 결과 (${currentList.value.length}개)`;
-  }
-  
+  const baseTitle =
+    activeTab.value === "all" ? "온동네 커뮤니티" : "참여중인 채팅방";
+
   return baseTitle;
 };
 </script>

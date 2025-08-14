@@ -10,7 +10,7 @@
             {{ currentTheme.title }}에서
           </h1>
           <p class="text-lg text-gray-600">
-            Ch.{{ chapterId }} {{ currentChapter?.title || "" }}
+            Ch.{{ currentChapter?.chapterNumber || chapterId }} {{ currentChapter?.title || '' }}  <!-- chapterNumber 사용 -->
           </p>
         </div>
 

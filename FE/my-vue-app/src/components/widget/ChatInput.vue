@@ -1,15 +1,17 @@
 <template>
-  <div class="flex items-center gap-2 p-4 border-t">
+  <div class="flex gap-2">
     <input
       v-model="inputText"
       @keydown.enter="emitSend"
+      placeholder="메세지를 입력하세요."
+      class="flex-1 p-2 border rounded-lg dark:bg-zinc-700 dark:text-white dark:border-zinc-600 text-sm font-paper"
+      id="chatInput"
       type="text"
-      placeholder="채팅을 입력해주세요"
-      class="flex-1 border border-black rounded-xl px-4 py-2 outline-none font-paper"
     />
     <button
       @click="emitSend"
-      class="bg-[#F2F5FD] px-4 py-2 rounded-xl text-sm font-paper"
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1.5 px-5 rounded-lg transition duration-300 ease-in-out text-sm !font-paper"
+      id="sendButton"
     >
       전송
     </button>
@@ -17,26 +19,29 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch } from "vue";
 
-const emit = defineEmits(['update:modelValue', 'send'])
+const emit = defineEmits(["update:modelValue", "send"]);
 const props = defineProps({
   modelValue: String,
-})
+});
 
-const inputText = ref(props.modelValue)
+const inputText = ref(props.modelValue);
 
-watch(() => props.modelValue, (val) => {
-  inputText.value = val
-})
+watch(
+  () => props.modelValue,
+  (val) => {
+    inputText.value = val;
+  }
+);
 
 watch(inputText, (val) => {
-  emit('update:modelValue', val)
-})
+  emit("update:modelValue", val);
+});
 
 function emitSend() {
-  if (!inputText.value.trim()) return
-  emit('send', inputText.value)
-  inputText.value = ''
+  if (!inputText.value.trim()) return;
+  emit("send", inputText.value);
+  inputText.value = "";
 }
 </script>

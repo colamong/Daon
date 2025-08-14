@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-start gap-3 mb-4 font-paper"
+    class="flex items-center gap-3 mb-6 font-paper px-3 py-2"
     :class="isMine ? 'justify-end' : 'justify-start'"
   >
     <!-- 프로필 이미지: 내 메시지는 안 보임 -->
@@ -8,28 +8,28 @@
       v-if="!isMine"
       :src="profileImageSrc"
       alt="user"
-      class="w-10 h-10 rounded-full object-cover"
+      class="w-12 h-12 rounded-full object-cover flex-shrink-0 border border-gray-200"
     />
 
     <!-- 메시지 영역 -->
-    <div :class="isMine ? 'flex flex-col items-end' : 'flex flex-col items-start'">
+    <div :class="isMine ? 'flex flex-col items-end min-h-[3rem] justify-center' : 'flex flex-col items-start min-h-[3rem] justify-center'">
       <!-- 사용자 이름: 내 메시지는 안 보임 -->
       <div
         v-if="!isMine && userName"
-        class="text-xs text-gray-500 mb-1 px-1"
+        class="text-sm text-gray-600 mb-2 px-1 font-medium"
       >
         {{ userName }}
       </div>
       
       <!-- 말풍선과 시간 -->
-      <div :class="isMine ? 'flex flex-row-reverse items-end gap-2' : 'flex items-end gap-2'">
+      <div :class="isMine ? 'flex flex-row-reverse items-end gap-3' : 'flex items-end gap-3'">
         <!-- 말풍선 -->
         <div
           :class="[
-            'px-4 py-2 max-w-xs text-sm rounded-xl',
+            'px-3 py-2 max-w-xs text-sm rounded-xl',
             isMine
-              ? 'bg-[#F2F5FD] text-right rounded-br-none'
-              : 'border border-black text-left',
+              ? 'bg-blue-300/30 text-right rounded-br-none'
+              : 'bg-white text-left rounded-tl-none',
           ]"
         >
           {{ message }}
@@ -55,6 +55,7 @@ const props = defineProps({
   timestamp: String,
   userName: String,
   userProfileImg: String,
+  isAlternate: Boolean,
 })
 
 // 시간 포맷팅
