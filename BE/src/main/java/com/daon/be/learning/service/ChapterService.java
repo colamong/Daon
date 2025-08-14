@@ -7,6 +7,7 @@ import com.daon.be.learning.repository.ChapterRepository;
 import com.daon.be.learning.repository.ThemeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import jakarta.persistence.Table;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,7 +28,10 @@ public class ChapterService {
         // 디버깅 로그 추가
         System.out.println("=== 디버깅 로그 ===");
         System.out.println("테마 ID: " + themeId);
+        System.out.println("테마 이름: " + theme.getName());
         System.out.println("챕터 개수: " + chapters.size());
+        System.out.println("테이블명: " + Chapter.class.getAnnotation(Table.class).name());
+        
         for (Chapter chapter : chapters) {
             System.out.println("챕터 ID: " + chapter.getId() + 
                              ", 테마 ID: " + chapter.getTheme().getId() + 
@@ -37,12 +41,19 @@ public class ChapterService {
         System.out.println("==================");
 
         return chapters.stream()
-                .map(chapter -> ChapterResponseDTO.builder()
-                        .id(chapter.getId())
-                        .chapterNumber(chapter.getChapterNumber()) // 챕터 번호 추가
-                        .title(chapter.getTitle())
-                        .description(chapter.getDescription())
-                        .build())
+                .map(chapter -> {
+                    ChapterResponseDTO dto = ChapterResponseDTO.builder()
+                            .id(chapter.getId())
+                            .chapterNumber(chapter.getChapterNumber()) // 챕터 번호 추가
+                            .title(chapter.getTitle())
+                            .description(chapter.getDescription())
+                            .build();
+                    
+                    // DTO 생성 로그
+                    System.out.println("생성된 DTO: " + dto);
+                    
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 }
