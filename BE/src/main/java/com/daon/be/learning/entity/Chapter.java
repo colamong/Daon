@@ -19,7 +19,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "Chapter")
+@Table(name = "chapter")
 public class Chapter {
 
 	@Id
