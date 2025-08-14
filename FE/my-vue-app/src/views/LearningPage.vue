@@ -10,7 +10,7 @@
             {{ currentTheme.title }}에서
           </h1>
           <p class="text-lg text-gray-600">
-            Ch.{{ chapterId }} {{ currentChapter?.title || "" }}
+            Ch.{{ currentChapterIndex }} {{ currentChapter?.title || "" }}
           </p>
         </div>
 
@@ -263,6 +263,12 @@ const currentChapter = computed(() =>
   chapters.value.find((c) => c.id === chapterId.value)
 );
 
+const currentChapterIndex = computed(() => {
+  const chapter = currentChapter.value;
+  if (!chapter) return 0;
+  return chapters.value.findIndex((c) => c.id === chapter.id) + 1;
+});
+
 const currentContent = computed(() => questions.value[questionId.value - 1]);
 
 const totalQuestions = computed(() => questions.value.length);
@@ -279,6 +285,9 @@ const showConfetti = ref(false);
 const showIncorrectModal = ref(false);
 const showAnswers = ref(false);
 const showQuestionCard = ref(false);
+
+// 사운드 미리 로딩
+const successAudio = ref(null);
 
 // ---------- API 로딩 ----------
 const loadThemes = async () => {
@@ -304,9 +313,21 @@ const loadQuestions = async () => {
   }
 };
 
+// 사운드 미리 로딩
+const loadSuccessSound = async () => {
+  try {
+    const answerSoundModule = await import("@/assets/effects/answer.mp3");
+    successAudio.value = new Audio(answerSoundModule.default);
+    successAudio.value.volume = 0.7;
+    successAudio.value.preload = "auto";
+  } catch (error) {
+    console.warn("효과음 로드 실패:", error);
+  }
+};
+
 // 최초 로딩
 onMounted(async () => {
-  await Promise.all([loadThemes(), loadChapters()]);
+  await Promise.all([loadThemes(), loadChapters(), loadSuccessSound()]);
   await loadQuestions();
 });
 
@@ -328,7 +349,7 @@ watch(
 );
 
 // ---------- 정답/발음 ----------
-const handleCorrectAnswer = (answer) => {
+const handleCorrectAnswer = async (answer) => {
   selectedAnswer.value = answer.id;
   selectedCorrectAnswer.value = answer;
 
@@ -339,21 +360,34 @@ const handleCorrectAnswer = (answer) => {
   }, 3000);
 
   // 성공 효과음 재생
-  playSuccessSound();
+  await playSuccessSound();
 
   showPronunciationConfirm.value = true;
 };
 
 // 성공 효과음 재생
-const playSuccessSound = () => {
+const playSuccessSound = async () => {
+  if (!successAudio.value) {
+    console.warn("효과음이 아직 로드되지 않았습니다.");
+    return;
+  }
+  
   try {
-    const audio = new Audio("/src/assets/effects/answer.mp3");
-    audio.volume = 0.7;
-    audio.play().catch((error) => {
-      console.warn("효과음 재생 실패:", error);
-    });
+    // 오디오 재설정 (이전 재생 중지)
+    successAudio.value.currentTime = 0;
+    
+    const playPromise = successAudio.value.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log("효과음 재생 성공");
+        })
+        .catch((error) => {
+          console.warn("효과음 재생 실패 - 사용자 상호작용 필요:", error);
+        });
+    }
   } catch (error) {
-    console.warn("효과음 로드 실패:", error);
+    console.warn("효과음 재생 중 오류:", error);
   }
 };
 
