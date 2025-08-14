@@ -29,6 +29,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, onUnmounted } from "vue";
+import typingSound from "@/assets/effects/typing.mp3";
 
 const props = defineProps({
   text: {
@@ -75,7 +76,7 @@ const playAudio = () => {
 // 타이핑 효과음 시작
 const startTypingSound = () => {
   try {
-    typingAudio.value = new Audio('/src/assets/effects/typing.mp3');
+    typingAudio.value = new Audio(typingSound);
     typingAudio.value.loop = true;
     typingAudio.value.volume = 0.3;
     typingAudio.value.playbackRate = 2.0;
