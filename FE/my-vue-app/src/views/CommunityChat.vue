@@ -12,6 +12,7 @@
           :messages="chatMessages"
           :currentUserId="authStore.user?.id || 0"
           :roomTitle="currentRoom?.location || 'Chatbot Assistant'"
+          :roomImage="currentRoom?.location ? getRegionImage(currentRoom.location) : null"
           :showLeaveButton="!!currentRoom?.userJoined"
           :showChatList="showChatList"
           @sendMessage="handleSendMessage"

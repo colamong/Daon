@@ -6,7 +6,8 @@
       v-model="inputValue"
       type="text"
       placeholder="지역명을 입력해주세요"
-      @input="$emit('update:modelValue', inputValue)"
+      @input="emit('update:modelValue', inputValue); emit('input')"
+      @focus="emit('focus')"
       class="w-full px-4 py-2 rounded-md border border-gray-300 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
     />
   </div>
@@ -21,6 +22,8 @@ const props = defineProps({
     required: true,
   },
 })
+
+const emit = defineEmits(['update:modelValue', 'input', 'focus'])
 
 const inputValue = ref(props.modelValue)
 

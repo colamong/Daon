@@ -5,9 +5,17 @@
     <div class="flex flex-col h-[600px]">
       <div class="px-4 py-3 border-b dark:border-zinc-700">
         <div class="flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-zinc-800 dark:text-white font-paper">
-            {{ roomTitle }}
-          </h2>
+          <div class="flex items-center space-x-3">
+            <img
+              v-if="roomImage"
+              :src="roomImage"
+              :alt="roomTitle"
+              class="w-8 h-8 rounded-full object-cover border border-gray-200 ml-2"
+            />
+            <h2 class="text-lg font-semibold text-zinc-800 dark:text-white font-paper">
+              {{ roomTitle }}
+            </h2>
+          </div>
           <div class="flex items-center space-x-2">
             <button
               v-if="!showChatList"
@@ -82,6 +90,10 @@ const props = defineProps({
   roomTitle: {
     type: String,
     default: 'Chatbot Assistant'
+  },
+  roomImage: {
+    type: String,
+    default: null
   },
   showLeaveButton: {
     type: Boolean,

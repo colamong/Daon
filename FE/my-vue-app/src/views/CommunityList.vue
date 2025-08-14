@@ -297,16 +297,20 @@ let popperInstance = null;
 
 // 검색 제안용
 const filteredSuggestions = computed(
-  () =>
-    communityStore.communities
+  () => {
+    if (!searchQuery.value || searchQuery.value.trim().length === 0) {
+      return [];
+    }
+    return communityStore.communities
       .map((c) => ({
         title: c.title,
         subtitle: "",
         image: getRegionImage(c.title), // 지역별 이미지 매핑
         link: `/dashboard/community/${c.id}`, // 실제 채팅방 링크로 변경
       }))
-      .filter((r) => r.title.includes(searchQuery.value))
-      .slice(0, 50) // 최대 50개까지 표시
+      .filter((r) => r.title.includes(searchQuery.value.trim()))
+      .slice(0, 50); // 최대 50개까지 표시
+  }
 );
 
 // Popper 인스턴스 생성 및 데이터 로드
@@ -380,12 +384,7 @@ const regionOptions = computed(() =>
 const processedAllCommunities = computed(() => {
   let list = communityStore.communities.slice();
 
-  // 실시간 검색 필터링
-  if (searchQuery.value.trim()) {
-    list = list.filter((c) => c.title.includes(searchQuery.value.trim()));
-  }
-
-  // 지역 드롭다운 필터링
+  // 지역 드롭다운 필터링만 적용 (검색어 필터링 제거)
   if (selectedRegion.value) {
     list = list.filter((c) => c.title.startsWith(selectedRegion.value));
   }
@@ -438,12 +437,14 @@ function nextPage() {
   if (page.value + 1 < totalPages.value) page.value++;
 }
 
-// 검색창 토글 & Popper 업데이트
+// 검색창 토글 & Popper 업데이트 (실시간 검색)
 watch(searchQuery, async (v) => {
-  if (v) {
+  if (v && v.trim().length > 0) {
     showDropdown.value = true;
     await nextTick();
-    popperInstance.update();
+    if (popperInstance) {
+      popperInstance.update();
+    }
   } else {
     showDropdown.value = false;
   }
@@ -483,10 +484,6 @@ function goChat(id) {
 const getListTitle = () => {
   const baseTitle =
     activeTab.value === "all" ? "온동네 커뮤니티" : "참여중인 채팅방";
-
-  if (activeTab.value === "all" && searchQuery.value.trim()) {
-    return `"${searchQuery.value}" 검색 결과 (${currentList.value.length}개)`;
-  }
 
   return baseTitle;
 };
