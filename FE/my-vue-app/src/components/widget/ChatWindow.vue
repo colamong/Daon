@@ -60,6 +60,7 @@
               :timestamp="msg.sentAt"
               :userName="msg.userName"
               :userProfileImg="msg.userProfileImg"
+              :messageType="msg.messageType"
               :isAlternate="index % 2 === 1"
             />
           </div>

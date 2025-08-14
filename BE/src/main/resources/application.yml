@@ -69,4 +69,10 @@ frontend:
   origin: http://localhost:5173
 
 tesseract:
-  path: "C:/Program Files/Tesseract-OCR/tessdata"
+  path: "/usr/share/tesseract-ocr/5/tessdata"
+
+logging:
+  level:
+    root: INFO
+    com.daon.be: DEBUG # 우리 패키지 로그를 디버그로
+    org.springframework.web: DEBUG # 웹 요청 처리 로그

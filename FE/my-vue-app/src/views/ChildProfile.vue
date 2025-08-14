@@ -182,6 +182,7 @@ onMounted(() => {
   childStore.initialize();
 });
 
+
 // 나이 계산 함수
 function calculateAge(birthDate) {
   if (!birthDate) return 0;

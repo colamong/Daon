@@ -1,6 +1,7 @@
 package com.daon.be.community.dto.response;
 
 import com.daon.be.community.entity.ChatMessage;
+import com.daon.be.community.entity.ChatMessage.MessageType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,6 +20,7 @@ public class ChatMessageResponseDto {
     private String userProfileImg;
     private String message;
     private LocalDateTime sentAt;
+    private MessageType messageType;
     
     public ChatMessageResponseDto(ChatMessage chatMessage) {
         this.id = chatMessage.getId();
@@ -28,5 +30,6 @@ public class ChatMessageResponseDto {
         this.userProfileImg = chatMessage.getUser().getProfileImg();
         this.message = chatMessage.getMessage();
         this.sentAt = chatMessage.getSentAt();
+        this.messageType = chatMessage.getMessageType();
     }
 }

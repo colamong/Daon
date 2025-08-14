@@ -19,7 +19,7 @@ export default defineConfig({
     proxy: {
       // ✅ REST API 프록시
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'https://i13a706.p.ssafy.io/stt',
         changeOrigin: true,
         secure: false,
         ws: false, // API는 웹소켓 아님
@@ -41,7 +41,7 @@ export default defineConfig({
       // ✅ 웹소켓(SockJS/STOMP) 프록시 — 이게 핵심!
       // 백엔드가 /ws/** 를 쓰므로 rewrite 없이 그대로 터널링
       '/ws': {
-        target: 'http://localhost:8080',
+        target: 'https://i13a706.p.ssafy.io/stt',
         changeOrigin: true,
         secure: false,
         ws: true, // ← 웹소켓 업그레이드 허용

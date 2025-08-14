@@ -1,5 +1,14 @@
 <template>
+  <!-- 시스템 메시지인 경우 -->
+  <div v-if="isSystemMessage" class="flex justify-center mb-4">
+    <div class="bg-gray-100 text-gray-600 text-xs px-4 py-2 rounded-full font-paper">
+      {{ message }}
+    </div>
+  </div>
+  
+  <!-- 일반 사용자 메시지인 경우 -->
   <div
+    v-else
     class="flex items-center gap-3 mb-6 font-paper px-3 py-2"
     :class="isMine ? 'justify-end' : 'justify-start'"
   >
@@ -56,6 +65,12 @@ const props = defineProps({
   userName: String,
   userProfileImg: String,
   isAlternate: Boolean,
+  messageType: String,
+})
+
+// 시스템 메시지 여부 확인
+const isSystemMessage = computed(() => {
+  return props.messageType === 'SYSTEM_JOIN' || props.messageType === 'SYSTEM_LEAVE'
 })
 
 // 시간 포맷팅
