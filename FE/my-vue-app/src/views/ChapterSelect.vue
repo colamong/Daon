@@ -56,7 +56,7 @@
           <div class="flex justify-between items-center">
             <div class="flex-1 pr-4">
               <h3 class="text-lg font-paperBold text-gray-800 mb-2">
-                Ch.{{ chapter.id }} {{ chapter.title }}
+                Ch.{{ chapter.chapterNumber }} {{ chapter.title }}
               </h3>
               <p class="text-sm text-gray-600 line-clamp-2">
                 {{ chapter.description }}

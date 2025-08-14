@@ -16,7 +16,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "Theme")
+@Table(name = "theme")
 public class Theme {
 
 	@Id

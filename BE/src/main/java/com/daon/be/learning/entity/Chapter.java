@@ -19,7 +19,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "Chapter")
+@Table(name = "chapter")
 public class Chapter {
 
 	@Id
@@ -29,6 +29,9 @@ public class Chapter {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "theme_id", nullable = false)
 	private Theme theme;
+
+	@Column(name = "chapter_number", nullable = false)
+	private Integer chapterNumber; // 추가: 테마별 챕터 번호 (1, 2, 3...)
 
 	@Column(nullable = false)
 	private String title;

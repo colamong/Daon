@@ -8,4 +8,7 @@ import java.util.List;
 
 public interface ChapterRepository extends JpaRepository<Chapter,Long> {
     List<Chapter> findAllByTheme(Theme theme);
+    
+    // 추가: 테마별 챕터 번호 순으로 정렬
+    List<Chapter> findAllByThemeOrderByChapterNumber(Theme theme);
 }
