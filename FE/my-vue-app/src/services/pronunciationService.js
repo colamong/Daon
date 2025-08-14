@@ -3,7 +3,12 @@ import axios from 'axios';
 const API_BASE = import.meta.env.VITE_PRONUN_API_BASE || 'https://i13a706.p.ssafy.io';
 
 export async function evaluatePronunciation(questionId, fileOrBlob) {
-  const wavBlob = await ensureMono16kWav(fileOrBlob);      // ★ 항상 정규화
+  const wavBlob = await ensureMono16kWav(fileOrBlob);  
+
+  console.log('[UPLOAD] type/size', wavBlob.type, wavBlob.size);
+  const meta = await readWavMeta(wavBlob);
+  console.log('[UPLOAD] wav meta', meta); 
+  
   const form = new FormData();
   form.append('audio', new File([wavBlob], 'speech.wav', { type: 'audio/wav' }));
   const { data } = await axios.post(`${API_BASE}/api/evaluate/${questionId}`, form);
@@ -113,4 +118,13 @@ function encodeWavPcm16(pcm16, sampleRate, channels) {
 
 function writeStr(v, off, s) {
   for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i));
+}
+
+async function readWavMeta(blob) {
+  const buf = await blob.arrayBuffer();
+  const v = new DataView(buf);
+  const channels = v.getUint16(22, true);
+  const sampleRate = v.getUint32(24, true);
+  const bitsPerSample = v.getUint16(34, true);
+  return { channels, sampleRate, bitsPerSample };
 }
