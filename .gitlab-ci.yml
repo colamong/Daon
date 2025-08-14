@@ -18,7 +18,6 @@ default:
   - ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
 # ===== Backend =====
-
 build-and-push-be:
   stage: build_be
   rules:
@@ -51,9 +50,6 @@ deploy-backend:
     - docker run -d --name "${CONTAINER_NAME}" --network daon-network --env-file "${ENV_FILE}" -p "${HOST_PORT}:${CONTAINER_PORT}" --restart=always "${IMAGE_NAME}:latest"
 
 # ===== Frontend =====
-
-# 기존 build-fe / package-fe 잡은 413의 원인이 되는 아티팩트 업로드가 있어 비활성화.
-# (룰을 when: never로 바꿔 두고, 실제 배포는 deploy-frontend 한 잡에서 모두 처리)
 build-fe:
   stage: build_fe
   rules:
@@ -84,27 +80,27 @@ deploy-frontend:
     - npm -v
     - cd FE/my-vue-app
   script:
-    # 1) 로컬에서 빌드
+    # 1) 로컬 빌드
     - npm ci
     - npm run build
 
-    # 2) 릴리스 식별자/패키징
+    # 2) 릴리스 식별자 & 패키징
     - export RELEASE="${CI_PIPELINE_IID}-${CI_COMMIT_SHORT_SHA}"
     - tar -czf "dist-${RELEASE}.tar.gz" -C dist .
 
-    # 3) 서버 대상 경로 계산
+    # 3) 서버 경로 설정
     - export TARGET="${SSH_TARGET_DIR}"
     - export RELEASE_DIR="${TARGET}/releases/${RELEASE}"
 
-    # 4) 서버에 릴리스 폴더 생성 후, 패키지 업로드 & 해제
-    - ssh ${SSH_USER}@${SSH_HOST} "sudo mkdir -p '${RELEASE_DIR}'"
+    # 4) 서버 폴더 생성 + 권한 부여 후 업로드
+    - ssh ${SSH_USER}@${SSH_HOST} "sudo mkdir -p '${RELEASE_DIR}' && sudo chown -R ${SSH_USER}:${SSH_USER} '${TARGET}'"
     - scp "dist-${RELEASE}.tar.gz" ${SSH_USER}@${SSH_HOST}:"${RELEASE_DIR}/"
     - ssh ${SSH_USER}@${SSH_HOST} "cd '${RELEASE_DIR}' && tar -xzf dist-${RELEASE}.tar.gz && rm dist-${RELEASE}.tar.gz"
 
-    # 5) 심볼릭 링크 스위칭 (current → 새 릴리스)
+    # 5) 심볼릭 링크 스위칭
     - ssh ${SSH_USER}@${SSH_HOST} "ln -sfn '${RELEASE_DIR}' '${TARGET}/current'"
 
-    # 6) 퍼미션 정리(옵션) & Nginx 재로드
+    # 6) 퍼미션 & Nginx 재로드
     - ssh ${SSH_USER}@${SSH_HOST} "sudo chown -R www-data:www-data '${TARGET}' || true"
     - ssh ${SSH_USER}@${SSH_HOST} "sudo nginx -t && sudo systemctl reload nginx"
 
