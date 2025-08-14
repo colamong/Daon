@@ -3,7 +3,7 @@
     :style="{ backgroundImage: `url(${bgImage})` }"
     class="h-screen relative bg-cover bg-center"
   >
-    <header class="px-4 py-2 flex items-center justify-between">
+    <header class="relative px-4 py-2 flex items-center justify-between">
       <button
         @click="goDashboard"
         @mouseenter="isBackButtonHovered = true"
@@ -11,29 +11,36 @@
         aria-label="뒤로가기"
         class="!w-36 !h-36 flex items-center justify-center rounded-lg"
       >
-        <img 
-          :src="isBackButtonHovered ? outHoverIcon : outIcon" 
-          alt="뒤로가기" 
-          class="w-28 h-28 object-contain transition-all duration-200" 
+        <img
+          :src="isBackButtonHovered ? outHoverIcon : outIcon"
+          alt="뒤로가기"
+          class="w-28 h-28 object-contain transition-all duration-200"
         />
       </button>
 
-      <!-- 선택된 아이 이름 표시 (구름 모양) -->
-      <CloudShape
+      <!-- 선택된 아이 이름 표시 (네임태그) -->
+      <div
         v-if="currentChild && currentChild.name"
-        bg-color="rgba(255, 255, 255, 1)"
+        class="fixed top-4 right-4 z-10"
       >
-        <div class="flex items-center gap-3">
+        <!-- 네임태그 배경 이미지 -->
+        <img
+          src="@/assets/images/name_tag.png"
+          alt="네임태그"
+          class="w-56 h-28 object-contain"
+        />
+        <!-- 프로필과 이름 - fixed 위치로 정확히 배치 -->
+        <div class="fixed top-10 right-16 flex items-center gap-2">
           <img
             :src="currentChild.profileImage || 'https://placehold.co/40x40'"
             :alt="`${currentChild.name} 프로필`"
-            class="w-12 h-12 rounded-full object-cover border-2 border-white"
+            class="w-14 h-14 rounded-full object-cover border-2 border-white"
           />
-          <p class="text-4xl text-gray-800 font-shark">
+          <p class="text-2xl text-gray-800 font-shark">
             {{ currentChild.name }}
           </p>
         </div>
-      </CloudShape>
+      </div>
     </header>
 
     <main
@@ -51,14 +58,14 @@
             <h2
               class="text-4xl mb-2 text-black text-center font-shark text-outline-white"
             >
-              <span class="text-blue-600 font-shark">펭귄</span>과 대화하기
+              <span class="text-blue-600 font-shark">펭구</span>랑 대화하기
             </h2>
             <div class="flex-1 flex items-center justify-center p-5">
               <img
                 src="../assets/images/penguin.png"
-                alt="펭귄과 대화하기"
+                alt="펭구랑 대화하기"
                 class="w-full h-auto object-contain"
-                style="max-height: calc(100% - 1rem);"
+                style="max-height: calc(100% - 1rem)"
               />
             </div>
           </div>
@@ -78,7 +85,7 @@
                 src="../assets/images/drawing.png"
                 alt="나의 그림 일기"
                 class="w-full h-auto object-contain"
-                style="max-height: calc(100% - 1rem);"
+                style="max-height: calc(100% - 1rem)"
               />
             </div>
           </div>

@@ -4,7 +4,12 @@
     class="relative w-full !h-24 bg-background-header flex items-center justify-between px-8"
   >
     <!-- 왼쪽 로고 -->
-    <div @click="goDashboard" class="cursor-pointer">
+    <div @click="goDashboard" class="cursor-pointer flex items-center gap-2">
+      <img 
+        src="@/assets/images/daon_logo.png" 
+        alt="다온 로고" 
+        class="w-8 h-8 object-contain"
+      />
       <h3 class="text-2xl font-paper font-bold text-black hover:text-blue-600">
         다온(DA:ON)
       </h3>

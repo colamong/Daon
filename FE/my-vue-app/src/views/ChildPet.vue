@@ -36,8 +36,8 @@
         @click="goBack"
         :disabled="isLoading"
         :class="[
-          'w-20 h-20 bg-white rounded-lg shadow flex items-center justify-center',
-          isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50',
+          'w-20 h-20   flex items-center justify-center transition-transform duration-400',
+          isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-x-[-1]',
         ]"
       >
         <div
@@ -52,18 +52,25 @@
         />
       </button>
 
-      <!-- 선택된 아이 이름 표시 -->
+      <!-- 선택된 아이 이름 표시 (네임태그) -->
       <div
         v-if="selectedChild && selectedChild.name"
-        class="bg-white/70 backdrop-blur-sm rounded-2xl px-6 py-3 shadow-lg"
+        class="fixed top-4 right-4 z-10"
       >
-        <div class="flex items-center gap-3">
+        <!-- 네임태그 배경 이미지 -->
+        <img
+          src="@/assets/images/name_tag.png"
+          alt="네임태그"
+          class="w-56 h-28 object-contain"
+        />
+        <!-- 프로필과 이름 - fixed 위치로 정확히 배치 -->
+        <div class="fixed top-10 right-16 flex items-center gap-2">
           <img
             :src="selectedChild.profileImage || 'https://placehold.co/40x40'"
             :alt="`${selectedChild.name} 프로필`"
-            class="w-12 h-12 rounded-full object-cover border-2 border-white"
+            class="w-14 h-14 rounded-full object-cover border-2 border-white"
           />
-          <p class="text-4xl text-gray-800 font-shark">
+          <p class="text-2xl text-gray-800 font-shark">
             {{ selectedChild.name }}
           </p>
         </div>
@@ -197,26 +204,35 @@
         <h3 class="text-xl font-shark text-gray-800 mb-2">
           그림일기를 만들고 있는 중입니다
         </h3>
-        <p class="text-gray-600 font-shark">
-          펭구와의 특별한 대화를 바탕으로<br />
-          아름다운 그림일기를 생성하고 있어요!<br />
-          <span class="text-rose-500 font-semibold"
-            >조금만 기다려 주세요 ✨</span
-          >
-        </p>
+        <p class="text-rose-500 font-shark">>조금만 기다려 주세요 ✨ ></p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
 import HamsterLoading from "@/components/common/HamsterLoading.vue";
 import CloudTransition from "@/components/effect/CloudTransition.vue";
 import SnowEffect from "@/components/effect/SnowEffect.vue";
+
+function handleBeforeUnload(event) {
+  event.preventDefault();
+  // 대부분의 브라우저는 message 커스터마이징을 막아둬서,
+  // 여기서 returnValue를 반드시 설정해야 경고가 뜹니다.
+  event.returnValue = "안된다";
+}
+
+onMounted(() => {
+  window.addEventListener("beforeunload", handleBeforeUnload);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("beforeunload", handleBeforeUnload);
+});
 
 /** ✅ GMS TTS 서비스(default export) */
 import ttsService from "@/services/ttsService_gms.js";
@@ -837,5 +853,9 @@ function getPenguinImage(stage) {
 
 .animate-wiggle {
   animation: wiggle 0.3s ease-in-out infinite;
+}
+
+.flip:hover {
+  transform: scaleX(-1); /* 좌우 반전 */
 }
 </style>
