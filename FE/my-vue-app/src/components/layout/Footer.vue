@@ -5,12 +5,11 @@
     >
       <!-- 왼쪽: 브랜드 정보 -->
       <div class="flex flex-col gap-5 w-full md:w-[200px]">
-        <div class="text-xl font-bold">다온(DA:ON)</div>
+        <div class="text-xl font-paperBold">다온(DA:ON)</div>
         <p class="text-sm leading-snug">
           다문화 가정이 한국 사회에 <br />
           잘 적응할 수 있도록 돕는 <br />
-          AI 기반 생활 지원 플랫폼<br />
-          다온입니다.
+          AI 기반 통합 지원 플랫폼
         </p>
         <div class="flex gap-3 mt-2">
           <img
@@ -83,7 +82,14 @@
         <div class="text-base font-semibold">고객지원</div>
         <ul class="text-sm leading-snug space-y-1">
           <li><a href="#">자주 묻는 질문</a></li>
-          <li><button @click="showTutorial" class="font-paper text-black hover:font-paperBold">이용 가이드</button></li>
+          <li>
+            <button
+              @click="showTutorial"
+              class="font-paper text-black hover:font-paperBold"
+            >
+              이용 가이드
+            </button>
+          </li>
           <li><a href="#">공지사항</a></li>
           <li><a href="#">문의하기</a></li>
         </ul>
@@ -148,9 +154,7 @@
     />
 
     <!-- 네비게이션 튜토리얼 모달 -->
-    <NavigationTutorialModal
-      v-model="showTutorialModal"
-    />
+    <NavigationTutorialModal v-model="showTutorialModal" />
   </footer>
 </template>
 
@@ -228,8 +232,8 @@ function handleChildRegistrationCancel() {
 // 튜토리얼 모달 표시
 function showTutorial() {
   // 페이지 상단으로 스크롤
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
   // 스크롤 완료 후 모달 표시
   setTimeout(() => {
     showTutorialModal.value = true;

@@ -54,25 +54,25 @@ const cardStyle = computed(() => {
   const styles = {
     schedule: {
       title: "일정 관리",
-      description: "아이의 중요한 일정을 체계적으로 관리하세요.",
+      description: "중요한 일정을 체계적으로 관리",
       icon: new URL("@/assets/icons/calendar.svg", import.meta.url).href,
       bg: "#DDEBFF",
     },
     growth: {
       title: "성장 기록",
-      description: "아이의 성장 과정을 상세히 기록하고 추적하세요.",
+      description: "아이의 하루를 상세히 기록",
       icon: new URL("@/assets/icons/diary.svg", import.meta.url).href,
       bg: "#E4F5EA",
     },
     community: {
       title: "커뮤니티",
-      description: "다른 부모들과 소통하고 정보를 나누세요.",
+      description: "다른 사람들과 소통하고 교류",
       icon: new URL("@/assets/icons/community.svg", import.meta.url).href,
       bg: "#FFECDC",
     },
     language: {
       title: "AI 도움",
-      description: "OCR과 한국어 도움으로 편리함을 더하세요",
+      description: "문서 요약과 번역으로 편리함",
       icon: new URL("@/assets/icons/language.svg", import.meta.url).href,
       bg: "#FFE49C",
     },

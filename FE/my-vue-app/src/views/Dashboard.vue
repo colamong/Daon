@@ -34,17 +34,25 @@
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-2xl font-semibold">오늘의 활동</h3>
         <button
-          @click="openTodayReport"
-          class="text-sm text-gray-600 hover:underline hover:text-blue-600"
+          @click="goToChildProfile"
+          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors font-paper"
         >
-          자세히 보기 →
+          아이 프로필
         </button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         <div class="md:col-span-2">
           <div
-            class="bg-blue-100 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center"
+            class="bg-blue-100 h-[400px] rounded-lg shadow p-6 flex flex-col items-center justify-center relative"
           >
+            <!-- 자세히 보기 버튼 (우측 상단) -->
+            <button
+              @click="openTodayReport"
+              class="text-sm text-gray-600 hover:underline hover:text-blue-600 bg-white/80 px-3 py-1 rounded-lg"
+              style="position: absolute !important; top: 16px !important; right: 16px !important; z-index: 10 !important;"
+            >
+              자세히 보기 →
+            </button>
             <template v-if="isLoadingActivity">
               <div
                 class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"
@@ -559,6 +567,11 @@ function goToChildRegister() {
 }
 function goToChildEdit() {
   router.push({ name: "EditChild" });
+}
+function goToChildProfile() {
+  router.push({
+    name: hasChild.value ? "ChildProfile" : "RegisterChild",
+  });
 }
 function goToActivity() {
   if (hasChild.value && selectedChild.value) {

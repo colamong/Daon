@@ -13,7 +13,7 @@
     >
       <p class="text-black text-sm mb-4">
         파일을 드래그하거나 클릭하여 업로드<br />
-        <span class="font-semibold">JPG, PNG</span> 파일을 지원합니다.
+        <span class="font-semibold">PNG</span> 파일을 지원합니다.
       </p>
       <label
         for="fileInput"
@@ -60,13 +60,15 @@
       v-if="hasPreview"
       :class="[
         'absolute font-paperBold px-4 mt-16 py-2 h-10',
-        props.disabled ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-200 hover:bg-blue-300'
+        props.disabled
+          ? 'bg-gray-300 cursor-not-allowed'
+          : 'bg-blue-200 hover:bg-blue-300',
       ]"
       style="bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 10"
       :disabled="props.disabled"
       @click="onTranslate"
     >
-      {{ props.disabled ? '처리 중...' : '번역하기' }}
+      {{ props.disabled ? "처리 중..." : "번역하기" }}
     </BaseButton>
   </div>
 </template>
@@ -80,8 +82,8 @@ import folderIcon from "@/assets/icons/Folder.svg";
 const props = defineProps({
   disabled: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
 const emit = defineEmits(["upload:file", "translate"]);
