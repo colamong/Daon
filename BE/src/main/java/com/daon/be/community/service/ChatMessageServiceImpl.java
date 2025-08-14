@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -38,7 +40,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         User user = userRepository.findById(requestDto.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        ChatMessage chatMessage = new ChatMessage(community, user, requestDto.getMessage(), LocalDateTime.now());
+        // 한국 시간대 사용
+        ZonedDateTime koreaTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+        LocalDateTime koreaLocalTime = koreaTime.toLocalDateTime();
+        
+        ChatMessage chatMessage = new ChatMessage(community, user, requestDto.getMessage(), koreaLocalTime);
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
         
         return convertToResponseDto(savedMessage);

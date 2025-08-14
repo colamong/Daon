@@ -34,6 +34,7 @@ public class OcrController {
         File tempFile = File.createTempFile("upload", image.getOriginalFilename());
         image.transferTo(tempFile);
 
+        
         // 사용자 정보에서 국가코드를 가져와서 언어명으로 변환
         String userNativeLanguage = "English"; // 기본값
         if (userId != null) {

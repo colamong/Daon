@@ -27,10 +27,13 @@
 			resolvers.add(signinUserArgumentResolver);
 		}
 
+		
 		@Override
 		public void addCorsMappings(CorsRegistry registry) {
 			registry.addMapping("/**")
-				.allowedOrigins(frontendOrigin)
+				.allowedOrigins(frontendOrigin,
+						"https://da-on.store",
+						"http://localhost:3000")
 				.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 				.allowCredentials(true)
 				.allowedHeaders("*");
