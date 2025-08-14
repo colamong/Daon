@@ -21,7 +21,7 @@
       <div
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden"
       >
-        <div class="px-3">
+        <div class="px-3 cursor-pointer" @click="$refs.nicknameInput.focus()">
           <img
             src="@/assets/icons/nick.svg"
             alt="닉네임 아이콘"
@@ -30,6 +30,7 @@
         </div>
         <input
           id="nickname"
+          ref="nicknameInput"
           v-model="nickname"
           type="text"
           maxlength="10"
@@ -49,7 +50,7 @@
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden font-paper"
       >
         <!-- 아이콘 -->
-        <div class="px-3">
+        <div class="px-3 cursor-pointer" @click="$refs.emailLocalInput.focus()">
           <img
             src="@/assets/icons/Email.svg"
             alt="이메일 아이콘"
@@ -60,6 +61,7 @@
         <div class="flex-1 flex items-center">
           <!-- 아이디 -->
           <input
+            ref="emailLocalInput"
             v-model="emailLocal"
             type="text"
             placeholder="daon"
@@ -102,7 +104,7 @@
       <div
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden font-paper"
       >
-        <div class="px-3">
+        <div class="px-3 cursor-pointer" @click="$refs.passwordInput.focus()">
           <img
             src="@/assets/icons/password.svg"
             alt="비밀번호 아이콘"
@@ -111,6 +113,7 @@
         </div>
         <input
           id="password"
+          ref="passwordInput"
           v-model="password"
           type="password"
           placeholder="Password"
@@ -129,7 +132,7 @@
         class="flex items-center border rounded-lg overflow-hidden font-paper"
         :class="passwordMatchBorderClass"
       >
-        <div class="px-3">
+        <div class="px-3 cursor-pointer" @click="$refs.confirmPasswordInput.focus()">
           <img
             src="@/assets/icons/password.svg"
             alt="비밀번호 확인 아이콘"
@@ -138,6 +141,7 @@
         </div>
         <input
           id="confirm"
+          ref="confirmPasswordInput"
           v-model="confirmPassword"
           type="password"
           placeholder="Password"
@@ -184,7 +188,7 @@
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden"
       >
         <!-- 1번 아이콘 -->
-        <div class="px-3">
+        <div class="px-3 cursor-pointer" @click="$refs.countrySelect.focus()">
           <img
             src="@/assets/icons/country.svg"
             alt="국가 아이콘"
@@ -193,6 +197,7 @@
         </div>
         <select
           id="country"
+          ref="countrySelect"
           v-model="country"
           required
           class="flex-1 py-2 pl-1 pr-3 text-sm focus:outline-none font-paper"
@@ -241,7 +246,7 @@ const customDomain = ref("");
 const password = ref("");
 const confirmPassword = ref("");
 const countryOptions = ref([]);
-const country = ref("KR"); // 기본값으로 한국 설정
+const country = ref("VN"); // 기본값으로 베트남 설정
 
 const email = computed(() =>
   domainOption.value === "직접 입력"

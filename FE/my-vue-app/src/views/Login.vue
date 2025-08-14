@@ -46,12 +46,23 @@
 
           <!-- 도메인 선택 -->
           <select
+            v-if="emailDomain !== '직접 입력'"
             v-model="emailDomain"
             class="w-40 py-2 pr-3 text-sm focus:outline-none bg-white"
             aria-label="이메일 도메인 선택"
           >
             <option v-for="d in domains" :key="d" :value="d">{{ d }}</option>
           </select>
+          
+          <!-- 직접 입력 모드 -->
+          <input
+            v-else
+            v-model="customDomain"
+            type="text"
+            placeholder="직접 입력"
+            required
+            class="w-40 py-2 pr-3 text-sm focus:outline-none bg-white"
+          />
         </div>
       </div>
 
@@ -127,6 +138,7 @@ const { showSuccess, showError } = useNotification();
 
 const emailLocal = ref("");
 const emailDomain = ref("gmail.com");
+const customDomain = ref("");
 const password = ref("");
 const error = ref("");
 
@@ -135,12 +147,14 @@ const domains = [
   "naver.com",
   "daum.net",
   "yahoo.com",
-  "kakao.com"
+  "kakao.com",
+  "직접 입력"
 ];
 
 const fullEmail = computed(() => {
   const local = emailLocal.value?.trim() || "";
-  return local ? `${local}@${emailDomain.value}` : `@${emailDomain.value}`;
+  const domain = emailDomain.value === "직접 입력" ? customDomain.value : emailDomain.value;
+  return local ? `${local}@${domain}` : `@${domain}`;
 });
 
 function isValidLocalPart(local) {
@@ -157,6 +171,12 @@ async function handleLogin() {
     showError("이메일 아이디를 올바르게 입력해주세요. (영문/숫자/._%-+ 가능)", "입력 오류");
     return;
   }
+  
+  if (emailDomain.value === "직접 입력" && !customDomain.value.trim()) {
+    showError("도메인을 입력해주세요.", "입력 오류");
+    return;
+  }
+  
   if (!password.value) {
     showError("비밀번호를 입력해주세요.", "입력 오류");
     return;
