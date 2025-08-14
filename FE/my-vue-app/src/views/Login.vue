@@ -11,16 +11,14 @@
         class="w-20 h-20 object-contain"
       />
       <h2 class="text-2xl font-semibold text-black font-paper">로그인</h2>
-      <p class="text-xs text-gray-500 font-paper">
-        Get started with our app, just login to enjoy the experience.
-      </p>
     </div>
 
     <!-- 이메일 -->
-    <div>
-      <label for="email" class="block text-xs text-black mb-1 font-paperBold">
+    <div class="space-y-2">
+      <label for="emailLocal" class="block text-xs text-black mb-1 font-paperBold">
         이메일
       </label>
+
       <div
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden font-paper"
       >
@@ -31,15 +29,32 @@
             class="w-5 h-5"
           />
         </div>
+
+        <!-- 아이디 -->
         <input
-          id="email"
-          v-model="email"
-          type="email"
-          placeholder="daon@email.com"
-          required
-          class="flex-1 py-2 pr-3 text-sm focus:outline-none"
+          id="emailLocal"
+          v-model.trim="emailLocal"
+          type="text"
+          placeholder="daon"
+          autocomplete="username"
+          class="flex-1 py-2 px-1 text-sm focus:outline-none"
         />
+
+        <!-- @ 구분 -->
+        <span class="px-1 text-gray-400 select-none">@</span>
+
+        <!-- 도메인 선택 -->
+        <select
+          v-model="emailDomain"
+          class="py-2 pr-3 text-sm focus:outline-none bg-white"
+          aria-label="이메일 도메인 선택"
+        >
+          <option v-for="d in domains" :key="d" :value="d">{{ d }}</option>
+        </select>
       </div>
+
+      <!-- 조합 미리보기 -->
+      <p class="text-xs text-gray-500 font-paper">입력 이메일: {{ fullEmail }}</p>
     </div>
 
     <!-- 비밀번호 -->
@@ -84,7 +99,6 @@
       로그인
     </button>
 
-
     <!-- 회원가입 링크 -->
     <p class="text-xs text-gray-500 text-center font-paper">
       계정이 아직 없으신가요?
@@ -99,47 +113,64 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
-import { useNotification } from '@/composables/useNotification.js';
+import { useNotification } from "@/composables/useNotification.js";
 import loginImage from "@/assets/images/login.png";
 
 const router = useRouter();
 const auth = useAuthStore();
-const { showSuccess, showError, showInfo } = useNotification();
+const { showSuccess, showError } = useNotification();
 
-const email = ref("");
+const emailLocal = ref("");
+const emailDomain = ref("gmail.com");
 const password = ref("");
 const error = ref("");
 
-/**
- * handleLogin
- * - 이메일/비밀번호가 비어있으면 에러
- * - 0.5초 더미 딜레이 후 mock-token 발행
- * - 실제 auth.login 액션이 있다면 호출, 아니면 localStorage에 저장
- * - 로그인 성공 시 Dashboard로 이동
- */
-async function handleLogin() {
-  if (!email.value || !password.value) {
-    showError("이메일과 비밀번호를 모두 입력해주세요.", "입력 오류");
-    return;
-  }
-  error.value = "";
-  try {
-    await auth.login({ 
-      email: email.value, 
-      password: password.value 
-    });
+const domains = [
+  "gmail.com",
+  "naver.com",
+  "daum.net",
+  "yahoo.com",
+  "kakao.com"
+];
 
-    // 로그인 성공 후 사용자 정보 가져오기
-    await auth.getCurrentUser();
+const fullEmail = computed(() => {
+  const local = emailLocal.value?.trim() || "";
+  return local ? `${local}@${emailDomain.value}` : `@${emailDomain.value}`;
+});
 
-    showSuccess("로그인되었습니다!", "환영합니다");
-    router.push({ name: "Dashboard" });
-  } catch (error) {
-    showError(error.message || "로그인 중 오류가 발생했습니다.", "로그인 실패");
-  }
+function isValidLocalPart(local) {
+  if (!local) return false;
+  const re = /^[A-Za-z0-9._%+\-]+$/;
+  return re.test(local);
 }
 
+async function handleLogin() {
+  error.value = "";
+
+  if (!isValidLocalPart(emailLocal.value)) {
+    showError("이메일 아이디를 올바르게 입력해주세요. (영문/숫자/._%-+ 가능)", "입력 오류");
+    return;
+  }
+  if (!password.value) {
+    showError("비밀번호를 입력해주세요.", "입력 오류");
+    return;
+  }
+
+  try {
+    await auth.login({
+      email: fullEmail.value,
+      password: password.value
+    });
+
+    await auth.getCurrentUser();
+    showSuccess("로그인되었습니다!", "환영합니다");
+    router.push({ name: "Dashboard" });
+  } catch (e) {
+    error.value = e?.message || "로그인 중 오류가 발생했습니다.";
+    showError(error.value, "로그인 실패");
+  }
+}
 </script>
