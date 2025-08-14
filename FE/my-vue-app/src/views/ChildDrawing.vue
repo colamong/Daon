@@ -14,7 +14,7 @@
     >
       <button
         @click="goBack"
-        class="w-20 h-20 bg-white rounded-lg shadow flex items-center justify-center"
+        class="w-20 h-20 flex items-center justify-center transition-transform duration-400 hover:scale-x-[-1]"
       >
         <img
           :src="HomeIcon"
@@ -138,10 +138,10 @@ onMounted(async () => {
       childStore.selectChild(childId);
     }
   }
-  
+
   // 초기 다이어리 조회
   fetchMonthlyDiaries();
-  
+
   // BGM 자동 재생 시도
   await playBGM();
 });
@@ -162,29 +162,31 @@ watch(currentChildId, (newChildId) => {
 async function playBGM() {
   if (!isBGMPlaying.value) {
     try {
-      console.log('BGM 재생 시도 중...');
-      const bgmModule = await import('@/assets/effects/bgm.mp3');
+      console.log("BGM 재생 시도 중...");
+      const bgmModule = await import("@/assets/effects/bgm.mp3");
       bgmAudio.value = new Audio(bgmModule.default);
       bgmAudio.value.loop = true;
       bgmAudio.value.volume = 0.3;
-      bgmAudio.value.preload = 'auto';
-      
+      bgmAudio.value.preload = "auto";
+
       // 강제 재생 시도
       const playPromise = bgmAudio.value.play();
-      
+
       if (playPromise !== undefined) {
-        playPromise.then(() => {
-          isBGMPlaying.value = true;
-          console.log('BGM 재생 성공');
-        }).catch(error => {
-          console.log('자동 재생 차단됨, 사용자 상호작용 대기 중:', error);
-          // 차단된 경우 첫 번째 클릭/터치 이벤트에서 재생
-          document.addEventListener('click', playBGM, { once: true });
-          document.addEventListener('touchstart', playBGM, { once: true });
-        });
+        playPromise
+          .then(() => {
+            isBGMPlaying.value = true;
+            console.log("BGM 재생 성공");
+          })
+          .catch((error) => {
+            console.log("자동 재생 차단됨, 사용자 상호작용 대기 중:", error);
+            // 차단된 경우 첫 번째 클릭/터치 이벤트에서 재생
+            document.addEventListener("click", playBGM, { once: true });
+            document.addEventListener("touchstart", playBGM, { once: true });
+          });
       }
     } catch (error) {
-      console.error('BGM 생성 실패:', error);
+      console.error("BGM 생성 실패:", error);
     }
   }
 }
@@ -217,41 +219,49 @@ const currentDate = ref(new Date());
 async function fetchMonthlyDiaries() {
   try {
     const childId = currentChildId.value;
-    
+
     if (!childId) {
-      console.warn('childId가 없어서 다이어리 조회를 건너뜁니다.');
+      console.warn("childId가 없어서 다이어리 조회를 건너뜁니다.");
       diaries.value = [];
       return;
     }
-    
+
     const year = currentDate.value.getFullYear();
     const month = currentDate.value.getMonth() + 1;
-    
-    console.log('요청 파라미터:', { childId, year, month });
+
+    console.log("요청 파라미터:", { childId, year, month });
     const response = await childService.getMonthlyDiaries(childId, year, month);
-    console.log('응답 결과:', response);
-    console.log('response 타입:', typeof response, 'isArray:', Array.isArray(response));
-    
+    console.log("응답 결과:", response);
+    console.log(
+      "response 타입:",
+      typeof response,
+      "isArray:",
+      Array.isArray(response)
+    );
+
     // API 응답을 diaries 형태로 변환
     // response가 배열이 아니라 단일 객체일 수도 있으므로 처리
-    const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
-    console.log('responseArray:', responseArray);
-    
+    const responseArray = Array.isArray(response)
+      ? response
+      : response
+      ? [response]
+      : [];
+    console.log("responseArray:", responseArray);
+
     diaries.value = responseArray
-      .map(diary => {
-        console.log('변환 중인 diary:', diary);
+      .map((diary) => {
+        console.log("변환 중인 diary:", diary);
         return {
-          date: diary.createdAt ? diary.createdAt.split('T')[0] : diary.date, // YYYY-MM-DD 형식으로 변환
+          date: diary.createdAt ? diary.createdAt.split("T")[0] : diary.date, // YYYY-MM-DD 형식으로 변환
           imageUrl: diary.imageUrl,
-          text: diary.diaryText || diary.text || diary.content || ''
+          text: diary.diaryText || diary.text || diary.content || "",
         };
       })
       .sort((a, b) => new Date(a.date) - new Date(b.date)); // 날짜순 정렬
-      
-    console.log('최종 변환된 diaries:', diaries.value);
-      
+
+    console.log("최종 변환된 diaries:", diaries.value);
   } catch (error) {
-    console.error('다이어리 조회 오류:', error);
+    console.error("다이어리 조회 오류:", error);
     diaries.value = [];
   }
 }
@@ -262,7 +272,7 @@ const diariesMap = computed(() => {
     acc[d.date] = d;
     return acc;
   }, {});
-  console.log('diariesMap 계산됨:', map);
+  console.log("diariesMap 계산됨:", map);
   return map;
 });
 
@@ -310,10 +320,10 @@ const calendarOptions = reactive({
     const viewStart = new Date(info.start);
     const viewEnd = new Date(info.end);
     const middleDate = new Date((viewStart.getTime() + viewEnd.getTime()) / 2);
-    
+
     currentDate.value = middleDate;
     await fetchMonthlyDiaries();
-    
+
     // 데이터 로드 후 강제로 다시 렌더링
     setTimeout(() => {
       if (calendarRef.value) {
@@ -351,21 +361,21 @@ const calendarOptions = reactive({
   // 썸네일 + 클릭 리스너
   dayCellDidMount: (info) => {
     info.el.style.position = "relative";
-    
+
     // 시간대 문제 해결: 로컬 날짜로 변환
     const year = info.date.getFullYear();
-    const month = String(info.date.getMonth() + 1).padStart(2, '0');
-    const day = String(info.date.getDate()).padStart(2, '0');
+    const month = String(info.date.getMonth() + 1).padStart(2, "0");
+    const day = String(info.date.getDate()).padStart(2, "0");
     const key = `${year}-${month}-${day}`;
-    
+
     // 더 긴 딜레이와 반복 체크로 확실히 데이터 로드 대기
     let attempts = 0;
     const maxAttempts = 10;
-    
+
     const checkAndRender = () => {
       attempts++;
-      const d = diaries.value.find(diary => diary.date === key);
-      
+      const d = diaries.value.find((diary) => diary.date === key);
+
       if (d && d.imageUrl) {
         // 데이터를 찾았으면 이미지 렌더링
         const wrap = document.createElement("div");
@@ -397,14 +407,14 @@ const calendarOptions = reactive({
           showModal.value = true;
         });
         info.el.appendChild(wrap);
-        
+
         console.log(`${key} 이미지 렌더링 완료 (${attempts}번째 시도)`);
       } else if (attempts < maxAttempts) {
         // 데이터가 없으면 100ms 후 다시 시도
         setTimeout(checkAndRender, 100);
       }
     };
-    
+
     // 첫 시도는 700ms 후
     setTimeout(checkAndRender, 700);
   },
