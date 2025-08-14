@@ -33,10 +33,27 @@ public class ChatMessage {
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type")
+    private MessageType messageType = MessageType.USER;
+    
     public ChatMessage(Community community, User user, String message, LocalDateTime sentAt) {
         this.community = community;
         this.user = user;
         this.message = message;
         this.sentAt = sentAt;
+        this.messageType = MessageType.USER;
+    }
+    
+    public ChatMessage(Community community, User user, String message, LocalDateTime sentAt, MessageType messageType) {
+        this.community = community;
+        this.user = user;
+        this.message = message;
+        this.sentAt = sentAt;
+        this.messageType = messageType;
+    }
+    
+    public enum MessageType {
+        USER, SYSTEM_JOIN, SYSTEM_LEAVE
     }
 }

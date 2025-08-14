@@ -8,12 +8,13 @@
         <h1 class="text-4xl font-paperBold text-gray-800 mb-4">
           {{ currentTheme.title }}에서
         </h1>
-        <div class="flex justify-center items-center space-x-8 mb-6">
-          <p class="text-lg text-gray-600 max-w-2xl">
+        <div class="flex justify-between items-center mb-6">
+          <div class="flex-1"></div>
+          <p class="text-lg text-gray-600 text-center flex-1 whitespace-nowrap">
             {{ currentTheme.description }}
           </p>
           <!-- 테마 간 이동 화살표 -->
-          <div class="flex space-x-2">
+          <div class="flex space-x-2 flex-1 justify-end">
             <IconButton
               variant="left-arrow"
               label="이전 테마"
@@ -47,25 +48,27 @@
 
       <!-- 오른쪽: 챕터 목록 (API 데이터) -->
       <div class="space-y-4">
-        <div
-          v-for="chapter in chapters"
-          :key="chapter.id"
-          class="bg-blue-100 rounded-lg p-4 hover:bg-blue-200 transition-colors cursor-pointer relative max-w-md"
-          @click="startChapter(chapter)"
-        >
-          <div class="flex justify-between items-center">
-            <div class="flex-1 pr-4">
-              <h3 class="text-lg font-paperBold text-gray-800 mb-2">
-                Ch.{{ chapter.chapterNumber }} {{ chapter.title }}
-              </h3>
-              <p class="text-sm text-gray-600 line-clamp-2">
-                {{ chapter.description }}
-              </p>
-            </div>
-            <div
-              class="flex-shrink-0 text-gray-500 text-2xl font-bold flex items-center justify-center"
-            >
-              &gt;
+        <div class="h-80 overflow-y-auto space-y-4 pr-2">
+          <div
+            v-for="(chapter, index) in chapters"
+            :key="chapter.id"
+            class="bg-blue-100 rounded-lg p-5 hover:bg-blue-200 transition-colors cursor-pointer relative max-w-md"
+            @click="startChapter(chapter)"
+          >
+            <div class="flex justify-between items-center">
+              <div class="flex-1 pr-4">
+                <h3 class="text-lg font-paperBold text-gray-800 mb-1">
+                  Ch.{{ index + 1 }} {{ chapter.title }}
+                </h3>
+                <p class="text-sm text-gray-600 line-clamp-2">
+                  {{ chapter.description }}
+                </p>
+              </div>
+              <div
+                class="flex-shrink-0 text-gray-500 text-2xl font-bold flex items-center justify-center"
+              >
+                &gt;
+              </div>
             </div>
           </div>
         </div>
@@ -164,8 +167,9 @@ const navigateTheme = (direction) => {
 
 // 챕터 시작하기
 const startChapter = (chapter) => {
+  const chapterIndex = chapters.value.findIndex((c) => c.id === chapter.id) + 1;
   showInfo(
-    `Ch.${chapter.id} ${chapter.title} 학습을 시작합니다!`,
+    `Ch.${chapterIndex} ${chapter.title} 학습을 시작합니다!`,
     "학습 시작",
     { duration: 2000 }
   );

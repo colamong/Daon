@@ -120,7 +120,7 @@ const isBGMPlaying = ref(false);
 const isBackButtonHovered = ref(false);
 
 // 컴포넌트 마운트 시 실행
-onMounted(() => {
+onMounted(async () => {
   childStore.initialize();
 
   // URL에서 childId가 전달된 경우 해당 아이를 선택
@@ -132,7 +132,7 @@ onMounted(() => {
   }
 
   // BGM 자동 재생 시도
-  playBGM();
+  await playBGM();
 });
 
 // 컴포넌트 언마운트 시 BGM 정지
@@ -165,14 +165,15 @@ function goToDrawing() {
 }
 
 // BGM 재생
-function playBGM() {
+async function playBGM() {
   if (!isBGMPlaying.value) {
     try {
       console.log("BGM 재생 시도 중...");
-      bgmAudio.value = new Audio("/src/assets/effects/bgm.mp3");
+      const bgmModule = await import("@/assets/effects/bgm.mp3");
+      bgmAudio.value = new Audio(bgmModule.default);
       bgmAudio.value.loop = true;
       bgmAudio.value.volume = 0.3;
-      bgmAudio.value.autoplay = true;
+      bgmAudio.value.preload = "auto";
 
       // 강제 재생 시도
       const playPromise = bgmAudio.value.play();
@@ -207,10 +208,12 @@ function stopBGM() {
 }
 
 // 호버 시 효과음 재생
-function playHoverSound() {
+async function playHoverSound() {
   try {
-    const audio = new Audio("/src/assets/effects/decide.mp3");
+    const decideModule = await import("@/assets/effects/decide.mp3");
+    const audio = new Audio(decideModule.default);
     audio.volume = 0.4;
+    audio.preload = "auto";
     audio.play().catch((error) => {
       console.warn("호버 효과음 재생 실패:", error);
     });
