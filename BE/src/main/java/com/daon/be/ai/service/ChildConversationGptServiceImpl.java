@@ -26,7 +26,7 @@ public class ChildConversationGptServiceImpl implements ChildConversationGptServ
 	public GptChildConversationResponseDto analyzeEmotionAndSummary(String sttText) {
 		String prompt = """
 		다음 아이의 발화 내용을 바탕으로 감정 요약과 대화 전체 요약을 JSON 형태로 반환해.
-		대화 전체 요약은 최대 60자, 감정 요약은 최대 100자로 한정되어있다.
+		대화 전체 요약은 최소 200자, 감정 요약은 최소 300자로 구성되어있다.
 		
 		다음 형식으로:
 		{
