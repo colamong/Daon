@@ -30,6 +30,9 @@ public class Chapter {
 	@JoinColumn(name = "theme_id", nullable = false)
 	private Theme theme;
 
+	@Column(name = "chapter_number", nullable = false)
+	private Integer chapterNumber; // 추가: 테마별 챕터 번호 (1, 2, 3...)
+
 	@Column(nullable = false)
 	private String title;
 

@@ -23,6 +23,7 @@ export function mapTheme(dto) {
 export function mapChapter(dto) {
   return {
     id: dto.id,
+    chapterNumber: dto.chapterNumber, // 추가: 테마별 챕터 번호
     title: dto.title,
     description: dto.description,
   }

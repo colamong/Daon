@@ -21,9 +21,10 @@ public class ChapterService {
         Theme theme = themeRepository.findById(themeId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 테마입니다" + themeId));
 
-        return chapterRepository.findAllByTheme(theme).stream()
+        return chapterRepository.findAllByThemeOrderByChapterNumber(theme).stream() // 정렬 추가
                 .map(chapter -> ChapterResponseDTO.builder()
                         .id(chapter.getId())
+                        .chapterNumber(chapter.getChapterNumber()) // 챕터 번호 추가
                         .title(chapter.getTitle())
                         .description(chapter.getDescription())
                         .build())
