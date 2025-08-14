@@ -1,45 +1,45 @@
 <template>
-  <section class="px-6 py-4 max-w-6xl mx-auto min-h-[calc(100vh-200px)]">
+  <section class="px-4 md:px-6 py-4 max-w-6xl mx-auto min-h-[calc(100vh-200px)]">
     <div class="flex justify-between items-center font-paperBold mb-4">
-      <h1 class="text-2xl">분석 결과</h1>
+      <h1 class="text-xl md:text-2xl">분석 결과</h1>
       <button
         @click="goBack"
-        class="px-4 py-2 bg-white rounded hover:bg-blue-700 hover:text-white transition"
+        class="px-3 md:px-4 py-2 bg-white rounded hover:bg-blue-700 hover:text-white transition text-sm md:text-base"
       >
         뒤로 가기
       </button>
     </div>
     <!-- 전체 높이를 뷰포트에 맞춤 -->
     <div
-      class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-250px)] mb-10"
+      class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 h-auto lg:h-[calc(100vh-250px)] mb-10"
     >
       <!-- LEFT: 이미지/파일 영역 -->
       <div
-        class="col-span-1 md:col-span-2 bg-white rounded-xl shadow p-4 flex items-center justify-center h-full"
+        class="col-span-1 lg:col-span-2 bg-white rounded-xl shadow p-4 flex items-center justify-center h-64 lg:h-full"
       >
         <img
           v-if="image"
           :src="image"
           alt="OCR Preview"
-          class="max-w-full max-h-[calc(100vh-300px)] object-contain"
+          class="max-w-full max-h-full object-contain"
         />
         <div
           v-else-if="file"
           class="flex flex-col items-center space-y-2 text-gray-700"
         >
-          <img :src="folderIcon" alt="파일 아이콘" class="w-16 h-16" />
-          <p class="break-all">{{ file }}</p>
+          <img :src="folderIcon" alt="파일 아이콘" class="w-12 md:w-16 h-12 md:h-16" />
+          <p class="break-all text-sm md:text-base">{{ file }}</p>
         </div>
-        <div v-else class="text-gray-500">미리볼 파일이 없습니다.</div>
+        <div v-else class="text-gray-500 text-sm md:text-base">미리볼 파일이 없습니다.</div>
       </div>
 
       <!-- RIGHT: 요약/번역 카드 -->
-      <div class="col-span-1 flex flex-col gap-4 h-full max-h-full">
+      <div class="col-span-1 flex flex-col gap-4 h-auto lg:h-full lg:max-h-full">
         <!-- 요약 결과 카드 -->
         <div
-          class="bg-white rounded-xl shadow p-4 flex-1 overflow-y-auto max-h-[calc(50vh-150px)]"
+          class="bg-white rounded-xl shadow p-4 flex-1 overflow-y-auto min-h-[200px] lg:max-h-[calc(50vh-150px)]"
         >
-          <h2 class="font-paperSemi mb-2 text-sm">요약 결과</h2>
+          <h2 class="font-paperSemi mb-2 text-sm md:text-base">요약 결과</h2>
           <div
             class="text-gray-600 whitespace-pre-wrap font-paper text-sm leading-relaxed"
           >
@@ -49,9 +49,9 @@
 
         <!-- 번역 결과 카드 -->
         <div
-          class="bg-white rounded-xl shadow p-4 flex-1 overflow-y-auto max-h-[calc(50vh-150px)]"
+          class="bg-white rounded-xl shadow p-4 flex-1 overflow-y-auto min-h-[200px] lg:max-h-[calc(50vh-150px)]"
         >
-          <h2 class="font-paperSemi mb-2 text-sm">번역 결과</h2>
+          <h2 class="font-paperSemi mb-2 text-sm md:text-base">번역 결과</h2>
           <div
             class="text-gray-600 whitespace-pre-wrap font-paper text-sm leading-relaxed"
           >

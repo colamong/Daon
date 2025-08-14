@@ -1,26 +1,26 @@
 <template>
-  <div class="py-8 px-4">
-    <div class="mx-auto max-w-5xl bg-white pt-10 pb-10 rounded-2xl mb-10">
+  <div class="py-4 md:py-8 px-4">
+    <div class="mx-auto max-w-5xl bg-white pt-6 md:pt-10 pb-6 md:pb-10 rounded-xl md:rounded-2xl mb-6 md:mb-10">
       <!-- 상단 타이틀 -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl font-paperBold text-gray-800">아이 등록</h1>
+      <div class="text-center mb-6 md:mb-12">
+        <h1 class="text-2xl md:text-4xl font-paperBold text-gray-800">아이 등록</h1>
       </div>
 
       <!-- 메인 콘텐츠: 좌우 레이아웃 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16 px-4 md:px-8">
         <!-- 좌측: 이미지 업로드 -->
-        <div class="flex flex-col space-y-6">
+        <div class="flex flex-col space-y-4 md:space-y-6">
           <BaseImageUpload @upload:image="handleImageUpload" />
         </div>
 
         <!-- 우측: 폼 필드들 -->
-        <div class="space-y-8">
-          <form @submit.prevent="handleRegisterChild" class="space-y-8">
+        <div class="space-y-6 md:space-y-8">
+          <form @submit.prevent="handleRegisterChild" class="space-y-6 md:space-y-8">
             <!-- 이름 -->
             <div>
               <label
                 for="childName"
-                class="block text-lg font-paperBold text-black mb-3"
+                class="block text-base md:text-lg font-paperBold text-black mb-2 md:mb-3"
               >
                 이름
               </label>
@@ -30,7 +30,7 @@
                 type="text"
                 required
                 placeholder="아이의 이름을 입력하세요"
-                class="w-full py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg"
+                class="w-full py-2 md:py-3 px-3 md:px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-base md:text-lg"
               />
             </div>
 
@@ -38,14 +38,14 @@
             <div>
               <label
                 for="birthDate"
-                class="block text-lg font-paperBold text-black mb-3"
+                class="block text-base md:text-lg font-paperBold text-black mb-2 md:mb-3"
               >
                 생년월일
               </label>
-              <div class="flex gap-2">
+              <div class="flex gap-1 md:gap-2">
                 <select
                   v-model="selectedYear"
-                  class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white"
+                  class="flex-1 py-2 md:py-3 px-2 md:px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-sm md:text-lg bg-white"
                 >
                   <option value="">년도</option>
                   <option v-for="year in years" :key="year" :value="year">
@@ -54,7 +54,7 @@
                 </select>
                 <select
                   v-model="selectedMonth"
-                  class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white"
+                  class="flex-1 py-2 md:py-3 px-2 md:px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-sm md:text-lg bg-white"
                 >
                   <option value="">월</option>
                   <option v-for="month in 12" :key="month" :value="month">
@@ -63,7 +63,7 @@
                 </select>
                 <select
                   v-model="selectedDay"
-                  class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg bg-white"
+                  class="flex-1 py-2 md:py-3 px-2 md:px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-sm md:text-lg bg-white"
                 >
                   <option value="">일</option>
                   <option v-for="day in daysInMonth" :key="day" :value="day">
@@ -88,7 +88,7 @@
       </div>
 
       <!-- 하단 관심사 영역 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 px-8 mt-12">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16 px-4 md:px-8 mt-8 md:mt-12">
         <!-- 좌측: 관심사 -->
         <div>
           <BaseCheckboxGroup
@@ -99,12 +99,12 @@
         </div>
 
         <!-- 우측: 추가하고 싶은 관심사 + 등록 버튼 -->
-        <div class="space-y-8">
+        <div class="space-y-6 md:space-y-8">
           <!-- 추가하고 싶은 관심사 -->
           <div>
             <label
               for="newInterest"
-              class="block text-lg font-paperBold text-black mb-3"
+              class="block text-base md:text-lg font-paperBold text-black mb-2 md:mb-3"
             >
               추가하고 싶은 관심사
             </label>
@@ -114,13 +114,13 @@
                 v-model="newInterest"
                 type="text"
                 placeholder="새로운 관심사를 입력하세요"
-                class="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-lg"
+                class="flex-1 py-2 md:py-3 px-3 md:px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-paper text-base md:text-lg"
                 @keypress.enter.prevent="addNewInterest"
               />
               <button
                 type="button"
                 @click="addNewInterest"
-                class="px-6 py-3 bg-purple-500 text-white font-paperBold text-lg rounded-lg hover:bg-purple-600 transition-colors"
+                class="px-3 md:px-6 py-2 md:py-3 bg-purple-500 text-white font-paperBold text-sm md:text-lg rounded-lg hover:bg-purple-600 transition-colors flex-shrink-0"
               >
                 추가
               </button>
@@ -128,12 +128,12 @@
           </div>
 
           <!-- 등록하기 버튼 -->
-          <div class="pt-6">
+          <div class="pt-4 md:pt-6">
             <button
               type="button"
               @click="handleRegisterChild"
               :disabled="loading"
-              class="w-full py-4 bg-purple-500 text-white font-paperBold text-lg rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="w-full py-3 md:py-4 bg-purple-500 text-white font-paperBold text-base md:text-lg rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {{ loading ? "등록 중..." : "등록하기" }}
             </button>

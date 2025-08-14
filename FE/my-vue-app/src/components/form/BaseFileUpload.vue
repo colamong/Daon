@@ -15,13 +15,23 @@
         파일을 드래그하거나 클릭하여 업로드<br />
         <span class="font-semibold">PNG</span> 파일을 지원합니다.
       </p>
-      <label
-        for="fileInput"
-        class="bg-green-100 hover:bg-green-200 text-black font-medium flex items-center gap-2 px-4 py-2 rounded-md cursor-pointer transition"
-      >
-        <img :src="folderIcon" alt="폴더 아이콘" class="w-5 h-5" />
-        파일 불러오기
-      </label>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <label
+          for="fileInput"
+          class="bg-green-100 hover:bg-green-200 text-black font-medium flex items-center gap-2 px-4 py-2 rounded-md cursor-pointer transition"
+        >
+          <img :src="folderIcon" alt="폴더 아이콘" class="w-5 h-5" />
+          파일 불러오기
+        </label>
+        <button
+          v-if="isMobile"
+          @click="openCamera"
+          :disabled="props.disabled"
+          class="bg-blue-100 hover:bg-blue-200 text-black font-medium flex items-center gap-2 px-4 py-2 rounded-md cursor-pointer transition disabled:bg-gray-300"
+        >
+          📷 카메라 촬영
+        </button>
+      </div>
       <input
         id="fileInput"
         type="file"
@@ -29,6 +39,15 @@
         class="hidden"
         :disabled="props.disabled"
         @change="onChange"
+      />
+      <input
+        id="cameraInput"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        class="hidden"
+        :disabled="props.disabled"
+        @change="onCameraCapture"
       />
     </div>
 
@@ -74,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import IconButton from "@/components/button/IconButton.vue";
 import BaseButton from "@/components/button/BaseButton.vue";
 import folderIcon from "@/assets/icons/Folder.svg";
@@ -89,8 +108,16 @@ const props = defineProps({
 const emit = defineEmits(["upload:file", "translate"]);
 const imagePreview = ref(null);
 const fileName = ref(null);
+const isMobile = ref(false);
 
 const hasPreview = computed(() => !!imagePreview.value || !!fileName.value);
+
+// 모바일 기기 감지
+onMounted(() => {
+  isMobile.value = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   ('ontouchstart' in window) || 
+                   (window.innerWidth <= 768);
+});
 
 function onChange(e) {
   handleFile(e.target.files[0]);
@@ -122,6 +149,15 @@ function clear() {
 function onTranslate() {
   if (props.disabled) return;
   emit("translate", { image: imagePreview.value, file: fileName.value });
+}
+
+function openCamera() {
+  if (props.disabled) return;
+  document.getElementById('cameraInput').click();
+}
+
+function onCameraCapture(e) {
+  handleFile(e.target.files[0]);
 }
 </script>
 

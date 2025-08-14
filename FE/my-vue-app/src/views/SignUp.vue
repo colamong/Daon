@@ -1,16 +1,16 @@
 <template>
   <form
     @submit.prevent="handleSignUp"
-    class="mx-auto w-full max-w-lg space-y-4 bg-white rounded-2xl shadow-lg p-6 m-6"
+    class="mx-auto w-full max-w-lg space-y-3 md:space-y-4 bg-white rounded-2xl shadow-lg p-4 md:p-6 m-4 md:m-6"
   >
     <!-- 로고 + 제목 -->
     <div class="flex flex-col items-center space-y-1">
       <img
         src="@/assets/images/daon_logo.png"
         alt="다온 로고"
-        class="!w-[80px] !h-[80px] object-contain"
+        class="!w-[60px] !h-[60px] md:!w-[80px] md:!h-[80px] object-contain"
       />
-      <h2 class="text-2xl font-semibold text-black font-paper">회원가입</h2>
+      <h2 class="text-xl md:text-2xl font-semibold text-black font-paper">회원가입</h2>
     </div>
 
     <!-- 닉네임 -->
@@ -21,11 +21,11 @@
       <div
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden"
       >
-        <div class="px-3 cursor-pointer" @click="$refs.nicknameInput.focus()">
+        <div class="px-2 md:px-3 cursor-pointer" @click="$refs.nicknameInput.focus()">
           <img
             src="@/assets/icons/nick.svg"
             alt="닉네임 아이콘"
-            class="w-5 h-5"
+            class="w-4 h-4 md:w-5 md:h-5"
           />
         </div>
         <input
@@ -36,7 +36,7 @@
           maxlength="10"
           placeholder="1~10글자"
           required
-          class="flex-1 py-2 pr-3 text-sm focus:outline-none font-paper"
+          class="flex-1 py-2 pr-2 md:pr-3 text-sm focus:outline-none font-paper"
         />
       </div>
     </div>
@@ -50,15 +50,15 @@
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden font-paper"
       >
         <!-- 아이콘 -->
-        <div class="px-3 cursor-pointer" @click="$refs.emailLocalInput.focus()">
+        <div class="px-2 md:px-3 cursor-pointer" @click="$refs.emailLocalInput.focus()">
           <img
             src="@/assets/icons/Email.svg"
             alt="이메일 아이콘"
-            class="w-5 h-5"
+            class="w-4 h-4 md:w-5 md:h-5"
           />
         </div>
 
-        <div class="flex-1 flex items-center">
+        <div class="flex-1 flex items-center min-w-0">
           <!-- 아이디 -->
           <input
             ref="emailLocalInput"
@@ -66,17 +66,17 @@
             type="text"
             placeholder="daon"
             required
-            class="w-32 py-2 px-1 text-sm focus:outline-none"
+            class="w-20 sm:w-28 md:w-32 py-2 px-1 text-sm focus:outline-none flex-shrink-0"
           />
 
           <!-- @ 구분 -->
-          <span class="w-8 flex justify-center text-gray-400 select-none">@</span>
+          <span class="w-6 sm:w-8 flex justify-center text-gray-400 select-none text-sm">@</span>
 
           <!-- 도메인 선택 -->
           <select
             v-if="domainOption !== '직접 입력'"
             v-model="domainOption"
-            class="w-40 py-2 pr-3 text-sm focus:outline-none bg-white"
+            class="flex-1 sm:w-28 md:w-40 py-2 pr-1 sm:pr-3 text-sm focus:outline-none bg-white min-w-0"
             aria-label="이메일 도메인 선택"
           >
             <option disabled value="">이메일 선택</option>
@@ -90,7 +90,7 @@
             type="text"
             placeholder="직접 입력"
             required
-            class="w-40 py-2 pr-3 text-sm focus:outline-none bg-white"
+            class="flex-1 sm:w-28 md:w-40 py-2 pr-1 sm:pr-3 text-sm focus:outline-none bg-white min-w-0"
           />
         </div>
       </div>
@@ -104,11 +104,11 @@
       <div
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden font-paper"
       >
-        <div class="px-3 cursor-pointer" @click="$refs.passwordInput.focus()">
+        <div class="px-2 md:px-3 cursor-pointer" @click="$refs.passwordInput.focus()">
           <img
             src="@/assets/icons/password.svg"
             alt="비밀번호 아이콘"
-            class="w-5 h-5"
+            class="w-4 h-4 md:w-5 md:h-5"
           />
         </div>
         <input
@@ -118,7 +118,7 @@
           type="password"
           placeholder="Password"
           required
-          class="flex-1 py-2 pr-3 text-sm focus:outline-none font-paper"
+          class="flex-1 py-2 pr-2 md:pr-3 text-sm focus:outline-none font-paper"
         />
       </div>
     </div>
@@ -132,11 +132,11 @@
         class="flex items-center border rounded-lg overflow-hidden font-paper"
         :class="passwordMatchBorderClass"
       >
-        <div class="px-3 cursor-pointer" @click="$refs.confirmPasswordInput.focus()">
+        <div class="px-2 md:px-3 cursor-pointer" @click="$refs.confirmPasswordInput.focus()">
           <img
             src="@/assets/icons/password.svg"
             alt="비밀번호 확인 아이콘"
-            class="w-5 h-5"
+            class="w-4 h-4 md:w-5 md:h-5"
           />
         </div>
         <input
@@ -148,11 +148,11 @@
           required
           class="flex-1 py-2 text-sm focus:outline-none"
         />
-        <div v-if="showPasswordMatchIcon" class="px-3">
+        <div v-if="showPasswordMatchIcon" class="px-2 md:px-3">
           <!-- 일치하지 않을 때 빨간 X -->
           <svg
             v-if="!passwordsMatch && confirmPassword.length > 0"
-            class="w-5 h-5 text-red-500"
+            class="w-4 h-4 md:w-5 md:h-5 text-red-500"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -165,7 +165,7 @@
           <!-- 일치할 때 초록 체크 -->
           <svg
             v-if="passwordsMatch && confirmPassword.length > 0"
-            class="w-5 h-5 text-green-500"
+            class="w-4 h-4 md:w-5 md:h-5 text-green-500"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -188,11 +188,11 @@
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden"
       >
         <!-- 1번 아이콘 -->
-        <div class="px-3 cursor-pointer" @click="$refs.countrySelect.focus()">
+        <div class="px-2 md:px-3 cursor-pointer" @click="$refs.countrySelect.focus()">
           <img
             src="@/assets/icons/country.svg"
             alt="국가 아이콘"
-            class="w-5 h-5"
+            class="w-4 h-4 md:w-5 md:h-5"
           />
         </div>
         <select
@@ -200,7 +200,7 @@
           ref="countrySelect"
           v-model="country"
           required
-          class="flex-1 py-2 pl-1 pr-3 text-sm focus:outline-none font-paper"
+          class="flex-1 py-2 pl-1 pr-2 md:pr-3 text-sm focus:outline-none font-paper"
         >
           <option disabled value="">자신의 국가를 선택하세요</option>
           <option
@@ -217,7 +217,7 @@
     <!-- 회원가입 버튼 -->
     <button
       type="submit"
-      class="w-full h-11 bg-blue-500 hover:bg-blue-600 font-paper text-white font-medium rounded-lg transition"
+      class="w-full h-10 md:h-11 bg-blue-500 hover:bg-blue-600 font-paper text-white font-medium rounded-lg transition text-sm md:text-base"
     >
       회원가입
     </button>

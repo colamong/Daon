@@ -5,76 +5,79 @@
 
     <!-- BaseModal 스타일을 따온 커스텀 모달 (오버레이 없음) -->
     <div
-      class="mt-10 fixed inset-0 flex items-center justify-center z-50 font-paper"
-      style="pointer-events: none"
+      class="fixed inset-0 grid place-items-center z-50 font-paper p-4 min-h-screen"
+      style="pointer-events: none; display: grid; place-items: center; align-content: center; justify-content: center;"
     >
       <div
-        class="bg-white rounded-xl overflow-hidden shadow-lg max-w-3xl w-full min-w-[750px] min-h-[550px]"
+        class="bg-white rounded-xl overflow-hidden shadow-lg w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl max-h-[85vh] overflow-y-auto my-auto"
         style="pointer-events: auto"
         @click.stop
       >
         <!-- 헤더 -->
         <div
-          class="flex items-center justify-between px-4 py-2 bg-blue-100 border-b border-blue-200"
+          class="flex items-center justify-between px-3 md:px-4 py-2 md:py-3 bg-blue-100 border-b border-blue-200"
         >
-          <h3 class="text-lg font-paperSemi text-gray-800">
+          <h3 class="text-sm md:text-lg font-paperSemi text-gray-800 truncate pr-2">
             {{ currentStepData.title }} - 이용 가이드
           </h3>
           <!-- 컨트롤 버튼들 -->
-          <div class="flex gap-3">
+          <div class="flex gap-1 md:gap-3 flex-shrink-0">
             <button
-              class="tutorial-btn px-4 py-2 border-none rounded-lg cursor-pointer text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="tutorial-btn px-2 md:px-4 py-1 md:py-2 border-none rounded-lg cursor-pointer text-xs md:text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="currentStep === 0"
               @click="previousStep"
             >
-              이전
+              <span class="hidden sm:inline">이전</span>
+              <span class="sm:hidden">←</span>
             </button>
             <button
-              class="tutorial-btn px-4 py-2 border-none rounded-lg cursor-pointer text-sm bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800 hover:transform hover:-translate-y-0.5 hover:shadow-lg transition-all"
+              class="tutorial-btn px-2 md:px-4 py-1 md:py-2 border-none rounded-lg cursor-pointer text-xs md:text-sm bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800 hover:transform hover:-translate-y-0.5 hover:shadow-lg transition-all"
               @click="nextStep"
             >
-              {{ currentStep === tutorialSteps.length - 1 ? "완료" : "다음" }}
+              <span class="hidden sm:inline">{{ currentStep === tutorialSteps.length - 1 ? "완료" : "다음" }}</span>
+              <span class="sm:hidden">{{ currentStep === tutorialSteps.length - 1 ? "✓" : "→" }}</span>
             </button>
             <button
-              class="tutorial-btn px-4 py-2 border-none rounded-lg cursor-pointer text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              class="tutorial-btn px-2 md:px-4 py-1 md:py-2 border-none rounded-lg cursor-pointer text-xs md:text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
               @click="skipTutorial"
             >
-              건너뛰기
+              <span class="hidden sm:inline">건너뛰기</span>
+              <span class="sm:hidden">×</span>
             </button>
           </div>
         </div>
 
         <!-- 본문 -->
-        <div class="p-4">
+        <div class="p-3 md:p-4 lg:p-6">
           <!-- 진행 표시기 -->
-          <div class="tutorial-progress flex justify-between items-center mb-6">
-            <div class="progress-dots flex gap-2">
+          <div class="tutorial-progress flex justify-between items-center mb-4 md:mb-6">
+            <div class="progress-dots flex gap-1 md:gap-2">
               <div
                 v-for="(step, index) in tutorialSteps"
                 :key="index"
-                class="progress-dot w-3 h-3 rounded-full transition-colors"
+                class="progress-dot w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors"
                 :class="index <= currentStep ? 'bg-purple-500' : 'bg-gray-300'"
               ></div>
             </div>
-            <div class="progress-text text-sm text-gray-500">
+            <div class="progress-text text-xs md:text-sm text-gray-500">
               {{ currentStep + 1 }}/{{ tutorialSteps.length }}
             </div>
           </div>
 
           <!-- 이미지/GIF 영역 -->
-          <div class="tutorial-image mb-4 flex justify-center">
+          <div class="tutorial-image mb-3 md:mb-4 flex justify-center">
             <div
-              class="w-full bg-gray-100 rounded-lg p-4 flex items-center justify-center"
+              class="w-full bg-gray-100 rounded-lg p-2 md:p-4 flex items-center justify-center"
             >
               <img
                 v-if="currentStepData.image"
                 :src="currentStepData.image"
                 :alt="currentStepData.title"
-                class="w-full h-80 object-contain rounded-md"
+                class="w-full h-40 md:h-60 lg:h-80 object-contain rounded-md"
               />
               <div
                 v-else
-                class="w-full h-80 bg-gradient-to-br from-purple-400 to-purple-600 rounded-md flex items-center justify-center text-white text-6xl"
+                class="w-full h-40 md:h-60 lg:h-80 bg-gradient-to-br from-purple-400 to-purple-600 rounded-md flex items-center justify-center text-white text-3xl md:text-4xl lg:text-6xl"
               >
                 {{ currentStepData.icon }}
               </div>
@@ -83,7 +86,7 @@
 
           <!-- 예시 -->
           <div
-            class="tutorial-example bg-purple-50 p-4 rounded-lg text-base text-gray-700 border-l-4 border-purple-500 mb-6 transition-all duration-500 ease-in-out flex justify-between items-start gap-3"
+            class="tutorial-example bg-purple-50 p-3 md:p-4 rounded-lg text-sm md:text-base text-gray-700 border-l-4 border-purple-500 mb-4 md:mb-6 transition-all duration-500 ease-in-out flex justify-between items-start gap-2 md:gap-3"
           >
             <div class="flex-1">
               {{ currentExample }}
@@ -233,6 +236,13 @@ const updateHighlight = async () => {
   });
 
   const step = tutorialSteps[currentStep.value];
+  
+  // target이 없거나 빈 문자열인 경우 하이라이트 적용하지 않음
+  if (!step.target || step.target.trim() === "") {
+    console.log("No target specified for this step, skipping highlight");
+    return;
+  }
+
   const targetElement = document.querySelector(step.target);
 
   console.log("Looking for:", step.target);
