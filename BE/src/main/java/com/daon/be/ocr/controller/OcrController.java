@@ -33,7 +33,6 @@ public class OcrController {
         // 업로드된 이미지 파일을 서버의 임시 디렉토리에 저장
         File tempFile = File.createTempFile("upload", image.getOriginalFilename());
         image.transferTo(tempFile);
-
         
         // 사용자 정보에서 국가코드를 가져와서 언어명으로 변환
         String userNativeLanguage = "English"; // 기본값
