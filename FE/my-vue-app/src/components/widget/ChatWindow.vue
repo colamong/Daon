@@ -47,10 +47,10 @@
       </div>
       <div
         ref="messageContainer"
-        class="flex-1 px-4 py-3 overflow-y-auto bg-white"
+        class="flex-1 overflow-y-auto bg-white px-4 py-3"
         id="chatDisplay"
       >
-        <div class="bg-blue-50 p-4 rounded-lg h-full">
+        <div class="bg-blue-50 rounded-lg p-4 min-h-full">
           <div class="flex flex-col space-y-2">
             <ChatBubble
               v-for="(msg, index) in messages"
