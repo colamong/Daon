@@ -46,41 +46,51 @@
         >아이디(이메일)</label
       >
       <div
-        class="flex items-center border border-gray-200 rounded-lg overflow-hidden"
+        class="flex items-center border border-gray-200 rounded-lg overflow-hidden font-paper"
       >
-        <!-- 2번 아이콘 -->
-        <div class="px-3 bg-whi">
+        <!-- 아이콘 -->
+        <div class="px-3">
           <img
             src="@/assets/icons/Email.svg"
             alt="이메일 아이콘"
             class="w-5 h-5"
           />
         </div>
-        <input
-          v-model="emailLocal"
-          type="text"
-          placeholder="Daon"
-          required
-          class="flex-1 text-sm focus:outline-none font-paper"
-        />
-        <span class="text-black font-paper">@</span>
-        <!-- 도메인 선택 -->
-        <select
-          v-if="domainOption !== '직접 입력'"
-          v-model="domainOption"
-          class="flex-1 py-2 pl-2 pr-2 text-sm focus:outline-none font-paper"
-        >
-          <option disabled value="">이메일 선택</option>
-          <option v-for="opt in domainOptions" :key="opt">{{ opt }}</option>
-        </select>
-        <input
-          v-else
-          v-model="customDomain"
-          type="text"
-          placeholder="직접 입력"
-          required
-          class="flex-1 py-2 pl-3 pr-3 text-sm focus:outline-none"
-        />
+
+        <div class="flex-1 flex items-center">
+          <!-- 아이디 -->
+          <input
+            v-model="emailLocal"
+            type="text"
+            placeholder="daon"
+            required
+            class="w-32 py-2 px-1 text-sm focus:outline-none"
+          />
+
+          <!-- @ 구분 -->
+          <span class="w-8 flex justify-center text-gray-400 select-none">@</span>
+
+          <!-- 도메인 선택 -->
+          <select
+            v-if="domainOption !== '직접 입력'"
+            v-model="domainOption"
+            class="w-40 py-2 pr-3 text-sm focus:outline-none bg-white"
+            aria-label="이메일 도메인 선택"
+          >
+            <option disabled value="">이메일 선택</option>
+            <option v-for="opt in domainOptions" :key="opt">{{ opt }}</option>
+          </select>
+          
+          <!-- 직접 입력 모드 -->
+          <input
+            v-else
+            v-model="customDomain"
+            type="text"
+            placeholder="직접 입력"
+            required
+            class="w-40 py-2 pr-3 text-sm focus:outline-none bg-white"
+          />
+        </div>
       </div>
     </div>
 

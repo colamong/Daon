@@ -30,27 +30,29 @@
           />
         </div>
 
-        <!-- 아이디 -->
-        <input
-          id="emailLocal"
-          v-model.trim="emailLocal"
-          type="text"
-          placeholder="daon"
-          autocomplete="username"
-          class="flex-1 py-2 px-1 text-sm focus:outline-none"
-        />
+        <div class="flex-1 flex items-center">
+          <!-- 아이디 -->
+          <input
+            id="emailLocal"
+            v-model.trim="emailLocal"
+            type="text"
+            placeholder="daon"
+            autocomplete="username"
+            class="w-32 py-2 px-1 text-sm focus:outline-none"
+          />
 
-        <!-- @ 구분 -->
-        <span class="px-1 text-gray-400 select-none">@</span>
+          <!-- @ 구분 -->
+          <span class="w-8 flex justify-center text-gray-400 select-none">@</span>
 
-        <!-- 도메인 선택 -->
-        <select
-          v-model="emailDomain"
-          class="py-2 pr-3 text-sm focus:outline-none bg-white"
-          aria-label="이메일 도메인 선택"
-        >
-          <option v-for="d in domains" :key="d" :value="d">{{ d }}</option>
-        </select>
+          <!-- 도메인 선택 -->
+          <select
+            v-model="emailDomain"
+            class="w-40 py-2 pr-3 text-sm focus:outline-none bg-white"
+            aria-label="이메일 도메인 선택"
+          >
+            <option v-for="d in domains" :key="d" :value="d">{{ d }}</option>
+          </select>
+        </div>
       </div>
 
       <!-- 조합 미리보기 -->
@@ -146,6 +148,7 @@ function isValidLocalPart(local) {
   const re = /^[A-Za-z0-9._%+\-]+$/;
   return re.test(local);
 }
+
 
 async function handleLogin() {
   error.value = "";
