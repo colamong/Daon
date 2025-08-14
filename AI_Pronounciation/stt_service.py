@@ -12,7 +12,7 @@ from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
 from g2pk import G2p
 
 
-SPRING_API_BASE = os.getenv("SPRING_API_BASE", "http://localhost:8080")
+SPRING_API_BASE = os.getenv("SPRING_API_BASE", "https://i13a706.p.ssafy.io")
 STT_MODEL_NAME = os.getenv("KOR_STT_MODEL", "kresnik/wav2vec2-large-xlsr-korean")
 TARGET_SR = 16_000  # 모델 학습 샘플레이트
 
