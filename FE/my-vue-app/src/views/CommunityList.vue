@@ -55,13 +55,13 @@
     </div>
 
     <!-- 탭 메뉴 & 필터 바 -->
-    <div class="flex items-center justify-between mb-6 md:mb-8 gap-4">
-      <!-- 탭 메뉴 (좌측) -->
-      <div class="bg-gray-100 p-1 rounded-lg">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8 gap-4">
+      <!-- 탭 메뉴 -->
+      <div class="bg-gray-100 p-1 rounded-lg w-full md:w-auto">
         <button
           @click="activeTab = 'all'"
           :class="[
-            'px-2 md:px-6 py-1.5 md:py-2 rounded-md font-medium transition-colors text-xs md:text-base',
+            'px-2 md:px-6 py-1.5 md:py-2 rounded-md font-medium transition-colors text-xs md:text-base w-1/2 md:w-auto',
             activeTab === 'all'
               ? 'bg-white text-blue-600 shadow-sm'
               : 'text-gray-600 hover:text-gray-900',
@@ -72,7 +72,7 @@
         <button
           @click="activeTab = 'joined'"
           :class="[
-            'px-2 md:px-6 py-1.5 md:py-2 rounded-md font-medium transition-colors text-xs md:text-base',
+            'px-2 md:px-6 py-1.5 md:py-2 rounded-md font-medium transition-colors text-xs md:text-base w-1/2 md:w-auto',
             activeTab === 'joined'
               ? 'bg-white text-blue-600 shadow-sm'
               : 'text-gray-600 hover:text-gray-900',

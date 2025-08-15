@@ -12,7 +12,7 @@
             <span class="text-pink-500">일상의 행복</span>을 만듭니다.
           </h2>
           <p class="text-gray-700 text-base md:text-lg lg:text-xl leading-relaxed">
-            언어가 달라도 마음이 통할 수 있도록,<br class="hidden md:block" />
+            언어가 달라도 마음이 통할 수 있도록,<br />
             일상의 작은 순간들이 행복으로 이어지는 다온입니다.
           </p>
         </div>

@@ -2,28 +2,28 @@
   <transition name="slide-down">
     <div
       v-if="visible"
-      class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 font-paper max-w-sm w-full mx-4"
+      class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 font-paper max-w-[85vw] sm:max-w-sm w-full mx-2 sm:mx-4"
     >
       <div
-        class="rounded-xl shadow-lg px-6 py-4 flex items-center gap-4"
+        class="rounded-xl shadow-lg px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-2 sm:gap-4"
         :class="typeClasses"
       >
         <!-- 아이콘 -->
         <div class="flex-shrink-0">
-          <span class="text-2xl">{{ typeIcon }}</span>
+          <span class="text-lg sm:text-2xl">{{ typeIcon }}</span>
         </div>
         
         <!-- 내용 -->
-        <div class="flex-1">
-          <p v-if="title" class="font-paperBold text-lg mb-1">{{ title }}</p>
-          <p class="text-sm" :class="title ? '' : 'font-paperBold'" v-html="message"></p>
+        <div class="flex-1 min-w-0">
+          <p v-if="title" class="font-paperBold text-sm sm:text-lg mb-1">{{ title }}</p>
+          <p class="text-xs sm:text-sm" :class="title ? '' : 'font-paperBold'" v-html="message"></p>
         </div>
         
         <!-- 닫기 버튼 (선택적) -->
         <button
           v-if="closable"
           @click="close"
-          class="flex-shrink-0 ml-2 text-xl opacity-70 hover:opacity-100 transition-opacity"
+          class="flex-shrink-0 ml-1 sm:ml-2 text-lg sm:text-xl opacity-70 hover:opacity-100 transition-opacity"
         >
           ✕
         </button>
@@ -51,7 +51,7 @@ const props = defineProps({
   },
   duration: {
     type: Number,
-    default: 3000
+    default: 2000
   },
   closable: {
     type: Boolean,

@@ -1,53 +1,73 @@
 <template>
-  <footer class="w-full bg-footer px-4 md:px-8 py-8 md:py-12 text-black font-paper">
+  <footer class="w-full bg-footer px-3 md:px-8 py-6 md:py-12 text-black font-paper">
     <div
-      class="max-w-screen-xl mx-auto flex flex-col lg:flex-row justify-between items-start gap-x-12 lg:gap-x-24 gap-y-8 lg:gap-y-10"
+      class="max-w-screen-xl mx-auto flex flex-col lg:flex-row justify-between items-start gap-x-12 lg:gap-x-24 gap-y-6 lg:gap-y-10"
     >
       <!-- 왼쪽: 브랜드 정보 -->
-      <div class="flex flex-col gap-4 md:gap-5 w-full lg:w-[200px] text-center lg:text-left">
-        <div class="text-lg md:text-xl font-paperBold">다온(DA:ON)</div>
+      <div class="flex flex-col gap-3 md:gap-5 w-full lg:w-[200px] text-center lg:text-left">
+        <div class="text-base md:text-xl font-paperBold">다온(DA:ON)</div>
         <p class="text-xs md:text-sm leading-snug">
           다문화 가정이 한국 사회에 <br class="hidden md:block" />
-          잘 적응할 수 있도록 돕는 <br class="hidden md:block" />
+          잘 적응할 수 있도록 돕는 <br />
           AI 기반 통합 지원 플랫폼
         </p>
-        <div class="flex gap-3 mt-2 justify-center lg:justify-start">
+        <div class="flex gap-2 md:gap-3 mt-1 md:mt-2 justify-center lg:justify-start">
           <img
             src="@/assets/images/facebook.png"
             alt="Facebook"
-            class="w-6 h-6 md:w-7 md:h-7 cursor-pointer hover:opacity-80 transition-opacity"
+            class="w-5 h-5 md:w-7 md:h-7 cursor-pointer hover:opacity-80 transition-opacity"
           />
           <img
             src="@/assets/images/twitter.png"
             alt="Twitter"
-            class="w-6 h-6 md:w-7 md:h-7 cursor-pointer hover:opacity-80 transition-opacity"
+            class="w-5 h-5 md:w-7 md:h-7 cursor-pointer hover:opacity-80 transition-opacity"
           />
           <img
             src="@/assets/images/instagram.png"
             alt="Instagram"
-            class="w-6 h-6 md:w-7 md:h-7 cursor-pointer hover:opacity-80 transition-opacity"
+            class="w-5 h-5 md:w-7 md:h-7 cursor-pointer hover:opacity-80 transition-opacity"
           />
         </div>
       </div>
 
       <!-- 서비스 -->
-      <div class="flex flex-col gap-3 w-full sm:w-1/2 lg:w-[160px] text-center lg:text-left">
-        <div class="text-sm md:text-base font-semibold">서비스</div>
-        <ul class="text-sm leading-snug space-y-1">
+      <div class="flex flex-col gap-2 md:gap-3 w-full sm:w-1/2 lg:w-[160px] text-center lg:text-left">
+        <div class="text-xs md:text-base font-semibold">서비스</div>
+        <div class="block md:hidden">
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button
+              @click="goChildMain"
+              class="font-paper text-black hover:font-paperBold text-center"
+            >
+              펭구랑 놀자
+            </button>
+            <button
+              @click="goOCRTool"
+              class="font-paper text-black hover:font-paperBold text-center"
+            >
+              문서 도우미
+            </button>
+            <button
+              @click="goCommunityChat"
+              class="font-paper text-black hover:font-paperBold text-center"
+            >
+              온동네
+            </button>
+            <button
+              @click="goLearningHelper"
+              class="font-paper text-black hover:font-paperBold text-center"
+            >
+              상황별 학습
+            </button>
+          </div>
+        </div>
+        <ul class="hidden md:block text-xs md:text-sm leading-snug space-y-1">
           <li>
             <button
               @click="goChildMain"
               class="font-paper text-black hover:font-paperBold"
             >
               펭구랑 놀자
-            </button>
-          </li>
-          <li>
-            <button
-              @click="goChildProfile"
-              class="font-paper text-black hover:font-paperBold"
-            >
-              아이 프로필
             </button>
           </li>
           <li>
@@ -78,9 +98,22 @@
       </div>
 
       <!-- 고객지원 -->
-      <div class="flex flex-col gap-3 w-full sm:w-1/2 lg:w-[160px] text-center lg:text-left">
-        <div class="text-sm md:text-base font-semibold">고객지원</div>
-        <ul class="text-xs md:text-sm leading-snug space-y-1">
+      <div class="flex flex-col gap-2 md:gap-3 w-full sm:w-1/2 lg:w-[160px] text-center lg:text-left">
+        <div class="text-xs md:text-base font-semibold">고객지원</div>
+        <div class="block md:hidden">
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <span class="cursor-default text-gray-600 text-center">자주 묻는 질문</span>
+            <button
+              @click="showTutorial"
+              class="font-paper text-black hover:font-paperBold hover:text-blue-600 transition-colors text-center"
+            >
+              이용 가이드
+            </button>
+            <span class="cursor-default text-gray-600 text-center">공지사항</span>
+            <span class="cursor-default text-gray-600 text-center">문의하기</span>
+          </div>
+        </div>
+        <ul class="hidden md:block text-xs md:text-sm leading-snug space-y-1">
           <li><span class="cursor-default text-gray-600">자주 묻는 질문</span></li>
           <li>
             <button
@@ -96,10 +129,10 @@
       </div>
 
       <!-- 연락처 -->
-      <div class="flex flex-col gap-3 w-full sm:w-1/2 lg:w-[200px] text-center lg:text-left">
-        <div class="text-sm md:text-base font-semibold">연락처</div>
-        <ul class="text-xs md:text-sm leading-snug space-y-2">
-          <li class="flex items-center gap-2 justify-center lg:justify-start">
+      <div class="flex flex-col gap-2 md:gap-3 w-full sm:w-1/2 lg:w-[200px] text-center lg:text-left">
+        <div class="text-xs md:text-base font-semibold">연락처</div>
+        <ul class="text-xs md:text-sm leading-snug space-y-1 md:space-y-2">
+          <li class="flex items-center gap-1 md:gap-2 justify-center lg:justify-start">
             <img
               src="@/assets/images/location.png"
               alt="주소"
@@ -107,7 +140,7 @@
             />
             <span>서울시 강남구 테헤란로</span>
           </li>
-          <li class="flex items-center gap-2 justify-center lg:justify-start">
+          <li class="flex items-center gap-1 md:gap-2 justify-center lg:justify-start">
             <img
               src="@/assets/images/letter.png"
               alt="이메일"
@@ -115,7 +148,7 @@
             />
             <span>support@daon.co.kr</span>
           </li>
-          <li class="flex items-center gap-2 justify-center lg:justify-start">
+          <li class="flex items-center gap-1 md:gap-2 justify-center lg:justify-start">
             <img src="@/assets/images/phone.png" alt="전화" class="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
             <span>1588-0706</span>
           </li>

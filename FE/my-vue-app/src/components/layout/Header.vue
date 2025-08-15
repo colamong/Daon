@@ -125,7 +125,7 @@
             </div>
             <div>
               <div class="font-paperBold">펭구랑 놀자</div>
-              <div class="text-sm text-gray-500">아이와 함께하는 재미있는 활동</div>
+              <div class="text-sm text-gray-500">펭구와 함께하는 재미있는 활동</div>
             </div>
           </div>
           
@@ -167,7 +167,7 @@
             </div>
             <div>
               <div class="font-paperBold">상황별 학습</div>
-              <div class="text-sm text-gray-500">아이의 성장 과정을 기록</div>
+              <div class="text-sm text-gray-500">유용한 다양한 상황별 학습</div>
             </div>
           </div>
         </div>
@@ -332,10 +332,18 @@ function logout() {
 // 모바일 메뉴 관련 함수들
 function toggleMobileMenu() {
   showMobileMenu.value = !showMobileMenu.value;
+  
+  // 모바일 메뉴가 열릴 때 스크롤 방지, 닫힐 때 스크롤 허용
+  if (showMobileMenu.value) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
 }
 
 function closeMobileMenu() {
   showMobileMenu.value = false;
+  document.body.style.overflow = '';
 }
 
 const goDashboard = () => router.push({ name: "Dashboard" });
@@ -443,6 +451,7 @@ function handleClickOutside(e) {
   // 모바일 메뉴 외부 클릭 시 닫기
   if (showMobileMenu.value && !e.target.closest('.mobile-menu') && !e.target.closest('[data-mobile-menu-toggle]')) {
     showMobileMenu.value = false;
+    document.body.style.overflow = '';
   }
 }
 
@@ -451,9 +460,11 @@ onMounted(async () => {
   // 국가 목록 로드 (프로필 카드의 국가 정보 표시를 위해)
   await auth.loadNations();
 });
-onBeforeUnmount(() =>
-  document.removeEventListener("click", handleClickOutside)
-);
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleClickOutside);
+  // 컴포넌트 언마운트 시 스크롤 복원
+  document.body.style.overflow = '';
+});
 </script>
 
 <style scoped></style>
