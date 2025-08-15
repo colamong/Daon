@@ -99,6 +99,7 @@
 import { ref, onMounted, computed, onUnmounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useChildStore } from "@/store/child";
+import { childService } from "@/services/childService.js";
 import CloudShape from "@/components/widget/CloudShape.vue";
 import audioManager from "@/utils/audioManager";
 import outIcon from "../assets/images/out.png";
@@ -135,6 +136,12 @@ onMounted(async () => {
     if (childStore.children.find((child) => child.id === childId)) {
       childStore.selectChild(childId);
     }
+  }
+
+  // 당일 그림일기 상태 미리 확인하여 localStorage 업데이트
+  const currentChildId = currentChild.value?.id;
+  if (currentChildId) {
+    await checkAndUpdateTodayDiary(currentChildId);
   }
 
   // BGM 자동 재생 시도 (오디오 매니저 사용)
@@ -178,6 +185,38 @@ function goToDrawing() {
       name: "ChildDrawing",
       params: { childId: currentChild.value.id },
     });
+  }
+}
+
+// 서버에서 당일 그림일기 확인하여 localStorage 업데이트
+async function checkAndUpdateTodayDiary(currentChildId) {
+  try {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    console.log(`[ChildMain] 당일 그림일기 확인: ${currentChildId}, ${todayStr}`);
+    
+    const response = await childService.getMonthlyDiaries(currentChildId, year, month);
+    const diaries = Array.isArray(response) ? response : (response ? [response] : []);
+    
+    // 오늘 날짜의 그림일기가 있는지 확인
+    const todayDiary = diaries.find(diary => {
+      const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+      return diaryDate === todayStr;
+    });
+    
+    if (todayDiary) {
+      const conversationResultId = todayDiary.conversationResultId || todayDiary.id;
+      childStore.setChildTodayDiary(currentChildId, true, conversationResultId);
+      console.log(`[ChildMain] 당일 그림일기 존재 - localStorage 업데이트 완료`);
+    } else {
+      console.log(`[ChildMain] 당일 그림일기 없음`);
+    }
+    
+  } catch (error) {
+    console.error('[ChildMain] 당일 그림일기 확인 실패:', error);
   }
 }
 
