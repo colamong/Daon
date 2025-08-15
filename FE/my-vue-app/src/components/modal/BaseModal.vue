@@ -3,10 +3,15 @@
     <div
       v-if="modelValue"
       class="fixed inset-0 bg-black bg-opacity-90 grid place-items-center z-50 font-paper p-4 min-h-screen"
-      style="display: grid; place-items: center; align-content: center; justify-content: center;"
+      style="
+        display: grid;
+        place-items: center;
+        align-content: center;
+        justify-content: center;
+      "
     >
       <div
-        class="bg-white rounded-xl overflow-hidden shadow-lg w-full max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl xl:max-w-4xl max-h-[85vh] overflow-y-auto my-auto"
+        class="bg-white rounded-xl overflow-hidden shadow-lg w-full lg:w-[500px] xl:w-[650px] max-w-full overflow-y-auto my-auto"
       >
         <!-- 헤더 -->
         <div

@@ -2,8 +2,17 @@
   <div class="py-4 md:py-8 px-4">
     <div class="mx-auto max-w-5xl bg-white pt-6 md:pt-10 pb-6 md:pb-10 rounded-xl md:rounded-2xl mb-6 md:mb-10">
       <!-- 상단 타이틀 -->
-      <div class="text-center mb-6 md:mb-12">
+      <div class="flex justify-between items-center mb-6 md:mb-12 px-4 md:px-8">
+        <div class="flex-1"></div>
         <h1 class="text-2xl md:text-4xl font-paperBold text-gray-800">아이 등록</h1>
+        <div class="flex-1 flex justify-end">
+          <button
+            @click="goBack"
+            class="px-3 md:px-6 py-1.5 md:py-2 bg-gray-300 text-gray-700 font-paperBold text-xs md:text-sm rounded-lg hover:bg-gray-400 transition-colors"
+          >
+            취소
+          </button>
+        </div>
       </div>
 
       <!-- 메인 콘텐츠: 좌우 레이아웃 -->
@@ -280,6 +289,10 @@ async function uploadDefaultChildImage(userId, childId, gender) {
     console.warn("아이 기본 프로필 이미지 업로드 실패:", error);
     // 기본 이미지 업로드 실패는 아이 등록을 막지 않음
   }
+}
+
+function goBack() {
+  router.push({ name: "Dashboard" });
 }
 
 async function handleRegisterChild() {

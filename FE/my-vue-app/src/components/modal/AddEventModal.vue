@@ -62,10 +62,11 @@ watch(
     } else if (newVal) {
       date.value = new Date().toISOString().substr(0, 10);
     }
-  }
+  },
+  { immediate: true }
 );
 
-watch(visible, (newVal) => emit("update:modelValue", newVal));
+watch(visible, (newVal) => emit("update:modelValue", newVal), { immediate: true });
 
 function submitEvent() {
   if (!title.value || !date.value) {

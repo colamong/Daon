@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
+    <div class="mt-12 grid grid-cols-3 gap-2 md:gap-6">
       <BaseCard variant="ocr1" class="ocr-card" />
       <BaseCard variant="ocr2" class="ocr-card" />
       <BaseCard variant="ocr3" class="ocr-card" />

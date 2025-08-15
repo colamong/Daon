@@ -116,7 +116,7 @@
         <!-- 모바일 네비게이션 -->
         <div class="space-y-1">
           <div
-            @click="goChildMain; closeMobileMenu()"
+            @click="handleMobileChildMain"
             class="flex items-center gap-4 w-full text-left py-4 px-4 text-lg font-paper text-gray-800 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all cursor-pointer border border-transparent hover:border-blue-200"
             data-tutorial="penguin"
           >
@@ -130,7 +130,7 @@
           </div>
           
           <div
-            @click="goOCRTool; closeMobileMenu()"
+            @click="handleMobileOCRTool"
             class="flex items-center gap-4 w-full text-left py-4 px-4 text-lg font-paper text-gray-800 hover:bg-green-50 hover:text-green-600 rounded-lg transition-all cursor-pointer border border-transparent hover:border-green-200"
             data-tutorial="document"
           >
@@ -144,7 +144,7 @@
           </div>
           
           <div
-            @click="goCommunityChat; closeMobileMenu()"
+            @click="handleMobileCommunity"
             class="flex items-center gap-4 w-full text-left py-4 px-4 text-lg font-paper text-gray-800 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all cursor-pointer border border-transparent hover:border-purple-200"
             data-tutorial="community"
           >
@@ -158,7 +158,7 @@
           </div>
           
           <div
-            @click="goLearningHelper; closeMobileMenu()"
+            @click="handleMobileLearning"
             class="flex items-center gap-4 w-full text-left py-4 px-4 text-lg font-paper text-gray-800 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all cursor-pointer border border-transparent hover:border-orange-200"
             data-tutorial="growth"
           >
@@ -178,7 +178,7 @@
         <!-- 모바일 프로필 -->
         <div class="bg-gray-50 rounded-xl p-4">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 cursor-pointer" @click="handleMobileProfileEdit">
               <img
                 :src="auth.user?.profileImage || 'https://placehold.co/48x48'"
                 alt="프로필"
@@ -186,7 +186,7 @@
               />
               <div>
                 <div class="text-base font-paperBold text-gray-800">
-                  {{ auth.user?.nickname || "게스트" }}
+                  {{ auth.user?.nickname || "게스트" }} ({{ auth.userNationName || "국가정보없음" }})
                 </div>
                 <div class="text-sm text-gray-500">
                   {{ auth.user?.email || "guest@example.com" }}
@@ -194,7 +194,7 @@
               </div>
             </div>
             <button
-              @click="logout; closeMobileMenu()"
+              @click="handleMobileLogout"
               class="flex items-center justify-center w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors shadow-sm"
               title="로그아웃"
             >
@@ -392,6 +392,41 @@ function handleChildRegistrationConfirm() {
 }
 function handleChildRegistrationCancel() {
   // 취소 시 아무것도 하지 않음
+}
+
+// 모바일 메뉴 핸들러 함수들
+async function handleMobileChildMain() {
+  closeMobileMenu();
+  await goChildMain();
+}
+
+function handleMobileOCRTool() {
+  closeMobileMenu();
+  goOCRTool();
+}
+
+function handleMobileCommunity() {
+  closeMobileMenu();
+  goCommunityChat();
+}
+
+function handleMobileLearning() {
+  closeMobileMenu();
+  goLearningHelper();
+}
+
+function handleMobileLogout() {
+  closeMobileMenu();
+  logout();
+}
+
+function handleMobileProfileEdit() {
+  closeMobileMenu();
+  goToProfileEdit();
+}
+
+function goToProfileEdit() {
+  router.push({ name: "ProfileEdit" });
 }
 
 function handleClickOutside(e) {

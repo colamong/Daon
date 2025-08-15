@@ -4,7 +4,53 @@
   >
     <!-- 헤더 -->
     <div v-if="currentContent && currentTheme">
-      <div class="flex justify-between items-center mb-6 pl-10 pr-5">
+      <!-- 모바일 레이아웃 -->
+      <div class="md:hidden mb-4 px-2">
+        <!-- 제목과 나가기 버튼이 같은 라인 -->
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex-1"></div>
+          <h1 class="text-xl font-paperBold text-gray-800 flex-1 text-center">
+            {{ currentTheme.title }}에서
+          </h1>
+          <div class="flex-1 flex justify-end">
+            <button
+              @click="confirmExit"
+              class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
+            >
+              나가기
+            </button>
+          </div>
+        </div>
+        
+        <!-- 설명과 이동 버튼이 같은 라인 -->
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex-1"></div>
+          <p class="text-sm text-gray-600 flex-1 text-center">
+            Ch.{{ currentChapterIndex }} {{ currentChapter?.title || "" }}
+          </p>
+          <div class="flex-1 flex justify-end">
+            <div class="flex space-x-1">
+              <IconButton
+                v-if="questionId > 1"
+                variant="left-arrow"
+                label="이전 질문"
+                @click="confirmNavigation('prev')"
+                class="hover:bg-green-500 text-xs"
+              />
+              <IconButton
+                v-if="questionId < totalQuestions"
+                variant="right-arrow"
+                label="다음 질문"
+                @click="confirmNavigation('next')"
+                class="bg-blue-400/80 hover:bg-blue-500/80 text-white text-xs"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 데스크톱 레이아웃 -->
+      <div class="hidden md:flex md:justify-between md:items-center mb-6 pl-10 pr-5">
         <div>
           <h1 class="text-4xl font-paperBold text-gray-800 mb-2">
             {{ currentTheme.title }}에서
@@ -14,7 +60,7 @@
           </p>
         </div>
 
-        <!-- 버튼들 -->
+        <!-- 데스크톱용 버튼들 -->
         <div class="flex space-x-2">
           <IconButton
             v-if="questionId > 1"
@@ -40,11 +86,11 @@
       </div>
 
       <!-- 구분선 -->
-      <hr class="border-gray-300 mb-8" />
+      <hr class="border-gray-300 mb-4 md:mb-8" />
     </div>
 
     <!-- 학습 콘텐츠 -->
-    <div v-if="currentContent" class="space-y-8 pl-20 pr-20">
+    <div v-if="currentContent" class="space-y-4 md:space-y-8 px-2 md:pl-20 md:pr-20">
       <!-- 질문 (타이핑 효과) -->
       <TypingEffect
         :key="questionId"
@@ -56,12 +102,12 @@
       />
 
       <!-- 답변 선택지 -->
-      <div v-if="showAnswers" class="space-y-4">
-        <h3 class="text-xl font-paperBold text-gray-800">답변을 선택하세요:</h3>
+      <div v-if="showAnswers" class="space-y-3 md:space-y-4">
+        <h3 class="text-lg md:text-xl font-paperBold text-gray-800 text-center">답변을 선택하세요:</h3>
         <div
           v-for="answer in currentContent.answers"
           :key="answer.id"
-          class="space-y-2 pl-20 pr-20"
+          class="space-y-2 px-2 md:pl-20 md:pr-20"
         >
           <AnswerCard
             class="text-center"
@@ -76,11 +122,11 @@
       </div>
 
       <!-- 다음 버튼 -->
-      <div class="text-center mt-8">
+      <div class="text-center mt-6 md:mt-8">
         <button
           v-if="selectedAnswer"
           @click="submitAnswer"
-          class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg transition-colors text-lg font-paperBold"
+          class="bg-blue-500 hover:bg-blue-600 text-white px-6 md:px-8 py-2 md:py-3 rounded-lg transition-colors text-base md:text-lg font-paperBold"
         >
           답변 확인
         </button>

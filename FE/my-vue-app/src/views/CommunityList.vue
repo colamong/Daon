@@ -1,8 +1,8 @@
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-8 space-y-12 font-paper">
+  <div class="max-w-4xl mx-auto px-2 md:px-4 py-4 md:py-8 space-y-6 md:space-y-12 font-paper">
     <!-- Hero 섹션 -->
     <section class="space-y-6">
-      <h2 class="text-3xl font-bold text-center mb-10">온 동네</h2>
+      <h2 class="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-10">온 동네</h2>
       <div
         class="flex flex-col md:flex-row bg-white rounded-lg shadow-lg overflow-hidden"
       >
@@ -13,7 +13,7 @@
             class="w-full h-full object-cover"
           />
         </div>
-        <div class="md:w-1/2 p-6 flex flex-col justify-center text-xl">
+        <div class="md:w-1/2 p-4 md:p-6 flex flex-col justify-center text-lg md:text-xl">
           <p class="text-gray-700 mb-2">
             같은 지역 이웃들과 바로 연결되는 채팅방<br />
             동네 맛집부터 생활 꿀팁까지,
@@ -49,21 +49,19 @@
       </teleport>
     </div>
 
-    <!-- 리스트 제목 -->
-    <div class="text-center !mb-2">
-      <h3 class="text-2xl font-bold">
-        {{ getListTitle() }}
-      </h3>
+    <!-- 동적 제목 -->
+    <div class="text-center mb-6 md:mb-8">
+      <h3 class="text-xl md:text-2xl font-bold">{{ getListTitle() }}</h3>
     </div>
 
     <!-- 탭 메뉴 & 필터 바 -->
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between mb-6 md:mb-8 gap-4">
       <!-- 탭 메뉴 (좌측) -->
       <div class="bg-gray-100 p-1 rounded-lg">
         <button
           @click="activeTab = 'all'"
           :class="[
-            'px-6 py-2 rounded-md font-medium transition-colors',
+            'px-2 md:px-6 py-1.5 md:py-2 rounded-md font-medium transition-colors text-xs md:text-base',
             activeTab === 'all'
               ? 'bg-white text-blue-600 shadow-sm'
               : 'text-gray-600 hover:text-gray-900',
@@ -74,7 +72,7 @@
         <button
           @click="activeTab = 'joined'"
           :class="[
-            'px-6 py-2 rounded-md font-medium transition-colors',
+            'px-2 md:px-6 py-1.5 md:py-2 rounded-md font-medium transition-colors text-xs md:text-base',
             activeTab === 'joined'
               ? 'bg-white text-blue-600 shadow-sm'
               : 'text-gray-600 hover:text-gray-900',
@@ -84,8 +82,8 @@
         </button>
       </div>
 
-      <!-- 정렬 & 필터 바 (우측) -->
-      <div v-if="activeTab === 'all'" class="flex items-center space-x-4">
+      <!-- 필터 바 (우측) -->
+      <div v-if="activeTab === 'all'" class="flex items-center gap-1 md:gap-2">
         <button
           @click="sortOption = 'popularity'"
           :class="
@@ -93,7 +91,7 @@
               ? 'bg-blue-600 text-white'
               : 'bg-gray-200 text-gray-700'
           "
-          class="px-4 py-2 rounded"
+          class="px-2 md:px-4 py-1.5 md:py-2 rounded text-xs md:text-base"
         >
           인기순
         </button>
@@ -104,13 +102,13 @@
               ? 'bg-blue-600 text-white'
               : 'bg-gray-200 text-gray-700'
           "
-          class="px-4 py-2 rounded"
+          class="px-2 md:px-4 py-1.5 md:py-2 rounded text-xs md:text-base"
         >
           가나다순
         </button>
         <select
           v-model="selectedRegion"
-          class="px-4 py-2 border border-gray-300 rounded"
+          class="px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded text-xs md:text-base"
         >
           <option value="">전체 지역</option>
           <option v-for="r in regionOptions" :key="r" :value="r">
@@ -118,7 +116,7 @@
           </option>
         </select>
       </div>
-      <div v-else class="flex items-center space-x-4">
+      <div v-else class="flex items-center gap-1 md:gap-2">
         <button
           @click="joinedSortOption = 'recent'"
           :class="
@@ -126,7 +124,7 @@
               ? 'bg-blue-600 text-white'
               : 'bg-gray-200 text-gray-700'
           "
-          class="px-4 py-2 rounded"
+          class="px-2 md:px-4 py-1.5 md:py-2 rounded text-xs md:text-base"
         >
           최근 참여순
         </button>
@@ -137,7 +135,7 @@
               ? 'bg-blue-600 text-white'
               : 'bg-gray-200 text-gray-700'
           "
-          class="px-4 py-2 rounded"
+          class="px-2 md:px-4 py-1.5 md:py-2 rounded text-xs md:text-base"
         >
           가나다순
         </button>
@@ -146,11 +144,11 @@
 
     <!-- 커뮤니티 카드 그리드 + 페이징 -->
     <section>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6">
         <div
-          v-for="post in currentList.slice(page * 6, (page + 1) * 6)"
+          v-for="post in currentList.slice(page * getItemsPerPage(), (page + 1) * getItemsPerPage())"
           :key="post.id"
-          class="cursor-pointer mb-5"
+          class="cursor-pointer mb-2 md:mb-5"
           @click="goChat(post.id)"
         >
           <CommunityCard
@@ -164,20 +162,20 @@
 
       <div
         v-if="totalPages > 1"
-        class="flex justify-center items-center space-x-4 mt-8"
+        class="flex justify-center items-center space-x-2 md:space-x-4 mt-6 md:mt-8"
       >
         <button
           @click="prevPage"
           :disabled="page === 0"
-          class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          class="px-3 md:px-4 py-2 bg-gray-200 rounded disabled:opacity-50 text-sm md:text-base"
         >
           이전
         </button>
-        <span class="text-gray-600">{{ page + 1 }} / {{ totalPages }}</span>
+        <span class="text-gray-600 text-sm md:text-base">{{ page + 1 }} / {{ totalPages }}</span>
         <button
           @click="nextPage"
           :disabled="page + 1 >= totalPages"
-          class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          class="px-3 md:px-4 py-2 bg-gray-200 rounded disabled:opacity-50 text-sm md:text-base"
         >
           다음
         </button>
@@ -420,14 +418,17 @@ const currentList = computed(() => {
 
 // 페이징
 const page = ref(0);
-const itemsPerPage = 6;
+const getItemsPerPage = () => {
+  // 모바일에서는 4개(2x2), 데스크톱에서는 6개(2x3)
+  return window.innerWidth < 768 ? 4 : 6;
+};
 const totalPages = computed(() =>
-  Math.ceil(currentList.value.length / itemsPerPage)
+  Math.ceil(currentList.value.length / getItemsPerPage())
 );
 const displayedCommunities = computed(() =>
   currentList.value.slice(
-    page.value * itemsPerPage,
-    (page.value + 1) * itemsPerPage
+    page.value * getItemsPerPage(),
+    (page.value + 1) * getItemsPerPage()
   )
 );
 function prevPage() {
