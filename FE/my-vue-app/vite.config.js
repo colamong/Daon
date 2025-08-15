@@ -19,7 +19,7 @@ export default defineConfig({
     proxy: {
       // ✅ REST API 프록시
       "/api": {
-        target: "https://i13a706.p.ssafy.io",
+        target: "https://i13a706.p.ssafy.io/stt",
         changeOrigin: true,
         secure: false,
         ws: false, // API는 웹소켓 아님
