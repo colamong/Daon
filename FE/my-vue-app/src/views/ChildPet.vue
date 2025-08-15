@@ -298,6 +298,9 @@ const penguinData = ref({
 });
 const isLoading = ref(false);
 
+// 당일 그림일기 존재 여부 (모바일용)
+const hasTodayDiaryFromServer = ref(false);
+
 // 애니메이션용 진행률 상태
 const animatedProgress = ref(0);
 
@@ -432,24 +435,58 @@ async function loadPenguinData(animate = false) {
   }
 }
 
+// 모바일에서 당일 그림일기 존재 여부 확인
+async function checkTodayDiaryFromServer(currentChildId) {
+  try {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    console.log(`[모바일] 당일 그림일기 확인: ${currentChildId}, ${todayStr}`);
+    
+    const response = await childService.getMonthlyDiaries(currentChildId, year, month);
+    const diaries = Array.isArray(response) ? response : (response ? [response] : []);
+    
+    // 오늘 날짜의 그림일기가 있는지 확인
+    const todayDiary = diaries.find(diary => {
+      const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+      return diaryDate === todayStr;
+    });
+    
+    hasTodayDiaryFromServer.value = !!todayDiary;
+    console.log(`[모바일] 당일 그림일기 존재:`, hasTodayDiaryFromServer.value);
+    
+    return hasTodayDiaryFromServer.value;
+  } catch (error) {
+    console.error('[모바일] 당일 그림일기 확인 실패:', error);
+    return false;
+  }
+}
+
 // 뒤로가기
 async function goBack() {
   if (isLoading.value) return;
   const currentChildId = childId.value;
 
-  const hasTodayDiary = childStore.getChildTodayDiary(currentChildId);
+  // 서버에서 당일 그림일기 존재 여부 확인 (모든 플랫폼 공통)
+  const hasTodayDiary = await checkTodayDiaryFromServer(currentChildId);
+
   if (hasTodayDiary) {
+    console.log('[뒤로가기] 이미 당일 그림일기 존재 - API 요청 생략');
     router.push({ name: "ChildMain", params: { childId: currentChildId } });
     return;
   }
 
   try {
     isLoading.value = true;
+    console.log('[뒤로가기] 그림일기 생성 API 요청 시작');
     const conversationResultId = conversationState.value.conversationResultId;
     if (currentChildId && conversationResultId) {
       await childService.recordExpression(currentChildId, conversationResultId);
       await childService.createDiary(conversationResultId);
       childStore.setChildTodayDiary(currentChildId, true, conversationResultId);
+      hasTodayDiaryFromServer.value = true; // 상태 업데이트
     }
     router.push({ name: "ChildMain", params: { childId: currentChildId } });
   } catch (e) {
