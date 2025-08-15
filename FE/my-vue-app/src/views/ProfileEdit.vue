@@ -34,6 +34,7 @@
               />
             </div>
 
+            <!-- 숨겨진 파일 입력들 -->
             <input
               ref="fileInput"
               type="file"
@@ -41,13 +42,47 @@
               @change="handleImageChange"
               class="hidden"
             />
+            
+            <input
+              ref="cameraInput"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              @change="handleImageChange"
+              class="hidden"
+            />
 
+            <!-- 모바일: 두 개의 버튼 -->
+            <div class="flex flex-col md:hidden gap-3">
+              <button
+                type="button"
+                @click="triggerCameraInput"
+                :disabled="uploadingImage"
+                class="px-4 py-2 bg-purple-100 text-black rounded-lg hover:bg-purple-500 hover:text-white transition-colors font-paper border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+              >
+                <img :src="cameraIcon" alt="카메라 아이콘" class="w-4 h-4" />
+                {{ uploadingImage ? '사진 업로드 중...' : '카메라 촬영' }}
+              </button>
+              
+              <button
+                type="button"
+                @click="triggerFileInput"
+                :disabled="uploadingImage"
+                class="px-4 py-2 bg-blue-100 text-black rounded-lg hover:bg-blue-500 hover:text-white transition-colors font-paper border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+              >
+                <img :src="galleryIcon" alt="갤러리 아이콘" class="w-4 h-4" />
+                {{ uploadingImage ? '사진 업로드 중...' : '사진 불러오기' }}
+              </button>
+            </div>
+
+            <!-- 데스크톱: 기존 버튼 -->
             <button
               type="button"
               @click="triggerFileInput"
               :disabled="uploadingImage"
-              class="px-4 md:px-6 py-2 bg-blue-100 text-black rounded-lg hover:bg-blue-500 hover:text-white transition-colors font-paper border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+              class="hidden md:flex px-6 py-2 bg-blue-100 text-black rounded-lg hover:bg-blue-500 hover:text-white transition-colors font-paper border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-base items-center justify-center gap-2"
             >
+              <img :src="galleryIcon" alt="갤러리 아이콘" class="w-4 h-4" />
               {{ uploadingImage ? '사진 업로드 중...' : '사진 불러오기' }}
             </button>
           </div>
@@ -121,6 +156,8 @@ import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { useNotification } from '@/composables/useNotification.js';
 import { nationService } from '@/services/nationService.js';
+import cameraIcon from "@/assets/icons/camera.png";
+import galleryIcon from "@/assets/icons/image-placeholder.svg";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -129,6 +166,7 @@ const { showSuccess, showError, showWarning } = useNotification();
 const loading = ref(false);
 const uploadingImage = ref(false); // 🔹 이미지 업로드 상태
 const fileInput = ref(null);
+const cameraInput = ref(null);
 
 // 현재 프로필 정보 (원본)
 const currentProfile = reactive({
@@ -205,6 +243,10 @@ async function loadCountries() {
 
 function triggerFileInput() {
   fileInput.value?.click();
+}
+
+function triggerCameraInput() {
+  cameraInput.value?.click();
 }
 
 function handleImageChange(event) {

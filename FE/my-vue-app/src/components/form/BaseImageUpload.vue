@@ -16,17 +16,51 @@
             class="w-32 h-32 md:w-48 md:h-48 rounded-full object-cover border-4 border-purple-200 shadow-lg"
           />
         </div>
+        <!-- 모바일: 두 개의 버튼 -->
+        <div class="flex flex-col md:hidden gap-3">
+          <label
+            for="cameraCapture"
+            class="bg-purple-100 hover:bg-purple-200 text-black font-medium flex items-center justify-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition font-paper text-sm"
+          >
+            <img :src="cameraIcon" alt="카메라 아이콘" class="w-4 h-4" />
+            카메라 촬영
+            <input
+              id="cameraCapture"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              class="hidden"
+              @change="handleChange"
+            />
+          </label>
+          
+          <label
+            for="gallerySelect"
+            class="bg-blue-100 hover:bg-blue-200 text-black font-medium flex items-center justify-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition font-paper text-sm"
+          >
+            <img :src="galleryIcon" alt="갤러리 아이콘" class="w-4 h-4" />
+            사진 불러오기
+            <input
+              id="gallerySelect"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleChange"
+            />
+          </label>
+        </div>
+        
+        <!-- 데스크톱: 기존 버튼 -->
         <label
           for="imageUpload"
-          class="bg-purple-100 hover:bg-purple-200 text-black font-medium flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-lg cursor-pointer transition font-paper text-sm md:text-base"
+          class="hidden md:flex bg-purple-100 hover:bg-purple-200 text-black font-medium items-center gap-2 px-6 py-3 rounded-lg cursor-pointer transition font-paper text-base"
         >
-          <img :src="cameraIcon" alt="카메라 아이콘" class="w-4 h-4 md:w-5 md:h-5" />
+          <img :src="cameraIcon" alt="카메라 아이콘" class="w-5 h-5" />
           사진 변경
           <input
             id="imageUpload"
             type="file"
             accept="image/*"
-            capture="environment"
             class="hidden"
             @change="handleChange"
           />
@@ -49,17 +83,51 @@
             <span class="font-semibold">JPG, PNG, GIF</span> 파일을 지원합니다.
           </span>
         </p>
+        <!-- 모바일: 두 개의 버튼 -->
+        <div class="flex flex-col md:hidden gap-3">
+          <label
+            for="cameraCapture2"
+            class="bg-purple-100 hover:bg-purple-200 text-black font-medium flex items-center justify-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition font-paper text-sm"
+          >
+            <img :src="cameraIcon" alt="카메라 아이콘" class="w-4 h-4" />
+            카메라 촬영
+            <input
+              id="cameraCapture2"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              class="hidden"
+              @change="handleChange"
+            />
+          </label>
+          
+          <label
+            for="gallerySelect2"
+            class="bg-blue-100 hover:bg-blue-200 text-black font-medium flex items-center justify-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition font-paper text-sm"
+          >
+            <img :src="galleryIcon" alt="갤러리 아이콘" class="w-4 h-4" />
+            사진 불러오기
+            <input
+              id="gallerySelect2"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleChange"
+            />
+          </label>
+        </div>
+        
+        <!-- 데스크톱: 기존 버튼 -->
         <label
           for="imageUpload"
-          class="bg-purple-100 hover:bg-purple-200 text-black font-medium flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-lg cursor-pointer transition font-paper text-sm md:text-base"
+          class="hidden md:flex bg-purple-100 hover:bg-purple-200 text-black font-medium items-center gap-2 px-6 py-3 rounded-lg cursor-pointer transition font-paper text-base"
         >
-          <img :src="cameraIcon" alt="카메라 아이콘" class="w-4 h-4 md:w-5 md:h-5" />
+          <img :src="cameraIcon" alt="카메라 아이콘" class="w-5 h-5" />
           사진 등록
           <input
             id="imageUpload"
             type="file"
             accept="image/*"
-            capture="environment"
             class="hidden"
             @change="handleChange"
           />
@@ -73,6 +141,7 @@
 import { ref } from "vue";
 import IconButton from "@/components/button/IconButton.vue";
 import cameraIcon from "@/assets/icons/camera.png";
+import galleryIcon from "@/assets/icons/image-placeholder.svg";
 
 const emit = defineEmits(["upload:image"]);
 const preview = ref(null);
