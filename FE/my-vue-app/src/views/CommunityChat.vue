@@ -2,11 +2,11 @@
   <div class="max-w-4xl mx-auto px-4 py-2 font-paper mb-10">
     <div
       :class="
-        showChatList ? 'flex items-start space-x-6' : 'flex justify-center'
+        showChatList ? 'md:flex md:items-start md:space-x-6' : 'flex justify-center'
       "
     >
       <!-- ChatWindow -->
-      <div :class="showChatList ? 'flex-1' : 'w-full max-w-xl'">
+      <div :class="showChatList ? 'md:flex-1' : 'w-full max-w-xl'">
         <ChatWindow
           class="w-full"
           :messages="chatMessages"
@@ -22,10 +22,10 @@
         />
       </div>
 
-      <!-- 오른쪽: 참가중인 채팅방 목록 -->
+      <!-- 데스크톱: 오른쪽 참가중인 채팅방 목록 -->
       <div
         v-if="showChatList"
-        class="w-88 h-[600px] px-6 py-4 bg-gradient-to-b from-blue-400 via-indigo-300 to-white rounded-lg shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] inline-flex flex-col justify-start items-start overflow-y-auto"
+        class="hidden md:block w-88 h-[600px] px-6 py-4 bg-gradient-to-b from-blue-400 via-indigo-300 to-white rounded-lg shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] flex flex-col justify-start items-start overflow-y-auto"
       >
         <div class="self-stretch flex justify-between items-center mb-2">
           <div class="text-white text-2xl font-paperSemi">나의 채팅방 목록</div>
@@ -44,6 +44,56 @@
             :image="room.image"
             :link="`/dashboard/community/${room.id}`"
             class="mb-3"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- 모바일: 사이드바 형태의 채팅방 목록 -->
+    <div
+      v-if="showChatList"
+      class="md:hidden fixed inset-0 z-50 flex"
+    >
+      <!-- 배경 오버레이 -->
+      <div 
+        class="absolute inset-0 bg-black bg-opacity-50"
+        @click="toggleChatList"
+      ></div>
+      
+      <!-- 사이드바 -->
+      <div
+        class="relative w-80 h-full bg-gradient-to-b from-blue-400 via-indigo-300 to-white shadow-xl flex flex-col px-4 py-6"
+      >
+        <!-- 헤더 -->
+        <div class="flex justify-between items-center mb-4">
+          <div class="text-white text-lg font-paperSemi">나의 채팅방 목록</div>
+          <button
+            @click="toggleChatList"
+            class="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- 전체 목록 버튼 -->
+        <button
+          @click="$router.push('/dashboard/community')"
+          class="w-full text-white text-sm bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg transition-colors mb-4"
+        >
+          전체 목록
+        </button>
+        
+        <!-- 채팅방 목록 -->
+        <div class="flex-1 overflow-y-auto space-y-3">
+          <ChatListCard
+            v-for="room in joinedRooms"
+            :key="room.id"
+            :location="room.location"
+            :image="room.image"
+            :link="`/dashboard/community/${room.id}`"
+            @click="toggleChatList"
           />
         </div>
       </div>

@@ -1,14 +1,14 @@
 <template>
-  <div class="py-8 px-4">
-    <div class="mx-auto max-w-5xl bg-white pt-10 pb-10 rounded-2xl mb-10">
+  <div class="py-4 md:py-8 px-4">
+    <div class="mx-auto max-w-5xl bg-white pt-6 md:pt-10 pb-6 md:pb-10 rounded-xl md:rounded-2xl mb-6 md:mb-10">
       <!-- 상단 타이틀 -->
-      <div class="flex justify-between items-center mb-12 px-8">
+      <div class="flex justify-between items-center mb-6 md:mb-12 px-4 md:px-8">
         <div class="flex-1"></div>
-        <h1 class="text-4xl font-paperBold text-gray-800">프로필 수정</h1>
+        <h1 class="text-2xl md:text-4xl font-paperBold text-gray-800">프로필 수정</h1>
         <div class="flex-1 flex justify-end">
           <button
             @click="goBack"
-            class="px-6 py-2 bg-gray-300 text-gray-700 font-paperBold text-sm rounded-lg hover:bg-gray-400 transition-colors"
+            class="px-3 md:px-6 py-1.5 md:py-2 bg-gray-300 text-gray-700 font-paperBold text-xs md:text-sm rounded-lg hover:bg-gray-400 transition-colors"
           >
             취소
           </button>
@@ -16,10 +16,10 @@
       </div>
 
       <!-- 좌우 레이아웃 -->
-      <div class="p-3">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <div class="p-2 md:p-3">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16 items-center">
           <!-- 좌측: 프로필 이미지 -->
-          <div class="flex flex-col items-center space-y-6">
+          <div class="flex flex-col items-center space-y-4 md:space-y-6 order-1 lg:order-1">
             <!-- 프로필 이미지 -->
             <div>
               <img
@@ -30,7 +30,7 @@
                   'https://placehold.co/200x200'
                 "
                 alt="프로필 이미지"
-                class="w-60 h-60 rounded-full object-cover border-4 border-gray-200"
+                class="w-40 h-40 sm:w-48 sm:h-48 md:w-60 md:h-60 rounded-full object-cover border-4 border-gray-200"
               />
             </div>
 
@@ -46,20 +46,20 @@
               type="button"
               @click="triggerFileInput"
               :disabled="uploadingImage"
-              class="px-6 py-2 bg-blue-100 text-black rounded-lg hover:bg-blue-500 hover:text-white transition-colors font-paper border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 md:px-6 py-2 bg-blue-100 text-black rounded-lg hover:bg-blue-500 hover:text-white transition-colors font-paper border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
             >
               {{ uploadingImage ? '사진 업로드 중...' : '사진 불러오기' }}
             </button>
           </div>
 
           <!-- 우측: 수정 폼 -->
-          <div class="space-y-8 px-4">
-            <form @submit.prevent="handleUpdateProfile" class="space-y-8">
+          <div class="space-y-6 md:space-y-8 px-2 md:px-4 order-2 lg:order-2">
+            <form @submit.prevent="handleUpdateProfile" class="space-y-6 md:space-y-8">
               <!-- 닉네임 -->
               <div>
                 <label
                   for="nickname"
-                  class="block text-lg font-paperBold text-black mb-3"
+                  class="block text-base md:text-lg font-paperBold text-black mb-2 md:mb-3"
                 >
                   닉네임
                 </label>
@@ -69,7 +69,7 @@
                   type="text"
                   maxlength="10"
                   placeholder="닉네임을 입력하세요"
-                  class="w-4/5 py-4 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 font-paper text-lg"
+                  class="w-full md:w-4/5 py-3 md:py-4 px-3 md:px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 font-paper text-base md:text-lg"
                 />
               </div>
 
@@ -77,14 +77,14 @@
               <div>
                 <label
                   for="country"
-                  class="block text-lg font-paperBold text-black mb-3"
+                  class="block text-base md:text-lg font-paperBold text-black mb-2 md:mb-3"
                 >
                   국가
                 </label>
                 <select
                   id="country"
                   v-model="formData.nationCode"
-                  class="w-4/5 py-4 px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 font-paper text-lg bg-white"
+                  class="w-full md:w-4/5 py-3 md:py-4 px-3 md:px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 font-paper text-base md:text-lg bg-white"
                 >
                   <option value="">국가를 선택</option>
                   <option
@@ -98,11 +98,11 @@
               </div>
 
               <!-- 수정 완료 버튼 -->
-              <div class="pt-6">
+              <div class="pt-4 md:pt-6">
                 <button
                   type="submit"
                   :disabled="loading || !hasChanges"
-                  class="w-4/5 py-4 bg-purple-500 text-white rounded-lg hover:bg-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-paperBold text-lg"
+                  class="w-full md:w-4/5 py-3 md:py-4 bg-purple-500 text-white rounded-lg hover:bg-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-paperBold text-base md:text-lg"
                 >
                   {{ loading ? "저장 중..." : "수정 완료" }}
                 </button>

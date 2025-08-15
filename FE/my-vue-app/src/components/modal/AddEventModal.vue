@@ -63,10 +63,11 @@ watch(
     } else if (newVal) {
       date.value = dayjs().tz('Asia/Seoul').format('YYYY-MM-DD');
     }
-  }
+  },
+  { immediate: true }
 );
 
-watch(visible, (newVal) => emit("update:modelValue", newVal));
+watch(visible, (newVal) => emit("update:modelValue", newVal), { immediate: true });
 
 function submitEvent() {
   if (!title.value || !date.value) {

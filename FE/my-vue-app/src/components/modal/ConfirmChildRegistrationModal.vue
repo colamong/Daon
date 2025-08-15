@@ -1,21 +1,22 @@
 <template>
   <div
     v-if="modelValue"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+    class="fixed inset-0 z-50 grid place-items-center bg-black bg-opacity-50 min-h-screen p-4"
+    style="display: grid; place-items: center; align-content: center; justify-content: center;"
     @click="handleCancel"
   >
     <!-- 모달 콘텐츠 -->
     <div
-      class="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6"
+      class="relative bg-white rounded-2xl shadow-xl max-w-xs sm:max-w-md w-full p-4 sm:p-6 my-auto"
       @click.stop
     >
       <!-- 아이콘 -->
-      <div class="text-center mb-4">
+      <div class="text-center mb-3 sm:mb-4">
         <div
-          class="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center"
+          class="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full flex items-center justify-center"
         >
           <svg
-            class="w-8 h-8 !text-yellow-600"
+            class="w-6 h-6 sm:w-8 sm:h-8 !text-yellow-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -31,26 +32,26 @@
       </div>
 
       <!-- 메시지 -->
-      <div class="text-center mb-6 font-paper">
-        <h3 class="text-lg font-paperBold text-gray-800 mb-2">
+      <div class="text-center mb-4 sm:mb-6 font-paper">
+        <h3 class="text-base sm:text-lg font-paperBold text-gray-800 mb-2">
           아이를 등록해주세요
         </h3>
-        <p class="text-gray-600 font-paper">
+        <p class="text-sm sm:text-base text-gray-600 font-paper">
           펭구와 놀기 위해서는 아이를 먼저 등록해야 합니다.
         </p>
       </div>
 
       <!-- 버튼들 -->
-      <div class="flex gap-3">
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <button
           @click="handleCancel"
-          class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-paperSemi hover:bg-gray-200 transition-colors"
+          class="flex-1 bg-gray-100 text-gray-700 py-2 sm:py-3 rounded-lg font-paperSemi hover:bg-gray-200 transition-colors text-sm sm:text-base"
         >
           취소
         </button>
         <button
           @click="handleConfirm"
-          class="flex-1 bg-purple-500 text-white py-3 rounded-lg font-paperSemi hover:bg-purple-600 transition-colors"
+          class="flex-1 bg-purple-500 text-white py-2 sm:py-3 rounded-lg font-paperSemi hover:bg-purple-600 transition-colors text-sm sm:text-base"
         >
           등록하기
         </button>
