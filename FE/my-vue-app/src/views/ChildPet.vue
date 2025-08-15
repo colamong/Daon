@@ -27,7 +27,8 @@
           </p>
           <button
             @click="handleFirstTap"
-            class="px-4 md:px-6 py-2 md:py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition text-sm md:text-base"
+            @touchend.prevent="handleFirstTapMobile"
+            class="px-4 md:px-6 py-2 md:py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition text-sm md:text-base active:bg-rose-700"
           >
             대화 시작
           </button>
@@ -480,6 +481,39 @@ async function handleFirstTap() {
   await unlockAudio();
   audioUnlocked.value = true;
   await startConversation();
+}
+
+// 모바일 전용 터치 핸들러
+async function handleFirstTapMobile(event) {
+  event.stopPropagation();
+  console.log("모바일 터치 이벤트 실행");
+  
+  // 모바일에서 더 강력한 오디오 활성화
+  try {
+    // 즉시 AudioContext 활성화
+    if (window.AudioContext || window.webkitAudioContext) {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
+    }
+    
+    // 더미 오디오 재생으로 모바일 브라우저 활성화
+    const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=');
+    audio.muted = false;
+    audio.volume = 0.1;
+    const playPromise = audio.play();
+    if (playPromise) {
+      await playPromise.catch(() => {});
+    }
+    
+    audioUnlocked.value = true;
+    await startConversation();
+  } catch (error) {
+    console.error("모바일 오디오 활성화 실패:", error);
+    // 폴백으로 기본 핸들러 실행
+    await handleFirstTap();
+  }
 }
 
 // 대화 시작
