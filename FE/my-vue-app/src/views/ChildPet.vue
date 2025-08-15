@@ -1,5 +1,31 @@
 <template>
-  <div class="relative w-screen h-screen overflow-hidden">
+  <!-- 모바일 차단 화면 -->
+  <div
+    v-if="isMobile"
+    class="w-screen h-screen bg-gray-100 flex flex-col items-center justify-center p-4"
+  >
+    <div
+      class="bg-white rounded-2xl p-6 shadow-xl text-center max-w-sm mx-auto"
+    >
+      <div class="text-6xl mb-4">📱</div>
+      <h2 class="text-xl font-shark text-gray-800 mb-3">
+        모바일에서 지원되지 않습니다
+      </h2>
+      <p class="text-gray-600 font-shark mb-6 text-sm">
+        펫 대화 기능은 데스크톱에서만 이용할 수 있습니다.<br />
+        PC에서 접속해 주세요.
+      </p>
+      <button
+        @click="goBack"
+        class="w-full px-6 py-3 bg-purple-500 text-white rounded-lg font-shark hover:bg-purple-600 transition-colors"
+      >
+        뒤로가기
+      </button>
+    </div>
+  </div>
+
+  <!-- 데스크톱 화면 -->
+  <div v-else class="relative w-screen h-screen overflow-hidden">
     <!-- background -->
     <img
       :src="bgImage"
@@ -27,7 +53,11 @@
           </p>
           <button
             @click="handleFirstTapUnified"
-            style="user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"
+            style="
+              user-select: none;
+              -webkit-user-select: none;
+              -webkit-touch-callout: none;
+            "
             class="px-4 md:px-6 py-2 md:py-3 bg-rose-500 text-white rounded-xl font-shark md:hover:bg-rose-600 transition text-base md:text-lg active:bg-rose-700 touch-manipulation"
           >
             대화 시작
@@ -111,7 +141,10 @@
         class="fixed right-[2%] md:right-[8%] -top-36 md:!top-1/2 md:-translate-y-1/2 w-[96%] max-w-[320px] md:!w-[450px] md:max-w-none z-20 font-shark"
       >
         <!-- 대화 UI 패널 - 손그림 말풍선 스타일 -->
-        <div class="bg-white p-3 md:p-4 shadow-lg hand-drawn-bubble" :class="bubbleClasses">
+        <div
+          class="bg-white p-3 md:p-4 shadow-lg hand-drawn-bubble"
+          :class="bubbleClasses"
+        >
           <!-- 말풍선 내용 -->
           <div class="text-center">
             <!-- 진행 상태 -->
@@ -279,6 +312,24 @@ const childStore = useChildStore();
 // 오디오 엘리먼트
 const ttsPlayer = ref(null);
 
+// 모바일 체크
+const isMobile = ref(false);
+
+// 모바일 디바이스 체크 함수
+function checkMobile() {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  const screenWidth = window.innerWidth;
+
+  // 모바일 기기 또는 화면 크기가 768px 미만이면 모바일로 판단
+  const isMobileDevice =
+    /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+      userAgent
+    );
+  const isSmallScreen = screenWidth < 768;
+
+  return isMobileDevice || isSmallScreen;
+}
+
 // childId 계산
 const selectedChild = computed(() => childStore.selectedChild);
 const childId = computed(() => {
@@ -375,8 +426,8 @@ const audioUnlocked = ref(false);
 const bubbleClasses = computed(() => {
   const isDesktop = window.innerWidth >= 768;
   return {
-    'hand-drawn-bubble-bottom': !isDesktop,
-    'hand-drawn-bubble-left': isDesktop
+    "hand-drawn-bubble-bottom": !isDesktop,
+    "hand-drawn-bubble-left": isDesktop,
   };
 });
 
@@ -434,7 +485,6 @@ async function loadPenguinData(animate = false) {
   }
 }
 
-
 // 뒤로가기
 async function goBack() {
   if (isLoading.value) return;
@@ -442,16 +492,16 @@ async function goBack() {
 
   // localStorage에서 당일 그림일기 상태 확인 (ChildMain에서 이미 업데이트됨)
   const hasTodayDiary = childStore.getChildTodayDiary(currentChildId);
-  
+
   if (hasTodayDiary) {
-    console.log('[뒤로가기] 이미 당일 그림일기 존재 - API 요청 생략');
+    console.log("[뒤로가기] 이미 당일 그림일기 존재 - API 요청 생략");
     router.push({ name: "ChildMain", params: { childId: currentChildId } });
     return;
   }
 
   try {
     isLoading.value = true;
-    console.log('[뒤로가기] 그림일기 생성 API 요청 시작');
+    console.log("[뒤로가기] 그림일기 생성 API 요청 시작");
     const conversationResultId = conversationState.value.conversationResultId;
     if (currentChildId && conversationResultId) {
       await childService.recordExpression(currentChildId, conversationResultId);
@@ -506,24 +556,24 @@ async function handleFirstTapUnified(event) {
     console.log("이미 처리 중 - 무시");
     return;
   }
-  
+
   isProcessingFirstTap.value = true;
   event.preventDefault();
   event.stopPropagation();
-  
+
   console.log("통합 이벤트 실행:", event.type);
-  
+
   try {
     // 강력한 오디오 컨텍스트 활성화
     if (window.AudioContext || window.webkitAudioContext) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       const audioContext = new AudioCtx();
-      
-      if (audioContext.state === 'suspended') {
+
+      if (audioContext.state === "suspended") {
         await audioContext.resume();
         console.log("AudioContext resumed");
       }
-      
+
       // 무음 오디오 생성하여 재생
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -533,19 +583,19 @@ async function handleFirstTapUnified(event) {
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.1);
     }
-    
+
     // 실제 오디오 객체로도 활성화
     const audio = new Audio();
-    audio.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+    audio.src =
+      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     audio.volume = 0.01;
     const playPromise = audio.play();
     if (playPromise) {
       await playPromise.catch(() => console.log("Audio play blocked"));
     }
-    
+
     audioUnlocked.value = true;
     await startConversation();
-    
   } catch (error) {
     console.error("오디오 활성화 실패:", error);
     // 폴백
@@ -829,6 +879,14 @@ async function startListening() {
 
 // 라이프사이클
 onMounted(async () => {
+  // 모바일 체크
+  isMobile.value = checkMobile();
+
+  // 모바일이면 여기서 중단
+  if (isMobile.value) {
+    return;
+  }
+
   await childStore.initialize();
   const currentChildId = childId.value;
   if (
@@ -837,7 +895,6 @@ onMounted(async () => {
   ) {
     childStore.selectChild(currentChildId);
   }
-
 
   // STT 준비
   if (isRecSupported) {
