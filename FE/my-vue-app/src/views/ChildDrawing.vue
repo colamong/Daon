@@ -79,6 +79,7 @@ import { ref, computed, reactive, onMounted, watch, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
+import audioManager from "@/utils/audioManager";
 
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -109,9 +110,8 @@ const childStore = useChildStore();
 // 선택된 아이 정보
 const selectedChild = computed(() => childStore.selectedChild);
 
-// BGM 관리
-const bgmAudio = ref(null);
-const isBGMPlaying = ref(false);
+// 페이지 식별자
+const PAGE_ID = 'ChildDrawing';
 
 // route params에서 childId 받아오기 (fallback으로 selectedChild 사용)
 const currentChildId = computed(() => {
@@ -142,14 +142,16 @@ onMounted(async () => {
   // 초기 다이어리 조회
   fetchMonthlyDiaries();
 
-  // BGM 자동 재생 시도
-  await playBGM();
+  // BGM 자동 재생 시도 (오디오 매니저 사용)
+  const bgmModule = await import("@/assets/effects/bgm.mp3");
+  await audioManager.playBGM(PAGE_ID, bgmModule.default);
 });
 
 // 컴포넌트 언마운트 시 BGM 정지
 onUnmounted(() => {
-  stopBGM();
+  audioManager.onPageLeave(PAGE_ID);
 });
+
 
 // childId가 변경될 때마다 다이어리 재조회
 watch(currentChildId, (newChildId) => {
@@ -158,51 +160,11 @@ watch(currentChildId, (newChildId) => {
   }
 });
 
-// BGM 재생
-async function playBGM() {
-  if (!isBGMPlaying.value) {
-    try {
-      console.log("BGM 재생 시도 중...");
-      const bgmModule = await import("@/assets/effects/bgm.mp3");
-      bgmAudio.value = new Audio(bgmModule.default);
-      bgmAudio.value.loop = true;
-      bgmAudio.value.volume = 0.3;
-      bgmAudio.value.preload = "auto";
-
-      // 강제 재생 시도
-      const playPromise = bgmAudio.value.play();
-
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            isBGMPlaying.value = true;
-            console.log("BGM 재생 성공");
-          })
-          .catch((error) => {
-            console.log("자동 재생 차단됨, 사용자 상호작용 대기 중:", error);
-            // 차단된 경우 첫 번째 클릭/터치 이벤트에서 재생
-            document.addEventListener("click", playBGM, { once: true });
-            document.addEventListener("touchstart", playBGM, { once: true });
-          });
-      }
-    } catch (error) {
-      console.error("BGM 생성 실패:", error);
-    }
-  }
-}
-
-// BGM 정지
-function stopBGM() {
-  if (bgmAudio.value) {
-    bgmAudio.value.pause();
-    bgmAudio.value.currentTime = 0;
-    bgmAudio.value = null;
-    isBGMPlaying.value = false;
-  }
-}
 
 // 뒤로가기
 function goBack() {
+  // 페이지 이동 전 BGM 정지
+  audioManager.onPageLeave(PAGE_ID);
   router.back();
 }
 
