@@ -280,7 +280,7 @@
       :child-name="
         selectedChild && selectedChild.name ? selectedChild.name : ''
       "
-      :report-date="dayjs().format('YYYY-MM-DD')"
+      :report-date="dayjs().tz('Asia/Seoul').format('YYYY-MM-DD')"
       :report-data="todayActivity"
       :show-navigation="false"
     />
@@ -295,7 +295,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import dayjs from "dayjs";
+import dayjs from "@/utils/dayjs";
 
 import AddEventModal from "@/components/modal/AddEventModal.vue";
 import CalendarWidget from "@/components/widget/CalendarWidget.vue";
@@ -322,7 +322,7 @@ const { showWarning, showInfo } = useNotification();
 
 /* 일정 상태 */
 const events = ref([]);
-const selectedMonth = ref(dayjs().format("YYYY-MM"));
+const selectedMonth = ref(dayjs().tz('Asia/Seoul').format("YYYY-MM"));
 const selectedDate = ref(null);
 
 async function loadEvents(year, month) {
@@ -340,8 +340,8 @@ const filteredEvents = computed(() =>
       id: ev.id || ev.calendarId,
       date: ev.eventDate || ev.date,
     }))
-    .filter((ev) => dayjs(ev.date).format("YYYY-MM") === selectedMonth.value)
-    .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix())
+    .filter((ev) => dayjs(ev.date).tz('Asia/Seoul').format("YYYY-MM") === selectedMonth.value)
+    .sort((a, b) => dayjs(a.date).tz('Asia/Seoul').unix() - dayjs(b.date).tz('Asia/Seoul').unix())
 );
 
 /* childStore 연동 */
@@ -441,7 +441,7 @@ function openScheduleModal() {
 
 /* 날짜 선택 */
 function onDateSelected(date) {
-  selectedDate.value = dayjs(date).format("YYYY-MM-DD");
+  selectedDate.value = dayjs(date).tz('Asia/Seoul').format("YYYY-MM-DD");
   modalVisible.value = true;
 }
 
@@ -492,7 +492,7 @@ async function loadTodayActivity() {
   }
   try {
     isLoadingActivity.value = true;
-    const today = dayjs();
+    const today = dayjs().tz('Asia/Seoul');
     const year = today.year();
     const month = today.month() + 1;
 
@@ -505,7 +505,9 @@ async function loadTodayActivity() {
     const todayStr = today.format("YYYY-MM-DD");
 
     const found = arr.find((d) => {
-      const diaryDate = d.createdAt ? d.createdAt.split("T")[0] : d.date;
+      const diaryDate = d.createdAt ? 
+        dayjs(d.createdAt).tz('Asia/Seoul').format("YYYY-MM-DD") : 
+        dayjs(d.date).tz('Asia/Seoul').format("YYYY-MM-DD");
       return diaryDate === todayStr;
     });
 
@@ -538,12 +540,7 @@ function openTodayReport() {
 /* 날짜/조사 유틸 */
 function formatDate(dateString) {
   if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return dayjs(dateString).tz('Asia/Seoul').locale('ko').format('YYYY년 M월 D일');
 }
 function getParticle(name, particles) {
   if (!name) return particles[0];
@@ -587,11 +584,11 @@ function goToActivity() {
 /* 나이 계산 */
 function calculateAge(birthDate) {
   if (!birthDate) return 0;
-  const today = new Date();
-  const birth = new Date(birthDate);
-  let age = today.getFullYear() - birth.getFullYear();
-  const md = today.getMonth() - birth.getMonth();
-  if (md < 0 || (md === 0 && today.getDate() < birth.getDate())) age--;
+  const today = dayjs().tz('Asia/Seoul');
+  const birth = dayjs(birthDate).tz('Asia/Seoul');
+  let age = today.year() - birth.year();
+  const md = today.month() - birth.month();
+  if (md < 0 || (md === 0 && today.date() < birth.date())) age--;
   return age + 1; // 한국식(만 + 1)
 }
 </script>

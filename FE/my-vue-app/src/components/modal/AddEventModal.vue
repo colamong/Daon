@@ -39,6 +39,7 @@
 import { ref, watch } from "vue";
 import BaseModal from "@/components/modal/BaseModal.vue";
 import { useNotification } from "@/composables/useNotification.js";
+import dayjs from "@/utils/dayjs";
 
 const props = defineProps({
   modelValue: Boolean,
@@ -50,7 +51,7 @@ const { showError } = useNotification();
 
 const visible = ref(false);
 const title = ref("");
-const date = ref(new Date().toISOString().substr(0, 10)); // 기본값 당일 날짜
+const date = ref(dayjs().tz('Asia/Seoul').format('YYYY-MM-DD')); // 기본값 당일 날짜
 const description = ref("");
 
 watch(
@@ -60,7 +61,7 @@ watch(
     if (newVal && props.initialDate) {
       date.value = props.initialDate;
     } else if (newVal) {
-      date.value = new Date().toISOString().substr(0, 10);
+      date.value = dayjs().tz('Asia/Seoul').format('YYYY-MM-DD');
     }
   }
 );

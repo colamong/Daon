@@ -171,7 +171,20 @@ export const useAuthStore = defineStore("auth", {
     async checkAuthStatus() {
       try {
         const userData = await userService.getCurrentUser();
-        this.user = userData;
+        
+        // 서버가 이미지 URL을 아직 안 준다면, 기존 미리보기 URL은 유지
+        const prevImage = this.user?.profileImage || null;
+
+        this.user = { ...userData };
+        
+        // 서버에서 받은 profileImg를 profileImage로 매핑
+        if (this.user.profileImg) {
+          this.user.profileImage = this.user.profileImg;
+          delete this.user.profileImg; // 중복 제거
+        } else if (prevImage && !this.user.profileImage) {
+          this.user.profileImage = prevImage;
+        }
+
         this.token = "cookie-based-auth";
         localStorage.setItem("auth_user", JSON.stringify(this.user));
         localStorage.setItem("auth_token", "cookie-based-auth");

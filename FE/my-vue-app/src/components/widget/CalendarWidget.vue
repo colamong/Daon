@@ -80,7 +80,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import dayjs from "dayjs";
+import dayjs from "@/utils/dayjs";
 import { cardColors } from "@/data/cardColors.js";
 
 const emit = defineEmits(["update-month", "date-selected"]);
@@ -88,7 +88,7 @@ const props = defineProps({
   events: { type: Array, required: true },
 });
 
-const today = dayjs();
+const today = dayjs().tz('Asia/Seoul');
 const current = ref(today.startOf("month"));
 const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -130,9 +130,9 @@ function selectDate(date) {
 }
 
 function getScheduleColor(date) {
-  const ev = props.events.find((e) => dayjs(e.date).isSame(date, "day"));
+  const ev = props.events.find((e) => dayjs(e.date).tz('Asia/Seoul').isSame(dayjs(date).tz('Asia/Seoul'), "day"));
   if (!ev) return null;
-  const idx = dayjs(date).date() - 1;
+  const idx = dayjs(date).tz('Asia/Seoul').date() - 1;
   return cardColors[idx % cardColors.length];
 }
 
