@@ -25,7 +25,7 @@
         <!-- 설명과 이동 버튼이 같은 라인 -->
         <div class="flex items-center justify-between mb-2">
           <div class="flex-1"></div>
-          <p class="text-sm text-gray-600 flex-1 text-center">
+          <p class="text-xs text-gray-600 flex-1 text-center whitespace-nowrap px-1">
             Ch.{{ currentChapterIndex }} {{ currentChapter?.title || "" }}
           </p>
           <div class="flex-1 flex justify-end">

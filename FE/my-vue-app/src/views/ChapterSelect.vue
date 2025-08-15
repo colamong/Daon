@@ -87,7 +87,7 @@
           >
             <div class="flex justify-between items-center">
               <div class="flex-1 pr-2 md:pr-4">
-                <h3 class="text-sm md:text-lg font-paperBold text-gray-800 mb-1">
+                <h3 class="text-xs md:text-lg font-paperBold text-gray-800 mb-1 whitespace-nowrap">
                   Ch.{{ index + 1 }} {{ chapter.title }}
                 </h3>
                 <p class="text-xs md:text-sm text-gray-600 line-clamp-2">

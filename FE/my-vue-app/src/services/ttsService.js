@@ -50,6 +50,24 @@ class TTSService {
       const loose = this.voices.find(v => v.name?.toLowerCase().includes(preferredName.toLowerCase()))
       if (loose) return loose
     }
+    
+    // 모바일 환경에서 더 나은 한국어 음성 선택
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    
+    if (isMobile) {
+      // 모바일에서 선호하는 한국어 음성 순서
+      const preferredMobileVoices = [
+        'Google 한국의', 'Google ko-KR-Standard-A', 'Google ko-KR-Standard-B',
+        'Microsoft Heami', 'com.apple.ttsbundle.siri_female_ko-KR_compact',
+        'com.apple.ttsbundle.siri_male_ko-KR_compact'
+      ]
+      
+      for (const voiceName of preferredMobileVoices) {
+        const voice = this.voices.find(v => v.name?.includes(voiceName))
+        if (voice) return voice
+      }
+    }
+    
     const ko = this.voices.find(v => (v.lang || '').toLowerCase().startsWith('ko'))
     return ko || this.voices[0] || null
   }
@@ -107,6 +125,11 @@ class TTSService {
       interrupt = true,
     } = opts
 
+    // 모바일 환경 감지 및 설정 조정
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    const finalRate = isMobile ? Math.min(rate * 0.8, 1) : rate  // 모바일에서만 속도 조정
+    const finalPitch = isMobile ? 1.0 : pitch  // 모바일에서만 음높이 조정
+
     if (interrupt) this.cancel()
     await this.ensureVoicesLoaded()
 
@@ -118,8 +141,8 @@ class TTSService {
       await new Promise((resolve, reject) => {
         const u = new SpeechSynthesisUtterance(c)
         u.lang = lang
-        u.rate = rate
-        u.pitch = pitch
+        u.rate = finalRate
+        u.pitch = finalPitch
         u.volume = volume
         if (voice) u.voice = voice
         u.onend = resolve
