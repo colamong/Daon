@@ -16,13 +16,13 @@
 
       <!-- 모달 내용 -->
       <div
-        class="bg-white rounded-xl overflow-hidden shadow-lg max-w-lg w-full min-w-[700px] min-h-[600px]"
+        class="bg-white rounded-xl overflow-hidden shadow-lg w-full max-w-sm md:max-w-lg md:min-w-[700px] md:min-h-[600px] min-h-[400px] mx-4 md:mx-0"
       >
         <!-- 헤더 -->
         <div
           class="flex items-center justify-between px-4 py-2 bg-blue-100 border-b border-blue-200"
         >
-          <h3 class="text-lg font-paperSemi text-gray-800">
+          <h3 class="text-sm md:text-lg font-paperSemi text-gray-800">
             {{ childName }} - {{ formatDate(reportDate) }} 감정 리포트
           </h3>
           <IconButton
@@ -34,29 +34,29 @@
         </div>
 
         <!-- 본문 -->
-        <div class="p-4">
-          <div v-if="reportData" class="space-y-6">
+        <div class="p-3 md:p-4">
+          <div v-if="reportData" class="space-y-4 md:space-y-6">
             <!-- 그림일기 -->
             <div>
-              <h4 class="text-lg font-paperBold text-gray-800 mb-3">
+              <h4 class="text-base md:text-lg font-paperBold text-gray-800 mb-2 md:mb-3">
                 그림일기
               </h4>
-              <div class="bg-gray-50 rounded-lg p-4">
+              <div class="bg-gray-50 rounded-lg p-3 md:p-4">
                 <img
                   :src="reportData.imageUrl || reportData.diaryImage"
                   :alt="`${formatDate(reportDate)} 그림일기`"
-                  class="w-full h-80 object-cover rounded-lg"
+                  class="w-full h-48 md:h-80 object-cover rounded-lg"
                 />
               </div>
             </div>
 
             <!-- 그림일기 내용 -->
             <div>
-              <h4 class="text-lg font-paperBold text-gray-800 mb-3">
+              <h4 class="text-base md:text-lg font-paperBold text-gray-800 mb-2 md:mb-3">
                 오늘의 이야기
               </h4>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <p class="text-gray-700 font-paper leading-relaxed">
+              <div class="bg-gray-50 rounded-lg p-3 md:p-4">
+                <p class="text-sm md:text-base text-gray-700 font-paper leading-relaxed">
                   {{
                     reportData.diaryText ||
                     reportData.text ||
