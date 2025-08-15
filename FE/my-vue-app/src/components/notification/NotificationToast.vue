@@ -2,7 +2,8 @@
   <transition name="slide-down">
     <div
       v-if="visible"
-      class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 font-paper max-w-[85vw] sm:max-w-sm w-full mx-2 sm:mx-4"
+      class="fixed left-1/2 transform -translate-x-1/2 z-50 font-paper max-w-[85vw] sm:max-w-sm w-full mx-2 sm:mx-4"
+      :style="topStyle"
     >
       <div
         class="rounded-xl shadow-lg px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-2 sm:gap-4"
@@ -87,6 +88,12 @@ const typeIcon = computed(() => {
     info: 'ℹ️'
   }
   return icons[props.type]
+})
+
+const topStyle = computed(() => {
+  return {
+    top: typeof window !== 'undefined' && window.innerWidth >= 768 ? '48px !important' : '64px !important'
+  }
 })
 
 function show() {

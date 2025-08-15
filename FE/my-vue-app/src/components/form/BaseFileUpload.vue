@@ -93,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import IconButton from "@/components/button/IconButton.vue";
 import BaseButton from "@/components/button/BaseButton.vue";
 import folderIcon from "@/assets/icons/Folder.svg";
@@ -112,11 +112,23 @@ const isMobile = ref(false);
 
 const hasPreview = computed(() => !!imagePreview.value || !!fileName.value);
 
-// 모바일 기기 감지
+// 모바일 기기 감지 (화면 크기 기반)
+let resizeHandler;
+
 onMounted(() => {
-  isMobile.value = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                   ('ontouchstart' in window) || 
-                   (window.innerWidth <= 768);
+  const updateMobileStatus = () => {
+    isMobile.value = window.innerWidth < 768;
+  };
+  
+  resizeHandler = updateMobileStatus;
+  updateMobileStatus();
+  window.addEventListener('resize', resizeHandler);
+});
+
+onBeforeUnmount(() => {
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler);
+  }
 });
 
 function onChange(e) {
@@ -153,7 +165,7 @@ function onTranslate() {
 
 function openCamera() {
   if (props.disabled) return;
-  document.getElementById('cameraInput').click();
+  document.getElementById("cameraInput").click();
 }
 
 function onCameraCapture(e) {
