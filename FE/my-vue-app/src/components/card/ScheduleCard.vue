@@ -144,7 +144,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import dayjs from "dayjs";
+import dayjs from "@/utils/dayjs";
 import BaseModal from "@/components/modal/BaseModal.vue";
 
 import { cardColors } from "@/data/cardColors.js";
@@ -165,14 +165,14 @@ const editDate = ref("");
 const editDescription = ref("");
 
 // 날짜 포맷
-const formattedDate = computed(() => dayjs(props.date).format("MM.DD"));
+const formattedDate = computed(() => dayjs(props.date).tz('Asia/Seoul').format("MM.DD"));
 const fullDate = computed(() =>
-  dayjs(props.date).format("YYYY년 MM월 DD일 (ddd)")
+  dayjs(props.date).tz('Asia/Seoul').format("YYYY년 MM월 DD일 (ddd)")
 );
 
 // 카드 색상
 const cardColor = computed(() => {
-  const idx = (new Date(props.date).getDate() - 1) % cardColors.length;
+  const idx = (dayjs(props.date).tz('Asia/Seoul').date() - 1) % cardColors.length;
   return cardColors[idx];
 });
 

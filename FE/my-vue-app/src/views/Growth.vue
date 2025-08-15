@@ -107,6 +107,7 @@ import {
 } from "@/utils/colorManager.js";
 import { useChildStore } from "@/store/child";
 import { childService } from "@/services/childService.js";
+import dayjs from "@/utils/dayjs";
 
 const router = useRouter();
 const childStore = useChildStore();
@@ -153,7 +154,7 @@ const selectedChildrenForReport = ref([]);
 
 // 다이어리 데이터 상태
 const diaries = ref([]);
-const currentDate = ref(new Date());
+const currentDate = ref(dayjs().tz('Asia/Seoul').toDate());
 
 // 월별 다이어리 조회
 async function fetchMonthlyDiaries() {
@@ -189,7 +190,9 @@ async function fetchMonthlyDiaries() {
           // 각 다이어리에 아이 이름과 색상 추가
           const childDiaries = responseArray.map(diary => ({
             ...diary,
-            date: diary.createdAt ? diary.createdAt.split('T')[0] : diary.date,
+            date: diary.createdAt ? 
+              dayjs(diary.createdAt).tz('Asia/Seoul').format('YYYY-MM-DD') : 
+              dayjs(diary.date).tz('Asia/Seoul').format('YYYY-MM-DD'),
             childName: childName,
             childId: child.id,
             color: child.color || getChildColor(childName)
@@ -202,7 +205,7 @@ async function fetchMonthlyDiaries() {
       }
     }
     
-    diaries.value = allDiaries.sort((a, b) => new Date(a.date) - new Date(b.date));
+    diaries.value = allDiaries.sort((a, b) => dayjs(a.date).tz('Asia/Seoul').unix() - dayjs(b.date).tz('Asia/Seoul').unix());
     
     // 수동으로 캐시된 computed properties 업데이트
     updateDiariesByDate();
@@ -354,7 +357,7 @@ function findPreviousReport() {
   }
   
   // 2. 이전 날짜들에서 가장 최근 날짜의 가장 큰 childId 찾기
-  const dates = Object.keys(reportsByDate.value).sort((a, b) => new Date(b) - new Date(a));
+  const dates = Object.keys(reportsByDate.value).sort((a, b) => dayjs(b).tz('Asia/Seoul').unix() - dayjs(a).tz('Asia/Seoul').unix());
   console.log('정렬된 날짜들:', dates);
   
   for (const date of dates) {
@@ -415,7 +418,7 @@ function findNextReport() {
   }
   
   // 2. 다음 날짜들에서 가장 가까운 날짜의 가장 작은 childId 찾기
-  const dates = Object.keys(reportsByDate.value).sort((a, b) => new Date(a) - new Date(b));
+  const dates = Object.keys(reportsByDate.value).sort((a, b) => dayjs(a).tz('Asia/Seoul').unix() - dayjs(b).tz('Asia/Seoul').unix());
   console.log('정렬된 날짜들:', dates);
   
   for (const date of dates) {
@@ -508,11 +511,11 @@ const calendarOptions = {
   
   // 월 변경 시 다이어리 재조회
   datesSet: async (info) => {
-    const viewStart = new Date(info.start);
-    const viewEnd = new Date(info.end);
-    const middleDate = new Date((viewStart.getTime() + viewEnd.getTime()) / 2);
+    const viewStart = dayjs(info.start).tz('Asia/Seoul');
+    const viewEnd = dayjs(info.end).tz('Asia/Seoul');
+    const middleDate = dayjs((viewStart.unix() + viewEnd.unix()) / 2 * 1000).tz('Asia/Seoul');
     
-    currentDate.value = middleDate;
+    currentDate.value = middleDate.toDate();
     await fetchMonthlyDiaries();
   },
 
@@ -525,11 +528,9 @@ const calendarOptions = {
   dayCellDidMount: (info) => {
     info.el.style.position = "relative";
     
-    // 시간대 문제 해결: 로컬 날짜로 변환
-    const year = info.date.getFullYear();
-    const month = String(info.date.getMonth() + 1).padStart(2, '0');
-    const day = String(info.date.getDate()).padStart(2, '0');
-    const key = `${year}-${month}-${day}`;
+    // 시간대 문제 해결: 한국 시간으로 변환
+    const dateInKorea = dayjs(info.date).tz('Asia/Seoul');
+    const key = dateInKorea.format('YYYY-MM-DD');
     
     // 해당 날짜의 다이어리가 있는지 확인
     let attempts = 0;
@@ -642,9 +643,9 @@ const calendarOptions = {
                 console.log('=== 타겟 리포트 발견, API 호출 시작 ===');
                 try {
                   // API로 원본 다이어리 데이터 가져오기
-                  const clickedDate = new Date(key);
-                  const year = clickedDate.getFullYear();
-                  const month = clickedDate.getMonth() + 1;
+                  const clickedDate = dayjs(key).tz('Asia/Seoul');
+                  const year = clickedDate.year();
+                  const month = clickedDate.month() + 1;
                   
                   console.log('API 요청:', { childId: clickedChildId, year, month });
                   const response = await childService.getMonthlyDiaries(clickedChildId, year, month);
@@ -652,7 +653,9 @@ const calendarOptions = {
                   
                   // 해당 날짜의 다이어리 찾기
                   const todayDiary = responseArray.find(diary => {
-                    const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+                    const diaryDate = diary.createdAt ? 
+                      dayjs(diary.createdAt).tz('Asia/Seoul').format('YYYY-MM-DD') : 
+                      dayjs(diary.date).tz('Asia/Seoul').format('YYYY-MM-DD');
                     return diaryDate === key;
                   });
                   
@@ -734,15 +737,17 @@ const calendarOptions = {
             
             try {
               // 해당 아이의 원본 데이터를 다시 API에서 가져오기
-              const clickedDate = new Date(key);
-              const year = clickedDate.getFullYear();
-              const month = clickedDate.getMonth() + 1;
+              const clickedDate = dayjs(key).tz('Asia/Seoul');
+              const year = clickedDate.year();
+              const month = clickedDate.month() + 1;
               
               const response = await childService.getMonthlyDiaries(additionalReport.childId, year, month);
               const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
               
               const todayDiary = responseArray.find(diary => {
-                const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+                const diaryDate = diary.createdAt ? 
+                  dayjs(diary.createdAt).tz('Asia/Seoul').format('YYYY-MM-DD') : 
+                  dayjs(diary.date).tz('Asia/Seoul').format('YYYY-MM-DD');
                 return diaryDate === key;
               });
               
@@ -831,15 +836,17 @@ async function openEmotionReport(dateStr) {
 
     try {
       // 해당 아이의 원본 데이터를 API에서 다시 가져오기
-      const clickedDate = new Date(dateStr);
-      const year = clickedDate.getFullYear();
-      const month = clickedDate.getMonth() + 1;
+      const clickedDate = dayjs(dateStr).tz('Asia/Seoul');
+      const year = clickedDate.year();
+      const month = clickedDate.month() + 1;
       
       const response = await childService.getMonthlyDiaries(report.childId, year, month);
       const responseArray = Array.isArray(response) ? response : (response ? [response] : []);
       
       const todayDiary = responseArray.find(diary => {
-        const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+        const diaryDate = diary.createdAt ? 
+          dayjs(diary.createdAt).tz('Asia/Seoul').format('YYYY-MM-DD') : 
+          dayjs(diary.date).tz('Asia/Seoul').format('YYYY-MM-DD');
         return diaryDate === dateStr;
       });
       
@@ -917,9 +924,9 @@ async function loadReportData(report) {
     console.log('리포트 데이터 로드 시도:', report);
     console.log('타겟 childId:', report.childId, '타겟 날짜:', report.date);
     
-    const clickedDate = new Date(report.date);
-    const year = clickedDate.getFullYear();
-    const month = clickedDate.getMonth() + 1;
+    const clickedDate = dayjs(report.date).tz('Asia/Seoul');
+    const year = clickedDate.year();
+    const month = clickedDate.month() + 1;
     
     console.log('API 요청:', { childId: report.childId, year, month, date: report.date });
     
@@ -931,7 +938,9 @@ async function loadReportData(report) {
     
     // 해당 날짜의 다이어리 찾기 (이미 해당 childId의 데이터만 있으므로 날짜만 매칭)
     const todayDiary = responseArray.find(diary => {
-      const diaryDate = diary.createdAt ? diary.createdAt.split('T')[0] : diary.date;
+      const diaryDate = diary.createdAt ? 
+        dayjs(diary.createdAt).tz('Asia/Seoul').format('YYYY-MM-DD') : 
+        dayjs(diary.date).tz('Asia/Seoul').format('YYYY-MM-DD');
       const match = diaryDate === report.date;
       console.log('다이어리 매칭 검사:', {
         diaryDate,
