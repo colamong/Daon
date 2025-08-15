@@ -96,10 +96,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from "vue";
+import { ref, onMounted, computed, onUnmounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useChildStore } from "@/store/child";
 import CloudShape from "@/components/widget/CloudShape.vue";
+import audioManager from "@/utils/audioManager";
 import outIcon from "../assets/images/out.png";
 import outHoverIcon from "../assets/images/out_1.png";
 import bgImage from "../assets/images/child_main.png";
@@ -118,9 +119,8 @@ const childStore = useChildStore();
 // 현재 선택된 아이 정보
 const currentChild = computed(() => childStore.selectedChild);
 
-// BGM 관리
-const bgmAudio = ref(null);
-const isBGMPlaying = ref(false);
+// 페이지 식별자
+const PAGE_ID = 'ChildMain';
 
 // 뒤로가기 버튼 호버 상태
 const isBackButtonHovered = ref(false);
@@ -137,21 +137,30 @@ onMounted(async () => {
     }
   }
 
-  // BGM 자동 재생 시도
-  await playBGM();
+  // BGM 자동 재생 시도 (오디오 매니저 사용)
+  const bgmModule = await import("@/assets/effects/bgm.mp3");
+  await audioManager.playBGM(PAGE_ID, bgmModule.default);
 });
 
 // 컴포넌트 언마운트 시 BGM 정지
 onUnmounted(() => {
-  stopBGM();
+  audioManager.onPageLeave(PAGE_ID);
 });
 
-const goDashboard = () => router.push({ name: "Dashboard" });
+// 페이지 떠날 때 BGM 정지 (브라우저 뒤로가기, 새로고침 등)
+onBeforeUnmount(() => {
+  audioManager.onPageLeave(PAGE_ID);
+});
+
+
+
 
 // 펭귀과 대화하기 클릭 시 바로 이동 (이미 선택된 아이 정보가 있음)
 function goToPenguin() {
   // 현재 선택된 아이가 있으면 바로 펭귄 페이지로
   if (currentChild.value) {
+    // 페이지 이동 전 BGM 정지
+    audioManager.onPageLeave(PAGE_ID);
     router.push({
       name: "ChildPet",
       params: { childId: currentChild.value.id },
@@ -163,6 +172,8 @@ function goToPenguin() {
 function goToDrawing() {
   // 현재 선택된 아이가 있으면 바로 그림일기 페이지로
   if (currentChild.value) {
+    // 페이지 이동 전 BGM 정지
+    audioManager.onPageLeave(PAGE_ID);
     router.push({
       name: "ChildDrawing",
       params: { childId: currentChild.value.id },
@@ -170,59 +181,17 @@ function goToDrawing() {
   }
 }
 
-// BGM 재생
-async function playBGM() {
-  if (!isBGMPlaying.value) {
-    try {
-      console.log("BGM 재생 시도 중...");
-      const bgmModule = await import("@/assets/effects/bgm.mp3");
-      bgmAudio.value = new Audio(bgmModule.default);
-      bgmAudio.value.loop = true;
-      bgmAudio.value.volume = 0.3;
-      bgmAudio.value.preload = "auto";
-
-      // 강제 재생 시도
-      const playPromise = bgmAudio.value.play();
-
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            isBGMPlaying.value = true;
-            console.log("BGM 재생 성공");
-          })
-          .catch((error) => {
-            console.log("자동 재생 차단됨, 사용자 상호작용 대기 중:", error);
-            // 차단된 경우 첫 번째 클릭/터치 이벤트에서 재생
-            document.addEventListener("click", playBGM, { once: true });
-            document.addEventListener("touchstart", playBGM, { once: true });
-          });
-      }
-    } catch (error) {
-      console.error("BGM 생성 실패:", error);
-    }
-  }
-}
-
-// BGM 정지
-function stopBGM() {
-  if (bgmAudio.value) {
-    bgmAudio.value.pause();
-    bgmAudio.value.currentTime = 0;
-    bgmAudio.value = null;
-    isBGMPlaying.value = false;
-  }
-}
+const goDashboard = () => {
+  // 페이지 이동 전 BGM 정지
+  audioManager.onPageLeave(PAGE_ID);
+  router.push({ name: "Dashboard" });
+};
 
 // 호버 시 효과음 재생
 async function playHoverSound() {
   try {
     const decideModule = await import("@/assets/effects/decide.mp3");
-    const audio = new Audio(decideModule.default);
-    audio.volume = 0.4;
-    audio.preload = "auto";
-    audio.play().catch((error) => {
-      console.warn("호버 효과음 재생 실패:", error);
-    });
+    audioManager.playEffect(decideModule.default, 0.4);
   } catch (error) {
     console.warn("호버 효과음 로드 실패:", error);
   }

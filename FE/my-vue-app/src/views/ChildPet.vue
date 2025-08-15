@@ -26,9 +26,10 @@
             버튼을 눌러 오디오를 활성화해 주세요.
           </p>
           <button
-            @click="handleFirstTap"
-            @touchend.prevent="handleFirstTapMobile"
-            class="px-4 md:px-6 py-2 md:py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition text-sm md:text-base active:bg-rose-700"
+            @click="handleFirstTapUnified"
+            @touchstart="handleFirstTapUnified"
+            style="user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"
+            class="px-4 md:px-6 py-2 md:py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition text-sm md:text-base active:bg-rose-700 touch-manipulation"
           >
             대화 시작
           </button>
@@ -111,7 +112,7 @@
         class="fixed right-[2%] md:right-[8%] -top-36 md:!top-1/2 md:-translate-y-1/2 w-[96%] max-w-[320px] md:!w-[450px] md:max-w-none z-20 font-shark"
       >
         <!-- 대화 UI 패널 - 손그림 말풍선 스타일 -->
-        <div class="bg-white p-3 md:p-4 shadow-lg hand-drawn-bubble md:hand-drawn-bubble-left hand-drawn-bubble-bottom">
+        <div class="bg-white p-3 md:p-4 shadow-lg hand-drawn-bubble" :class="bubbleClasses">
           <!-- 말풍선 내용 -->
           <div class="text-center">
             <!-- 진행 상태 -->
@@ -368,6 +369,15 @@ function onEvolutionComplete() {
 // 사용자 첫 클릭으로 오디오 재생 허용 여부
 const audioUnlocked = ref(false);
 
+// 화면 크기에 따른 말풍선 클래스
+const bubbleClasses = computed(() => {
+  const isDesktop = window.innerWidth >= 768;
+  return {
+    'hand-drawn-bubble-bottom': !isDesktop,
+    'hand-drawn-bubble-left': isDesktop
+  };
+});
+
 // 대화 상태
 const conversationState = ref({
   isActive: false,
@@ -483,36 +493,52 @@ async function handleFirstTap() {
   await startConversation();
 }
 
-// 모바일 전용 터치 핸들러
-async function handleFirstTapMobile(event) {
+// 통합 터치/클릭 핸들러
+async function handleFirstTapUnified(event) {
+  event.preventDefault();
   event.stopPropagation();
-  console.log("모바일 터치 이벤트 실행");
   
-  // 모바일에서 더 강력한 오디오 활성화
+  console.log("통합 이벤트 실행:", event.type);
+  
   try {
-    // 즉시 AudioContext 활성화
+    // 강력한 오디오 컨텍스트 활성화
     if (window.AudioContext || window.webkitAudioContext) {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioCtx();
+      
       if (audioContext.state === 'suspended') {
         await audioContext.resume();
+        console.log("AudioContext resumed");
       }
+      
+      // 무음 오디오 생성하여 재생
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
     }
     
-    // 더미 오디오 재생으로 모바일 브라우저 활성화
-    const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=');
-    audio.muted = false;
-    audio.volume = 0.1;
+    // 실제 오디오 객체로도 활성화
+    const audio = new Audio();
+    audio.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+    audio.volume = 0.01;
     const playPromise = audio.play();
     if (playPromise) {
-      await playPromise.catch(() => {});
+      await playPromise.catch(() => console.log("Audio play blocked"));
     }
     
     audioUnlocked.value = true;
     await startConversation();
+    
   } catch (error) {
-    console.error("모바일 오디오 활성화 실패:", error);
-    // 폴백으로 기본 핸들러 실행
-    await handleFirstTap();
+    console.error("오디오 활성화 실패:", error);
+    // 폴백
+    await unlockAudio();
+    audioUnlocked.value = true;
+    await startConversation();
   }
 }
 
@@ -796,6 +822,7 @@ onMounted(async () => {
   ) {
     childStore.selectChild(currentChildId);
   }
+
 
   // STT 준비
   if (isRecSupported) {
