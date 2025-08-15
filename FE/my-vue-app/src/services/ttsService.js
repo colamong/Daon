@@ -55,16 +55,28 @@ class TTSService {
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     
     if (isMobile) {
-      // 모바일에서 선호하는 한국어 음성 순서
-      const preferredMobileVoices = [
-        'Google 한국의', 'Google ko-KR-Standard-A', 'Google ko-KR-Standard-B',
-        'Microsoft Heami', 'com.apple.ttsbundle.siri_female_ko-KR_compact',
-        'com.apple.ttsbundle.siri_male_ko-KR_compact'
-      ]
+      // 여성 음성 우선 선택 (더 자연스러운 목소리)
+      const femaleVoices = this.voices.filter(v => 
+        (v.lang || '').toLowerCase().startsWith('ko') && 
+        (v.name?.toLowerCase().includes('female') || 
+         v.name?.toLowerCase().includes('heami') ||
+         v.name?.toLowerCase().includes('standard-a') ||
+         v.name?.includes('여성') ||
+         v.name?.includes('Female'))
+      )
       
-      for (const voiceName of preferredMobileVoices) {
-        const voice = this.voices.find(v => v.name?.includes(voiceName))
-        if (voice) return voice
+      if (femaleVoices.length > 0) {
+        return femaleVoices[0]
+      }
+      
+      // 일반 한국어 음성 중에서 품질 좋은 것 선택
+      const koVoices = this.voices.filter(v => (v.lang || '').toLowerCase().startsWith('ko'))
+      if (koVoices.length > 0) {
+        // 시스템 기본 음성보다는 Google이나 Microsoft 음성 선호
+        const preferredVoice = koVoices.find(v => 
+          v.name?.includes('Google') || v.name?.includes('Microsoft')
+        )
+        return preferredVoice || koVoices[0]
       }
     }
     
@@ -127,8 +139,8 @@ class TTSService {
 
     // 모바일 환경 감지 및 설정 조정
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    const finalRate = isMobile ? Math.min(rate * 0.8, 1) : rate  // 모바일에서만 속도 조정
-    const finalPitch = isMobile ? 1.0 : pitch  // 모바일에서만 음높이 조정
+    const finalRate = isMobile ? Math.min(rate * 0.9, 1) : rate  // 모바일에서 속도 약간 조정
+    const finalPitch = isMobile ? Math.max(pitch * 1.1, 1) : pitch  // 모바일에서 음높이 약간 높게
 
     if (interrupt) this.cancel()
     await this.ensureVoicesLoaded()
