@@ -21,7 +21,7 @@
             </button>
           </div>
         </div>
-        
+
         <!-- 설명과 이동 버튼이 같은 라인 -->
         <div class="flex items-center justify-between mb-2">
           <div class="flex-1"></div>
@@ -50,7 +50,9 @@
       </div>
 
       <!-- 데스크톱 레이아웃 -->
-      <div class="hidden md:flex md:justify-between md:items-center mb-6 pl-10 pr-5">
+      <div
+        class="hidden md:flex md:justify-between md:items-center mb-6 pl-10 pr-5"
+      >
         <div>
           <h1 class="text-4xl font-paperBold text-gray-800 mb-2">
             {{ currentTheme.title }}에서
@@ -90,7 +92,10 @@
     </div>
 
     <!-- 학습 콘텐츠 -->
-    <div v-if="currentContent" class="space-y-4 md:space-y-8 px-2 md:pl-20 md:pr-20">
+    <div
+      v-if="currentContent"
+      class="space-y-4 md:space-y-8 px-2 md:pl-20 md:pr-20"
+    >
       <!-- 질문 (타이핑 효과) -->
       <TypingEffect
         :key="questionId"
@@ -103,7 +108,9 @@
 
       <!-- 답변 선택지 -->
       <div v-if="showAnswers" class="space-y-3 md:space-y-4">
-        <h3 class="text-lg md:text-xl font-paperBold text-gray-800 text-center">답변을 선택하세요:</h3>
+        <h3 class="text-lg md:text-xl font-paperBold text-gray-800 text-center">
+          답변을 선택하세요
+        </h3>
         <div
           v-for="answer in currentContent.answers"
           :key="answer.id"
@@ -417,11 +424,11 @@ const playSuccessSound = async () => {
     console.warn("효과음이 아직 로드되지 않았습니다.");
     return;
   }
-  
+
   try {
     // 오디오 재설정 (이전 재생 중지)
     successAudio.value.currentTime = 0;
-    
+
     const playPromise = successAudio.value.play();
     if (playPromise !== undefined) {
       playPromise

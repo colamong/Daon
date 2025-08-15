@@ -506,8 +506,7 @@ const calendarOptions = {
     center: "title",
     right: "today",
   },
-  height: window.innerWidth <= 768 ? 450 : 580,
-  contentHeight: window.innerWidth <= 768 ? 400 : 530,
+  aspectRatio: window.innerWidth <= 768 ? 0.9 : 1.8,
   
   // 월 변경 시 다이어리 재조회
   datesSet: async (info) => {
@@ -551,7 +550,7 @@ const calendarOptions = {
         // 각 리포트를 버튼으로 표시하되, 칸 안에 세로로 정렬 (정렬 없이 원본 순서)
         const container = document.createElement("div");
         container.style.position = "absolute";
-        container.style.top = window.innerWidth <= 768 ? "20px" : "25px"; // 날짜 글자 바로 아래부터 시작
+        container.style.top = window.innerWidth <= 768 ? "15px" : "25px"; // 날짜 글자 바로 아래부터 시작
         container.style.left = "2px";
         container.style.right = "2px";
         container.style.display = "flex";
@@ -576,9 +575,9 @@ const calendarOptions = {
             button.style.border = "none";
             button.style.borderRadius = "4px";
             button.style.padding = "2px 4px";
-            button.style.fontSize = window.innerWidth <= 768 ? "8px" : "9px";
+            button.style.fontSize = window.innerWidth <= 768 ? "6px" : "9px";
             button.style.fontWeight = "500";
-            button.style.height = window.innerWidth <= 768 ? "14px" : "16px";
+            button.style.height = window.innerWidth <= 768 ? "12px" : "16px";
             button.style.cursor = "pointer";
             button.style.overflow = "hidden";
             button.style.whiteSpace = "nowrap";
@@ -717,8 +716,8 @@ const calendarOptions = {
           moreButton.style.border = "none";
           moreButton.style.borderRadius = "4px";
           moreButton.style.padding = "2px 4px";
-          moreButton.style.fontSize = "8px";
-          moreButton.style.height = "14px";
+          moreButton.style.fontSize = window.innerWidth <= 768 ? "6px" : "8px";
+          moreButton.style.height = window.innerWidth <= 768 ? "12px" : "14px";
           moreButton.style.cursor = "pointer";
           moreButton.style.transition = "opacity 0.2s";
           
@@ -1013,14 +1012,29 @@ onMounted(async () => {
 /* FullCalendar 커스텀 스타일 */
 :deep(.fc-toolbar-title) {
   font-family: "PaperlogySemiBold", sans-serif;
-  font-size: 1.5rem;
+  font-size: 1rem;
   color: #374151;
+}
+
+@media (min-width: 768px) {
+  :deep(.fc-toolbar-title) {
+    font-size: 1.5rem;
+  }
 }
 
 :deep(.fc-button) {
   background-color: #8b5cf6;
   border-color: #8b5cf6;
   font-family: "Paperlog", sans-serif;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+@media (min-width: 768px) {
+  :deep(.fc-button) {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+  }
 }
 
 :deep(.fc-button:hover) {
@@ -1054,20 +1068,35 @@ onMounted(async () => {
 }
 
 :deep(.fc .fc-daygrid-day) {
-  height: 80px !important;
-  min-width: 80px !important;
+  min-height: 100px !important;
+  min-width: 45px !important;
 }
 
 @media (min-width: 768px) {
   :deep(.fc .fc-daygrid-day) {
-    height: 100px !important;
+    min-height: 90px !important;
     min-width: 120px !important;
   }
 }
 
 :deep(.fc .fc-daygrid-day-frame) {
   position: relative !important;
-  overflow: hidden !important;
+  overflow: visible !important;
+}
+
+:deep(.fc-daygrid-day-number) {
+  font-family: "Paperlog", sans-serif;
+  color: #374151;
+  font-weight: 600;
+  z-index: 1;
+  position: relative;
+  font-size: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  :deep(.fc-daygrid-day-number) {
+    font-size: 0.875rem;
+  }
 }
 
 /* 모달 전환 효과 */

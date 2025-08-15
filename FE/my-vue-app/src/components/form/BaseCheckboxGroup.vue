@@ -26,12 +26,12 @@
 
         <!-- 커스텀 체크박스 -->
         <div
-          class="border-gray-300 w-6 h-6 flex items-center justify-center border-2 rounded-md transition-colors group-hover:bg-blue-100 group-hover:border-blue-400"
+          class="border-gray-300 w-6 h-6 flex items-center justify-center border-2 rounded-md transition-colors md:group-hover:bg-blue-100 md:group-hover:border-blue-400"
           :class="{
             'bg-blue-600 border-blue-600 text-white': localValue.includes(
               option.value
             ),
-            'border-[#1C1C1C] bg-white group-hover:bg-blue-100 group-hover:border-blue-400':
+            'border-[#1C1C1C] bg-white md:group-hover:bg-blue-100 md:group-hover:border-blue-400':
               !localValue.includes(option.value),
           }"
         >

@@ -28,7 +28,7 @@
           <button
             @click="handleFirstTapUnified"
             style="user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"
-            class="px-4 md:px-6 py-2 md:py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition text-sm md:text-base active:bg-rose-700 touch-manipulation"
+            class="px-4 md:px-6 py-2 md:py-3 bg-rose-500 text-white rounded-xl font-shark md:hover:bg-rose-600 transition text-base md:text-lg active:bg-rose-700 touch-manipulation"
           >
             대화 시작
           </button>
@@ -40,7 +40,7 @@
         :disabled="isLoading"
         :class="[
           'w-12 h-12 md:w-20 md:h-20 flex items-center justify-center transition-transform duration-400',
-          isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-x-[-1]',
+          isLoading ? 'opacity-50 cursor-not-allowed' : 'md:hover:scale-x-[-1]',
         ]"
       >
         <div
@@ -988,7 +988,9 @@ function getPenguinImage(stage) {
   animation: wiggle 0.3s ease-in-out infinite;
 }
 
-.flip:hover {
-  transform: scaleX(-1); /* 좌우 반전 */
+@media (min-width: 768px) {
+  .flip:hover {
+    transform: scaleX(-1); /* 좌우 반전 */
+  }
 }
 </style>
