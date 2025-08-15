@@ -15,16 +15,30 @@
       </h3>
     </div>
 
-    <!-- 햄버거 메뉴 버튼 (모바일) -->
-    <button
-      @click="toggleMobileMenu"
-      data-mobile-menu-toggle
-      class="md:hidden flex flex-col items-center justify-center w-8 h-8 space-y-1"
-    >
-      <span class="w-6 h-0.5 bg-black transition-all duration-300" :class="{ 'rotate-45 translate-y-2': showMobileMenu }"></span>
-      <span class="w-6 h-0.5 bg-black transition-all duration-300" :class="{ 'opacity-0': showMobileMenu }"></span>
-      <span class="w-6 h-0.5 bg-black transition-all duration-300" :class="{ '-rotate-45 -translate-y-2': showMobileMenu }"></span>
-    </button>
+    <!-- 모바일 헤더 우측 버튼들 -->
+    <div class="md:hidden flex items-center gap-3">
+      <!-- 이용 가이드 버튼 (?) -->
+      <button
+        @click="showTutorial"
+        class="w-8 h-8 flex items-center justify-center text-blue-600 hover:text-blue-800 transition-colors"
+        title="이용 가이드"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </button>
+      
+      <!-- 햄버거 메뉴 버튼 -->
+      <button
+        @click="toggleMobileMenu"
+        data-mobile-menu-toggle
+        class="flex flex-col items-center justify-center w-8 h-8 space-y-1"
+      >
+        <span class="w-6 h-0.5 bg-black transition-all duration-300" :class="{ 'rotate-45 translate-y-2': showMobileMenu }"></span>
+        <span class="w-6 h-0.5 bg-black transition-all duration-300" :class="{ 'opacity-0': showMobileMenu }"></span>
+        <span class="w-6 h-0.5 bg-black transition-all duration-300" :class="{ '-rotate-45 -translate-y-2': showMobileMenu }"></span>
+      </button>
+    </div>
 
     <!-- 데스크톱 내비게이션 -->
     <nav class="hidden md:flex gap-8">
@@ -279,6 +293,9 @@
       @confirm="handleChildRegistrationConfirm"
       @cancel="handleChildRegistrationCancel"
     />
+
+    <!-- 네비게이션 튜토리얼 모달 -->
+    <NavigationTutorialModal v-model="showTutorialModal" />
   </header>
 </template>
 
@@ -290,6 +307,7 @@ import { useChildStore } from "@/store/child";
 import BaseButton from "@/components/button/BaseButton.vue";
 import ChildSelectModal from "@/components/modal/ChildSelectModal.vue";
 import ConfirmChildRegistrationModal from "@/components/modal/ConfirmChildRegistrationModal.vue";
+import NavigationTutorialModal from "@/components/modal/NavigationTutorialModal.vue";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -302,6 +320,7 @@ const showPenguinChildSelectModal = ref(false);
 const showChildRegistrationModal = ref(false);
 const hoverTimer = ref(null);
 const showMobileMenu = ref(false);
+const showTutorialModal = ref(false);
 
 function toggleProfile() {
   showProfile.value = !showProfile.value;
@@ -435,6 +454,17 @@ function handleMobileProfileEdit() {
 
 function goToProfileEdit() {
   router.push({ name: "ProfileEdit" });
+}
+
+// 튜토리얼 모달 표시
+function showTutorial() {
+  // 페이지 상단으로 스크롤
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // 스크롤 완료 후 모달 표시
+  setTimeout(() => {
+    showTutorialModal.value = true;
+  }, 800);
 }
 
 function handleClickOutside(e) {

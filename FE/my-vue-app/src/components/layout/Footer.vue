@@ -31,37 +31,9 @@
       </div>
 
       <!-- 서비스 -->
-      <div class="flex flex-col gap-2 md:gap-3 w-full sm:w-1/2 lg:w-[160px] text-center lg:text-left">
+      <div class="hidden md:flex flex-col gap-2 md:gap-3 w-full sm:w-1/2 lg:w-[160px] text-center lg:text-left">
         <div class="text-xs md:text-base font-semibold">서비스</div>
-        <div class="block md:hidden">
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <button
-              @click="goChildMain"
-              class="font-paper text-black hover:font-paperBold text-center"
-            >
-              펭구랑 놀자
-            </button>
-            <button
-              @click="goOCRTool"
-              class="font-paper text-black hover:font-paperBold text-center"
-            >
-              문서 도우미
-            </button>
-            <button
-              @click="goCommunityChat"
-              class="font-paper text-black hover:font-paperBold text-center"
-            >
-              온동네
-            </button>
-            <button
-              @click="goLearningHelper"
-              class="font-paper text-black hover:font-paperBold text-center"
-            >
-              상황별 학습
-            </button>
-          </div>
-        </div>
-        <ul class="hidden md:block text-xs md:text-sm leading-snug space-y-1">
+        <ul class="text-xs md:text-sm leading-snug space-y-1">
           <li>
             <button
               @click="goChildMain"
@@ -98,22 +70,9 @@
       </div>
 
       <!-- 고객지원 -->
-      <div class="flex flex-col gap-2 md:gap-3 w-full sm:w-1/2 lg:w-[160px] text-center lg:text-left">
+      <div class="hidden md:flex flex-col gap-2 md:gap-3 w-full sm:w-1/2 lg:w-[160px] text-center lg:text-left">
         <div class="text-xs md:text-base font-semibold">고객지원</div>
-        <div class="block md:hidden">
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <span class="cursor-default text-gray-600 text-center">자주 묻는 질문</span>
-            <button
-              @click="showTutorial"
-              class="font-paper text-black hover:font-paperBold hover:text-blue-600 transition-colors text-center"
-            >
-              이용 가이드
-            </button>
-            <span class="cursor-default text-gray-600 text-center">공지사항</span>
-            <span class="cursor-default text-gray-600 text-center">문의하기</span>
-          </div>
-        </div>
-        <ul class="hidden md:block text-xs md:text-sm leading-snug space-y-1">
+        <ul class="text-xs md:text-sm leading-snug space-y-1">
           <li><span class="cursor-default text-gray-600">자주 묻는 질문</span></li>
           <li>
             <button
