@@ -27,7 +27,6 @@
           </p>
           <button
             @click="handleFirstTapUnified"
-            @touchstart="handleFirstTapUnified"
             style="user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"
             class="px-4 md:px-6 py-2 md:py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition text-sm md:text-base active:bg-rose-700 touch-manipulation"
           >
@@ -530,8 +529,17 @@ async function handleFirstTap() {
   await startConversation();
 }
 
+// 처리 중 플래그
+const isProcessingFirstTap = ref(false);
+
 // 통합 터치/클릭 핸들러
 async function handleFirstTapUnified(event) {
+  if (isProcessingFirstTap.value) {
+    console.log("이미 처리 중 - 무시");
+    return;
+  }
+  
+  isProcessingFirstTap.value = true;
   event.preventDefault();
   event.stopPropagation();
   
@@ -576,6 +584,8 @@ async function handleFirstTapUnified(event) {
     await unlockAudio();
     audioUnlocked.value = true;
     await startConversation();
+  } finally {
+    isProcessingFirstTap.value = false;
   }
 }
 
