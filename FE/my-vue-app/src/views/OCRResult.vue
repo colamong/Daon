@@ -21,7 +21,7 @@
           v-if="image"
           :src="image"
           alt="OCR Preview"
-          class="max-w-full max-h-full object-contain"
+          class="max-w-full max-h-full object-contain md:max-w-[450px] md:max-h-[450px]"
         />
         <div
           v-else-if="file"
