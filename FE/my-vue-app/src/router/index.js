@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/store/auth";
+import audioManager from "@/utils/audioManager";
 
 // 레이아웃
 import ModalDemo from "@/views/ModalDemo.vue";
@@ -124,6 +125,12 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const auth = useAuthStore();
+  
+  // 페이지 이동 시 모든 BGM 강제 정지 (오디오 겹침 방지)
+  if (from.name && (from.name === 'ChildMain' || from.name === 'ChildDrawing')) {
+    console.log(`[Router] ${from.name}에서 ${to.name}으로 이동 - BGM 정지`);
+    audioManager.stopAllBGM();
+  }
   
   // 인증이 필요한 페이지인데 로그인하지 않은 경우
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
