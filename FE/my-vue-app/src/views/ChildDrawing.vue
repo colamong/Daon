@@ -1,6 +1,6 @@
 <!-- src/views/ChildDrawing.vue -->
 <template>
-  <div class="h-screen relative overflow-hidden pt-6">
+  <div class="h-screen relative overflow-hidden pt-4 md:pt-6">
     <!-- 배경 -->
     <img
       :src="bgImage"
@@ -10,11 +10,11 @@
 
     <!-- 헤더 -->
     <header
-      class="fixed top-4 left-4 right-4 z-30 flex items-center justify-between"
+      class="fixed top-2 md:top-4 left-2 md:left-4 right-2 md:right-4 z-30 flex items-center justify-between"
     >
       <button
         @click="goBack"
-        class="w-20 h-20 flex items-center justify-center transition-transform duration-400 hover:scale-x-[-1]"
+        class="w-12 h-12 md:w-20 md:h-20 flex items-center justify-center transition-transform duration-400 hover:scale-x-[-1]"
       >
         <img
           :src="HomeIcon"
@@ -26,7 +26,7 @@
 
     <!-- 달력 -->
     <div
-      class="calendar-container relative z-0 font-shark pt-6 mt-6 mx-auto w-[1200px]"
+      class="calendar-container relative z-0 font-shark pt-4 md:pt-6 mt-4 md:mt-6 mx-auto w-full px-2 md:px-0 md:w-[1200px]"
     >
       <FullCalendar ref="calendarRef" :options="calendarOptions" />
     </div>
@@ -35,18 +35,18 @@
     <img
       :src="playPenImg"
       alt="playing penguin"
-      class="fixed bottom-4 right-4 w-40 h-40 pointer-events-none z-20"
+      class="fixed bottom-2 md:bottom-4 right-2 md:right-4 w-24 h-24 md:w-40 md:h-40 pointer-events-none z-20"
     />
 
     <!-- 그림일기 모달 -->
     <BaseModal v-model="showModal">
       <template #header>{{ selectedDiary.date }}</template>
-      <div class="p-4 flex items-start">
+      <div class="p-2 md:p-4 flex items-start">
         <div class="flex-1 text-center space-y-2">
           <img
             :src="selectedDiary.imageUrl"
             alt="Diary Detail"
-            class="mx-auto rounded max-h-[400px]"
+            class="mx-auto rounded max-h-[300px] md:max-h-[400px] max-w-full"
           />
         </div>
       </div>
@@ -309,8 +309,8 @@ const calendarOptions = reactive({
   locale: koLocale,
   headerToolbar: { left: "", center: "title", right: "today prev next" },
   titleFormat: { year: "numeric", month: "long" },
-  height: 580,
-  contentHeight: 530,
+  height: 'auto',
+  aspectRatio: window.innerWidth < 768 ? 1.2 : 1.35,
   initialDate: today,
 
   // 월 변경 시 다이어리 재조회
@@ -344,10 +344,11 @@ const calendarOptions = reactive({
   // 날짜 숫자 커스텀
   dayCellContent: (arg) => {
     const n = arg.date.getDate();
+    const isMobile = window.innerWidth < 768;
     return {
       html: `
         <div
-          class="inline-flex w-6 h-6 items-center justify-center font-shark text-sm text-black"
+          class="inline-flex ${isMobile ? 'w-5 h-5' : 'w-6 h-6'} items-center justify-center font-shark ${isMobile ? 'text-xs' : 'text-sm'} text-black"
           style="
             background-image: url('${cloudImg}');
             background-size: contain;
@@ -379,13 +380,14 @@ const calendarOptions = reactive({
       if (d && d.imageUrl) {
         // 데이터를 찾았으면 이미지 렌더링
         const wrap = document.createElement("div");
+        const isMobile = window.innerWidth < 768;
         Object.assign(wrap.style, {
           position: "absolute",
-          top: "0.5rem",
+          top: isMobile ? "1.5rem" : "0.5rem",
           left: "50%",
           transform: "translateX(-50%)",
-          width: "140px",
-          height: "65px",
+          width: isMobile ? "45px" : "140px",
+          height: isMobile ? "35px" : "65px",
           overflow: "hidden",
           borderRadius: "0.25rem",
           cursor: "pointer",
@@ -425,7 +427,13 @@ const calendarOptions = reactive({
 .calendar-container {
   max-width: 1200px;
   margin: 20 auto;
-  height: 700px;
+  height: 500px;
+}
+
+@media (min-width: 768px) {
+  .calendar-container {
+    height: 700px;
+  }
 }
 
 /* FullCalendar 헤더/캘린더 커스터마이징 */
@@ -442,10 +450,35 @@ const calendarOptions = reactive({
   box-shadow: none !important;
 }
 :deep(.fc-toolbar-title) {
-  font-size: 1.75rem !important;
+  font-size: 1.25rem !important;
 }
 :deep(.fc .fc-daygrid-day) {
-  height: 80px !important;
-  min-width: 100px !important;
+  height: 70px !important;
+  min-width: 40px !important;
+  max-width: calc(100vw / 7 - 4px) !important;
+}
+
+:deep(.fc-daygrid-day-frame) {
+  overflow: hidden !important;
+}
+
+:deep(.fc .fc-col-header-cell) {
+  font-size: 0.75rem !important;
+  padding: 0.25rem !important;
+}
+
+@media (min-width: 768px) {
+  :deep(.fc-toolbar-title) {
+    font-size: 1.75rem !important;
+  }
+  :deep(.fc .fc-daygrid-day) {
+    height: 80px !important;
+    min-width: 100px !important;
+    max-width: none !important;
+  }
+  :deep(.fc .fc-col-header-cell) {
+    font-size: 1rem !important;
+    padding: 0.5rem !important;
+  }
 }
 </style>

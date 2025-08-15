@@ -3,40 +3,40 @@
     :style="{ backgroundImage: `url(${bgImage})` }"
     class="h-screen relative bg-cover bg-center"
   >
-    <header class="relative px-4 py-2 flex items-center justify-between">
+    <header class="relative px-2 md:px-4 py-2 flex items-center justify-between">
       <button
         @click="goDashboard"
         @mouseenter="isBackButtonHovered = true"
         @mouseleave="isBackButtonHovered = false"
         aria-label="뒤로가기"
-        class="!w-36 !h-36 flex items-center justify-center rounded-lg"
+        class="w-20 h-20 md:!w-36 md:!h-36 flex items-center justify-center rounded-lg"
       >
         <img
           :src="isBackButtonHovered ? outHoverIcon : outIcon"
           alt="뒤로가기"
-          class="w-28 h-28 object-contain transition-all duration-200"
+          class="w-16 h-16 md:w-28 md:h-28 object-contain transition-all duration-200"
         />
       </button>
 
       <!-- 선택된 아이 이름 표시 (네임태그) -->
       <div
         v-if="currentChild && currentChild.name"
-        class="fixed top-4 right-4 z-10"
+        class="fixed top-2 md:top-4 right-2 md:right-4 z-10"
       >
         <!-- 네임태그 배경 이미지 -->
         <img
           src="@/assets/images/name_tag.png"
           alt="네임태그"
-          class="w-56 h-28 object-contain"
+          class="w-32 h-16 md:w-56 md:h-28 object-contain"
         />
         <!-- 프로필과 이름 - fixed 위치로 정확히 배치 -->
-        <div class="fixed top-10 right-16 flex items-center gap-2">
+        <div class="fixed top-5 right-6 md:top-10 md:right-16 flex items-center gap-1 md:gap-2">
           <img
             :src="currentChild.profileImage || 'https://placehold.co/40x40'"
             :alt="`${currentChild.name} 프로필`"
-            class="w-14 h-14 rounded-full object-cover border-2 border-white"
+            class="w-8 h-8 md:w-14 md:h-14 rounded-full object-cover border-2 border-white"
           />
-          <p class="text-2xl text-gray-800 font-shark">
+          <p class="text-sm md:text-2xl text-gray-800 font-shark">
             {{ currentChild.name }}
           </p>
         </div>
@@ -47,20 +47,20 @@
       class="absolute inset-0 flex items-center justify-center pointer-events-none"
     >
       <div
-        class="pointer-events-auto grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-24 w-full max-w-[1100px] px-4"
+        class="pointer-events-auto grid grid-cols-1 md:grid-cols-2 gap-y-6 md:gap-y-8 gap-x-6 md:gap-x-24 w-full max-w-sm md:max-w-[1100px] px-4"
       >
         <div
           @click="goToPenguin"
           @mouseenter="playHoverSound"
-          class="aspect-square bg-purple-300 rounded-2xl overflow-hidden shadow hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer hover-glow"
+          class="aspect-square bg-purple-300 rounded-xl md:rounded-2xl overflow-hidden shadow hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer hover-glow"
         >
-          <div class="p-4 h-full flex flex-col">
+          <div class="p-2 md:p-4 h-full flex flex-col">
             <h2
-              class="text-4xl mb-2 text-black text-center font-shark text-outline-white"
+              class="text-2xl md:text-4xl mb-1 md:mb-2 text-black text-center font-shark text-outline-white"
             >
               <span class="text-blue-600 font-shark">펭구</span>랑 대화하기
             </h2>
-            <div class="flex-1 flex items-center justify-center p-5">
+            <div class="flex-1 flex items-center justify-center p-2 md:p-5">
               <img
                 src="../assets/images/penguin.png"
                 alt="펭구랑 대화하기"
@@ -74,13 +74,13 @@
         <div
           @click="goToDrawing"
           @mouseenter="playHoverSound"
-          class="aspect-square bg-blue-400 rounded-2xl overflow-hidden shadow hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer hover-glow"
+          class="aspect-square bg-blue-400 rounded-xl md:rounded-2xl overflow-hidden shadow hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer hover-glow"
         >
-          <div class="p-4 h-full flex flex-col">
-            <h2 class="text-4xl font-shark mb-2 text-center text-outline-white">
+          <div class="p-2 md:p-4 h-full flex flex-col">
+            <h2 class="text-2xl md:text-4xl font-shark mb-1 md:mb-2 text-center text-outline-white">
               나의 <span class="font-shark text-red-500">그림</span> 일기
             </h2>
-            <div class="flex-1 flex items-start justify-center pt-2 pb-5 px-5">
+            <div class="flex-1 flex items-start justify-center pt-1 md:pt-2 pb-2 md:pb-5 px-2 md:px-5">
               <img
                 src="../assets/images/drawing.png"
                 alt="나의 그림 일기"

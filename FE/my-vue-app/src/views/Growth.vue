@@ -1,18 +1,18 @@
 <template>
-  <div class="py-8 px-4">
-    <div class="mx-auto max-w-6xl bg-white pt-10 pb-10 rounded-2xl mb-10">
+  <div class="py-4 md:py-8 px-4">
+    <div class="mx-auto max-w-6xl bg-white pt-6 md:pt-10 pb-6 md:pb-10 rounded-xl md:rounded-2xl mb-6 md:mb-10">
       <!-- 상단 타이틀 -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl font-paperBold text-gray-800">성장 기록</h1>
-        <p class="text-lg text-gray-600 mt-4 font-paper">아이의 성장 과정을 상세히 기록하고 추적하세요</p>
+      <div class="text-center mb-6 md:mb-12">
+        <h1 class="text-2xl md:text-4xl font-paperBold text-gray-800">성장 기록</h1>
+        <p class="text-sm md:text-lg text-gray-600 mt-2 md:mt-4 font-paper px-4">아이의 성장 과정을 상세히 기록하고 추적하세요</p>
       </div>
 
       <!-- 아이가 없는 경우 -->
-      <div v-if="!hasChild" class="text-center py-20">
-        <p class="text-xl text-gray-600 mb-8">등록된 아이가 없습니다.</p>
+      <div v-if="!hasChild" class="text-center py-12 md:py-20">
+        <p class="text-lg md:text-xl text-gray-600 mb-6 md:mb-8">등록된 아이가 없습니다.</p>
         <button
           @click="goToRegister"
-          class="bg-purple-500 text-white px-8 py-4 rounded-lg text-lg font-paperBold hover:bg-purple-600 transition-colors"
+          class="bg-purple-500 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg text-base md:text-lg font-paperBold hover:bg-purple-600 transition-colors"
         >
           아이 등록하기
         </button>
@@ -22,15 +22,15 @@
       <div v-else class="space-y-8">
 
         <!-- 감정 리포트 달력 -->
-        <div class="px-8">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-paperBold text-gray-800">감정 리포트</h3>
+        <div class="px-4 md:px-8">
+          <div class="flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0 mb-4 md:mb-6">
+            <h3 class="text-xl md:text-2xl font-paperBold text-gray-800">감정 리포트</h3>
             <!-- 아이 선택 체크박스 -->
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-2 md:gap-3">
               <label
                 v-for="child in childrenList"
                 :key="child.id"
-                class="flex items-center gap-2 px-4 py-2 rounded-lg border-2 cursor-pointer transition-colors"
+                class="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 rounded-lg border-2 cursor-pointer transition-colors text-sm md:text-base"
                 :style="{
                   borderColor: selectedChildrenForReport.includes(child.name)
                     ? (child.color || getChildColor(child.name))
@@ -50,7 +50,7 @@
                   class="sr-only"
                 />
                 <span
-                  class="text-sm font-paperBold transition-colors"
+                  class="text-xs md:text-sm font-paperBold transition-colors"
                   :style="{
                     color: selectedChildrenForReport.includes(child.name)
                       ? (child.color || getChildColor(child.name))
@@ -62,16 +62,16 @@
               </label>
             </div>
           </div>
-          <div class="bg-white rounded-xl shadow-lg p-6">
+          <div class="bg-white rounded-xl shadow-lg p-3 md:p-6">
             <FullCalendar :options="calendarOptions" ref="calendar" :key="calendarKey" />
           </div>
         </div>
 
         <!-- 뒤로 가기 버튼 -->
-        <div class="text-center mt-8">
+        <div class="text-center mt-6 md:mt-8">
           <button
             @click="goBack"
-            class="px-8 py-3 bg-gray-300 text-gray-700 font-paperBold text-lg rounded-lg hover:bg-gray-400 transition-colors"
+            class="px-6 md:px-8 py-2 md:py-3 bg-gray-300 text-gray-700 font-paperBold text-base md:text-lg rounded-lg hover:bg-gray-400 transition-colors"
           >
             뒤로가기
           </button>
@@ -506,8 +506,8 @@ const calendarOptions = {
     center: "title",
     right: "today",
   },
-  height: 580,
-  contentHeight: 530,
+  height: window.innerWidth <= 768 ? 450 : 580,
+  contentHeight: window.innerWidth <= 768 ? 400 : 530,
   
   // 월 변경 시 다이어리 재조회
   datesSet: async (info) => {
@@ -551,7 +551,7 @@ const calendarOptions = {
         // 각 리포트를 버튼으로 표시하되, 칸 안에 세로로 정렬 (정렬 없이 원본 순서)
         const container = document.createElement("div");
         container.style.position = "absolute";
-        container.style.top = "25px"; // 날짜 글자 바로 아래부터 시작
+        container.style.top = window.innerWidth <= 768 ? "20px" : "25px"; // 날짜 글자 바로 아래부터 시작
         container.style.left = "2px";
         container.style.right = "2px";
         container.style.display = "flex";
@@ -576,9 +576,9 @@ const calendarOptions = {
             button.style.border = "none";
             button.style.borderRadius = "4px";
             button.style.padding = "2px 4px";
-            button.style.fontSize = "9px";
+            button.style.fontSize = window.innerWidth <= 768 ? "8px" : "9px";
             button.style.fontWeight = "500";
-            button.style.height = "16px";
+            button.style.height = window.innerWidth <= 768 ? "14px" : "16px";
             button.style.cursor = "pointer";
             button.style.overflow = "hidden";
             button.style.whiteSpace = "nowrap";
@@ -1054,8 +1054,15 @@ onMounted(async () => {
 }
 
 :deep(.fc .fc-daygrid-day) {
-  height: 100px !important;
-  min-width: 120px !important;
+  height: 80px !important;
+  min-width: 80px !important;
+}
+
+@media (min-width: 768px) {
+  :deep(.fc .fc-daygrid-day) {
+    height: 100px !important;
+    min-width: 120px !important;
+  }
 }
 
 :deep(.fc .fc-daygrid-day-frame) {

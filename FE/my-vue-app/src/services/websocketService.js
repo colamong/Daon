@@ -23,11 +23,17 @@ class WebSocketService {
     try {
       // 환경에 따른 WebSocket URL 자동 설정
       const USE_PROXY = import.meta?.env?.VITE_USE_PROXY === 'true'
-      const WS_BASE_URL = USE_PROXY
-        ? `${window.location.protocol}//${window.location.host}` // 현재 도메인 사용
-        : (import.meta?.env?.VITE_API_BASE_URL || 'https://i13a706.p.ssafy.io/stt')
       
-      const wsUrl = `${WS_BASE_URL}/ws`
+      let wsUrl
+      if (USE_PROXY) {
+        // 개발 환경: Vite 프록시를 통해 연결
+        wsUrl = `${window.location.protocol}//${window.location.host}/ws`
+      } else {
+        // 프로덕션 환경: 직접 백엔드로 연결
+        const WS_BASE_URL = import.meta?.env?.VITE_API_BASE_URL || 'https://i13a706.p.ssafy.io/stt'
+        wsUrl = `${WS_BASE_URL}/ws`
+      }
+      
       console.log('WebSocket connecting to:', wsUrl)
       
       const socket = new SockJS(wsUrl)

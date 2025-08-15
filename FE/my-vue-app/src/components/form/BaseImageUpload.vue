@@ -1,7 +1,7 @@
 <!-- src/components/form/BaseImageUpload.vue -->
 <template>
   <div
-    class="w-full h-[400px] flex flex-col items-center justify-center bg-white border-2 border-dashed border-gray-300 rounded-xl text-center relative"
+    class="w-full h-[300px] md:h-[400px] flex flex-col items-center justify-center bg-white border-2 border-dashed border-gray-300 rounded-xl text-center relative"
     @dragover.prevent
     @dragenter.prevent
     @drop.prevent="handleDrop"
@@ -13,19 +13,20 @@
           <img
             :src="preview"
             alt="아이 프로필"
-            class="w-48 h-48 rounded-full object-cover border-4 border-purple-200 shadow-lg"
+            class="w-32 h-32 md:w-48 md:h-48 rounded-full object-cover border-4 border-purple-200 shadow-lg"
           />
         </div>
         <label
           for="imageUpload"
-          class="bg-purple-100 hover:bg-purple-200 text-black font-medium flex items-center gap-2 px-6 py-3 rounded-lg cursor-pointer transition font-paper"
+          class="bg-purple-100 hover:bg-purple-200 text-black font-medium flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-lg cursor-pointer transition font-paper text-sm md:text-base"
         >
-          <img :src="cameraIcon" alt="카메라 아이콘" class="w-5 h-5" />
+          <img :src="cameraIcon" alt="카메라 아이콘" class="w-4 h-4 md:w-5 md:h-5" />
           사진 변경
           <input
             id="imageUpload"
             type="file"
             accept="image/*"
+            capture="environment"
             class="hidden"
             @change="handleChange"
           />
@@ -36,20 +37,29 @@
     <!-- 업로드 안내 -->
     <template v-else>
       <div class="flex flex-col items-center space-y-4">
-        <p class="text-black text-lg mb-4 font-paper">
-          아이의 사진을 드래그하거나 클릭하여 업로드<br />
-          <span class="font-semibold">JPG, PNG, GIF</span> 파일을 지원합니다.
+        <p class="text-black text-base md:text-lg mb-3 md:mb-4 font-paper px-4">
+          <!-- 모바일에서만 표시 -->
+          <span class="block md:hidden text-center">
+            아이의 사진을 촬영하거나 갤러리에서 선택<br />
+            <span class="font-semibold">JPG, PNG, GIF</span> 파일을 지원합니다.
+          </span>
+          <!-- 데스크톱에서만 표시 -->
+          <span class="hidden md:block text-center">
+            아이의 사진을 드래그하거나 클릭하여 업로드<br />
+            <span class="font-semibold">JPG, PNG, GIF</span> 파일을 지원합니다.
+          </span>
         </p>
         <label
           for="imageUpload"
-          class="bg-purple-100 hover:bg-purple-200 text-black font-medium flex items-center gap-2 px-6 py-3 rounded-lg cursor-pointer transition font-paper"
+          class="bg-purple-100 hover:bg-purple-200 text-black font-medium flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-lg cursor-pointer transition font-paper text-sm md:text-base"
         >
-          <img :src="cameraIcon" alt="카메라 아이콘" class="w-5 h-5" />
+          <img :src="cameraIcon" alt="카메라 아이콘" class="w-4 h-4 md:w-5 md:h-5" />
           사진 등록
           <input
             id="imageUpload"
             type="file"
             accept="image/*"
+            capture="environment"
             class="hidden"
             @change="handleChange"
           />

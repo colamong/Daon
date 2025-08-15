@@ -4,20 +4,20 @@
     :is="to || link ? 'router-link' : 'div'"
     :to="to || link"
     @click="handleClick"
-    class="w-64 rounded-2xl shadow-md p-6 block hover:shadow-xl hover:shadow-gray-600/60 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+    class="w-full max-w-xs sm:max-w-sm md:max-w-md lg:w-64 rounded-xl sm:rounded-2xl shadow-md p-3 sm:p-4 md:p-6 block hover:shadow-xl hover:shadow-gray-600/60 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
     :style="{ backgroundColor: cardStyle.bg }"
   >
-    <div class="flex justify-center mb-4">
+    <div class="flex justify-center mb-2 sm:mb-3 md:mb-4">
       <img
         :src="cardStyle.icon"
         :alt="cardStyle.title + ' 아이콘'"
-        class="w-15 h-15"
+        class="w-10 h-10 sm:w-12 sm:h-12 md:w-15 md:h-15"
       />
     </div>
-    <h3 class="text-xl font-bold text-center mb-2 font-paper">
+    <h3 class="text-base sm:text-lg md:text-xl font-bold text-center mb-1 sm:mb-2 font-paper">
       {{ cardStyle.title }}
     </h3>
-    <p class="text-sm text-center text-gray-700 font-paper">
+    <p class="text-xs sm:text-sm text-center text-gray-700 font-paper leading-relaxed">
       {{ cardStyle.description }}
     </p>
   </component>

@@ -9,23 +9,25 @@
 
     <!-- header -->
     <header
-      class="fixed top-4 left-4 right-4 z-20 flex items-center justify-between"
+      class="fixed top-2 md:top-4 left-2 md:left-4 right-2 md:right-4 z-20 flex items-center justify-between"
     >
       <!-- 첫 상호작용 유도 오버레이 -->
       <div
         v-if="!audioUnlocked"
-        class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-6"
+        class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-6 p-4"
       >
-        <div class="bg-white rounded-2xl px-8 py-6 shadow-xl text-center">
-          <p class="text-xl font-shark mb-2">
+        <div
+          class="bg-white rounded-2xl px-4 md:px-8 py-4 md:py-6 shadow-xl text-center max-w-sm md:max-w-md mx-auto"
+        >
+          <p class="text-lg md:text-xl font-shark mb-2">
             펭구가 말을 시작할 준비가 됐어요!
           </p>
-          <p class="text-gray-600 font-shark mb-4">
+          <p class="text-sm md:text-base text-gray-600 font-shark mb-4">
             버튼을 눌러 오디오를 활성화해 주세요.
           </p>
           <button
             @click="handleFirstTap"
-            class="px-6 py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition"
+            class="px-4 md:px-6 py-2 md:py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition text-sm md:text-base"
           >
             대화 시작
           </button>
@@ -36,13 +38,13 @@
         @click="goBack"
         :disabled="isLoading"
         :class="[
-          'w-20 h-20   flex items-center justify-center transition-transform duration-400',
+          'w-12 h-12 md:w-20 md:h-20 flex items-center justify-center transition-transform duration-400',
           isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-x-[-1]',
         ]"
       >
         <div
           v-if="isLoading"
-          class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+          class="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-blue-600"
         ></div>
         <img
           v-else
@@ -55,22 +57,24 @@
       <!-- 선택된 아이 이름 표시 (네임태그) -->
       <div
         v-if="selectedChild && selectedChild.name"
-        class="fixed top-4 right-4 z-10"
+        class="fixed top-2 md:top-4 right-2 md:right-4 z-10"
       >
         <!-- 네임태그 배경 이미지 -->
         <img
           src="@/assets/images/name_tag.png"
           alt="네임태그"
-          class="w-56 h-28 object-contain"
+          class="w-32 h-16 md:w-56 md:h-28 object-contain"
         />
         <!-- 프로필과 이름 - fixed 위치로 정확히 배치 -->
-        <div class="fixed top-10 right-16 flex items-center gap-2">
+        <div
+          class="fixed top-5 right-6 md:top-10 md:right-16 flex items-center gap-1 md:gap-2"
+        >
           <img
             :src="selectedChild.profileImage || 'https://placehold.co/40x40'"
             :alt="`${selectedChild.name} 프로필`"
-            class="w-14 h-14 rounded-full object-cover border-2 border-white"
+            class="w-8 h-8 md:w-14 md:h-14 rounded-full object-cover border-2 border-white"
           />
-          <p class="text-2xl text-gray-800 font-shark">
+          <p class="text-sm md:text-2xl text-gray-800 font-shark">
             {{ selectedChild.name }}
           </p>
         </div>
@@ -79,9 +83,11 @@
 
     <!-- main (펭귄 + 아래에 붙는 게이지) -->
     <main
-      class="absolute left-1/2 !top-[57%] -translate-x-1/2 -translate-y-1/2 transform z-10 flex flex-col items-center relative"
+      class="absolute left-1/2 !top-[60%] md:!top-[57%] -translate-x-1/2 -translate-y-1/2 transform z-10 flex flex-col items-center relative"
     >
-      <span class="mb-4 text-black text-4xl text-outline-white font-shark">
+      <span
+        class="mb-2 md:mb-4 text-black text-2xl md:text-4xl text-outline-white font-shark"
+      >
         {{ penguinData.name }}
       </span>
 
@@ -92,23 +98,23 @@
           :src="getPenguinImage(penguinData.currentStage)"
           alt="펭귄 단계 이미지"
           :class="[
-            'object-contain w-[140px] sm:w-[160px] lg:w-[200px] xl:w-[250px] transition-transform duration-100',
+            'object-contain w-[160px] sm:w-[180px] md:w-[160px] lg:w-[200px] xl:w-[250px] transition-transform duration-100',
             { 'animate-wiggle': conversationState.isSpeaking },
           ]"
         />
       </div>
 
-      <!-- 대화 말풍선 - 펭귄과 우측 사이에 배치 -->
+      <!-- 대화 말풍선 - 반응형 위치 조정 -->
       <div
         v-if="conversationState.isActive"
-        class="fixed right-[8%] top-1/2 -translate-y-1/2 !w-[450px] z-20 font-shark"
+        class="fixed right-[2%] md:right-[8%] -top-36 md:!top-1/2 md:-translate-y-1/2 w-[96%] max-w-[320px] md:!w-[450px] md:max-w-none z-20 font-shark"
       >
         <!-- 대화 UI 패널 - 손그림 말풍선 스타일 -->
-        <div class="bg-white p-4 shadow-lg hand-drawn-bubble">
+        <div class="bg-white p-3 md:p-4 shadow-lg hand-drawn-bubble md:hand-drawn-bubble-left hand-drawn-bubble-bottom">
           <!-- 말풍선 내용 -->
           <div class="text-center">
             <!-- 진행 상태 -->
-            <div class="mb-3">
+            <div class="mb-2 md:mb-3">
               <span class="text-xs text-gray-600">
                 {{ conversationState.currentStep }} /
                 {{ conversationState.totalSteps }}
@@ -128,14 +134,14 @@
             </div>
 
             <!-- 현재 질문 -->
-            <div v-if="conversationState.currentQuestion" class="mb-3">
-              <p class="text-xl text-gray-800 leading-relaxed">
+            <div v-if="conversationState.currentQuestion" class="mb-2 md:mb-3">
+              <p class="text-sm md:text-xl text-gray-800 leading-relaxed">
                 {{ conversationState.currentQuestion }}
               </p>
             </div>
 
             <!-- 상태 메시지 -->
-            <div class="text-s text-gray-600">
+            <div class="text-xs md:text-sm text-gray-600">
               <div
                 v-if="conversationState.isSpeaking"
                 class="flex items-center justify-center gap-2"
@@ -156,7 +162,10 @@
               </div>
               <div v-else class="flex items-center justify-center gap-2">
                 <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                <span>스페이스바를 눌러 대답하세요</span>
+                <span class="hidden md:inline"
+                  >스페이스바를 눌러 대답하세요</span
+                >
+                <span class="md:hidden">화면을 탭해서 대답하세요</span>
               </div>
             </div>
           </div>
@@ -165,7 +174,7 @@
 
       <!-- 펭귄 바로 아래에 고정된 경험치 바 -->
       <div
-        class="mt-4 w-[clamp(200px,80vw,600px)] h-8 bg-white border-4 border-rose-600 rounded-full overflow-hidden relative"
+        class="mt-2 md:mt-4 w-[clamp(180px,85vw,600px)] h-6 md:h-8 bg-white border-2 md:border-4 border-rose-600 rounded-full overflow-hidden relative"
       >
         <div
           class="h-full bg-emerald-300 rounded-full transition-all duration-1000 ease-out"
@@ -190,21 +199,23 @@
     <!-- 그림일기 생성 중 로딩 모달 -->
     <div
       v-if="isLoading"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
     >
       <div
-        class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl"
+        class="bg-white rounded-2xl p-6 md:p-8 max-w-sm md:max-w-md mx-auto text-center shadow-2xl"
       >
         <!-- 햄스터 휠 애니메이션 -->
-        <div class="mb-6 flex justify-center">
+        <div class="mb-4 md:mb-6 flex justify-center">
           <HamsterLoading />
         </div>
 
         <!-- 메시지 -->
-        <h3 class="text-xl font-shark text-gray-800 mb-2">
+        <h3 class="text-lg md:text-xl font-shark text-gray-800 mb-2">
           그림일기를 만들고 있는 중입니다
         </h3>
-        <p class="text-rose-500 font-shark">조금만 기다려 주세요 ✨</p>
+        <p class="text-sm md:text-base text-rose-500 font-shark">
+          조금만 기다려 주세요 ✨
+        </p>
       </div>
     </div>
   </div>
@@ -698,7 +709,7 @@ async function finishConversation(finalAnswer) {
   }
 }
 
-// 키 입력
+// 키 입력 또는 터치 입력
 async function handleKeyPress(event) {
   if (
     event.code === "Space" &&
@@ -707,22 +718,37 @@ async function handleKeyPress(event) {
     !conversationState.value.isSpeaking
   ) {
     event.preventDefault();
+    await startListening();
+  }
+}
 
-    try {
-      const transcript = await listenForAnswer(); // 🎤 말하기
-      // 공백이면(말 안 했으면) 그냥 무시
-      if (!transcript || !transcript.trim()) return;
+// 터치 또는 클릭으로 음성 인식 시작
+async function handleScreenTap() {
+  if (
+    conversationState.value.isActive &&
+    !conversationState.value.isListening &&
+    !conversationState.value.isSpeaking
+  ) {
+    await startListening();
+  }
+}
 
-      // 답변 저장
-      conversationState.value.answers[conversationState.value.currentStep - 1] =
-        transcript.trim();
+// 음성 인식 시작 공통 함수
+async function startListening() {
+  try {
+    const transcript = await listenForAnswer(); // 🎤 말하기
+    // 공백이면(말 안 했으면) 그냥 무시
+    if (!transcript || !transcript.trim()) return;
 
-      // 다음 단계로 진행
-      await processAnswer();
-    } catch (e) {
-      console.error("음성 인식 실패:", e);
-      alert("음성 인식에 실패했어요. 다시 시도해 주세요.");
-    }
+    // 답변 저장
+    conversationState.value.answers[conversationState.value.currentStep - 1] =
+      transcript.trim();
+
+    // 다음 단계로 진행
+    await processAnswer();
+  } catch (e) {
+    console.error("음성 인식 실패:", e);
+    alert("음성 인식에 실패했어요. 다시 시도해 주세요.");
   }
 }
 
@@ -754,10 +780,13 @@ onMounted(async () => {
 
   await loadPenguinData();
   window.addEventListener("keydown", handleKeyPress);
+  // 모바일을 위한 터치 이벤트 추가
+  window.addEventListener("click", handleScreenTap);
 });
 
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeyPress);
+  window.removeEventListener("click", handleScreenTap);
   ttsService.stop(ttsPlayer.value);
   try {
     recognitionRef.value?.stop?.();
@@ -790,8 +819,36 @@ function getPenguinImage(stage) {
   animation: wobble 0.3s ease-in-out;
 }
 
-/* 말풍선 꼬리 - 삼각형 스타일 */
-.hand-drawn-bubble::before {
+/* 모바일: 하단 말꼬리 */
+.hand-drawn-bubble-bottom::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -20px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border: 15px solid transparent;
+  border-top: 20px solid #e11d48;
+  border-bottom: 0;
+}
+
+.hand-drawn-bubble-bottom::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -16px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border: 12px solid transparent;
+  border-top: 16px solid white;
+  border-bottom: 0;
+  z-index: 1;
+}
+
+/* 데스크톱: 왼쪽 말꼬리 */
+.hand-drawn-bubble-left::before {
   content: "";
   position: absolute;
   left: -20px;
@@ -804,7 +861,7 @@ function getPenguinImage(stage) {
   border-left: 0;
 }
 
-.hand-drawn-bubble::after {
+.hand-drawn-bubble-left::after {
   content: "";
   position: absolute;
   left: -16px;

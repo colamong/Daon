@@ -140,18 +140,21 @@ function getScheduleColor(date) {
 // 원 테두리 및 호버 효과
 function hoverStyle(date) {
   const c = getScheduleColor(date);
+  const isMobile = window.innerWidth < 768;
+  const size = isMobile ? "2rem" : "2.5rem";
+  
   if (c) {
     return {
-      width: "2.5rem",
-      height: "2.5rem",
+      width: size,
+      height: size,
       boxShadow: `0 0 0 2px ${c}`,
       '--hover-color': c,
       '--hover-text-color': 'white'
     };
   }
   return {
-    width: "2.5rem",
-    height: "2.5rem",
+    width: size,
+    height: size,
     '--hover-color': '#e5e7eb',
     '--hover-text-color': 'black'
   };

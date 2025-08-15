@@ -2,17 +2,17 @@
   <BaseModal v-model="internalValue">
     <template #header> 아이 선택 </template>
 
-    <div class="text-center mb-6">
-      <p class="text-gray-600 text-lg">해당 아이의 프로필로 연결됩니다.</p>
+    <div class="text-center mb-4 md:mb-6">
+      <p class="text-gray-600 text-sm md:text-lg">해당 아이의 프로필로 연결됩니다.</p>
     </div>
 
     <!-- 아이 목록 -->
-    <div class="space-y-4 max-h-80 overflow-y-auto">
+    <div class="space-y-3 md:space-y-4 max-h-60 md:max-h-80 overflow-y-auto">
       <div
         v-for="child in children"
         :key="child.id"
         @click="selectChild(child)"
-        class="flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:border-blue-300 hover:bg-blue-50"
+        class="flex items-center p-3 md:p-4 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md hover:border-blue-300 hover:bg-blue-50"
         :style="{
           borderColor: '#e5e7eb',
           backgroundColor: 'white',
@@ -20,32 +20,32 @@
       >
         <!-- 프로필 이미지 -->
         <img
-          :src="child.profileImage || 'https://placehold.co/80x80'"
+          :src="child.profileImage || 'https://placehold.co/60x60'"
           :alt="`${child.name} 프로필`"
-          class="w-16 h-16 rounded-full object-cover border-4 border-gray-200"
+          class="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover border-2 md:border-4 border-gray-200 flex-shrink-0"
         />
 
         <!-- 아이 정보 -->
-        <div class="ml-4 flex-1">
-          <p class="text-xl font-paperBold text-gray-800 mb-1">
+        <div class="ml-3 md:ml-4 flex-1 min-w-0">
+          <p class="text-base md:text-xl font-paperBold text-gray-800 mb-1 truncate">
             이름 : {{ child.name }}
           </p>
-          <p class="text-base text-sm text-gray-600">
+          <p class="text-xs md:text-sm text-gray-600">
             {{ calculateAge(child.birthDate) }}세
           </p>
           <p
             v-if="child.interests && child.interests.length > 0"
-            class="text-m text-gray-500 mt-1"
+            class="text-xs md:text-sm text-gray-500 mt-1 truncate"
           >
-            관심사: {{ child.interests.slice(0, 5).join(", ")
-            }}{{ child.interests.length > 5 ? " 외" : "" }}
+            관심사: {{ child.interests.slice(0, 3).join(", ")
+            }}{{ child.interests.length > 3 ? " 외" : "" }}
           </p>
         </div>
 
         <!-- 화살표 아이콘 -->
-        <div class="text-gray-400 text-2xl">
+        <div class="text-gray-400 flex-shrink-0">
           <svg
-            class="w-6 h-6"
+            class="w-5 h-5 md:w-6 md:h-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -62,13 +62,13 @@
     </div>
 
     <!-- 아이 추가 버튼 -->
-    <div class="mt-6 pt-4 border-t border-gray-200">
+    <div class="mt-4 md:mt-6 pt-3 md:pt-4 border-t border-gray-200">
       <button
         @click="goToRegister"
-        class="w-full bg-purple-500 text-white py-4 rounded-xl font-paperBold text-lg hover:bg-purple-600 transition-colors flex items-center justify-center"
+        class="w-full bg-purple-500 text-white py-3 md:py-4 rounded-xl font-paperBold text-sm md:text-lg hover:bg-purple-600 transition-colors flex items-center justify-center"
       >
         <svg
-          class="w-6 h-6 mr-2"
+          class="w-5 h-5 md:w-6 md:h-6 mr-2"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

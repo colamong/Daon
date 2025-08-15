@@ -1,16 +1,16 @@
 <template>
   <form
     @submit.prevent="handleLogin"
-    class="mx-auto w-full max-w-lg space-y-6 bg-white rounded-2xl shadow-lg p-8"
+    class="mx-auto w-full max-w-lg space-y-4 md:space-y-6 bg-white rounded-2xl shadow-lg p-6 md:p-8 m-4 md:m-0"
   >
     <!-- 로고 + 제목 -->
     <div class="flex flex-col items-center space-y-2">
       <img 
         src="@/assets/images/daon_logo.png" 
         alt="다온 로고" 
-        class="w-20 h-20 object-contain"
+        class="w-16 h-16 md:w-20 md:h-20 object-contain"
       />
-      <h2 class="text-2xl font-semibold text-black font-paper">로그인</h2>
+      <h2 class="text-xl md:text-2xl font-semibold text-black font-paper">로그인</h2>
     </div>
 
     <!-- 이메일 -->
@@ -22,15 +22,15 @@
       <div
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden font-paper"
       >
-        <div class="px-3">
+        <div class="px-2 md:px-3">
           <img
             src="@/assets/icons/Email.svg"
             alt="이메일 아이콘"
-            class="w-5 h-5"
+            class="w-4 h-4 md:w-5 md:h-5"
           />
         </div>
 
-        <div class="flex-1 flex items-center">
+        <div class="flex-1 flex items-center min-w-0">
           <!-- 아이디 -->
           <input
             id="emailLocal"
@@ -38,17 +38,17 @@
             type="text"
             placeholder="daon"
             autocomplete="username"
-            class="w-32 py-2 px-1 text-sm focus:outline-none"
+            class="w-20 sm:w-32 py-2 px-1 text-sm focus:outline-none flex-shrink-0"
           />
 
           <!-- @ 구분 -->
-          <span class="w-8 flex justify-center text-gray-400 select-none">@</span>
+          <span class="w-6 sm:w-8 flex justify-center text-gray-400 select-none text-sm">@</span>
 
           <!-- 도메인 선택 -->
           <select
             v-if="emailDomain !== '직접 입력'"
             v-model="emailDomain"
-            class="w-40 py-2 pr-3 text-sm focus:outline-none bg-white"
+            class="flex-1 sm:w-32 md:w-40 py-2 pr-1 sm:pr-3 text-sm focus:outline-none bg-white min-w-0"
             aria-label="이메일 도메인 선택"
           >
             <option v-for="d in domains" :key="d" :value="d">{{ d }}</option>
@@ -61,7 +61,7 @@
             type="text"
             placeholder="직접 입력"
             required
-            class="w-40 py-2 pr-3 text-sm focus:outline-none bg-white"
+            class="flex-1 sm:w-32 md:w-40 py-2 pr-1 sm:pr-3 text-sm focus:outline-none bg-white min-w-0"
           />
         </div>
       </div>
@@ -81,11 +81,11 @@
       <div
         class="flex items-center border border-gray-200 rounded-lg overflow-hidden font-paper"
       >
-        <div class="px-3">
+        <div class="px-2 md:px-3">
           <img
             src="@/assets/icons/password.svg"
             alt="비밀번호 아이콘"
-            class="w-5 h-5"
+            class="w-4 h-4 md:w-5 md:h-5"
           />
         </div>
         <input
@@ -94,30 +94,30 @@
           type="password"
           placeholder="Password"
           required
-          class="flex-1 py-2 pr-3 text-sm focus:outline-none"
+          class="flex-1 py-2 pr-2 md:pr-3 text-sm focus:outline-none"
         />
       </div>
     </div>
 
     <!-- 에러 메시지 -->
-    <p v-if="error" class="text-sm text-red-500 font-paper">
+    <p v-if="error" class="text-xs md:text-sm text-red-500 font-paper">
       {{ error }}
     </p>
 
     <!-- 로그인 버튼 -->
     <button
       type="submit"
-      class="w-full h-11 bg-blue-500 hover:bg-blue-600 text-white text-sm font-paper font-medium rounded-lg transition"
+      class="w-full h-10 md:h-11 bg-blue-500 hover:bg-blue-600 text-white text-sm md:text-base font-paper font-medium rounded-lg transition"
     >
       로그인
     </button>
 
     <!-- 회원가입 링크 -->
-    <p class="text-xs text-gray-500 text-center font-paper">
+    <p class="text-xs md:text-sm text-gray-500 text-center font-paper">
       계정이 아직 없으신가요?
       <router-link
         :to="{ name: 'signup' }"
-        class="text-blue-500 hover:underline"
+        class="text-blue-500 hover:underline ml-1"
       >
         회원가입 하러 가기
       </router-link>

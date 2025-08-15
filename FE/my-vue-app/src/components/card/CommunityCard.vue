@@ -2,23 +2,23 @@
 <template>
   <router-link
     :to="link"
-    class="bg-white rounded-xl shadow-md w-64 h-64 flex flex-col justify-between hover:shadow-lg transition-shadow"
+    class="bg-white rounded-xl shadow-md w-full h-48 md:w-64 md:h-64 flex flex-col justify-between hover:shadow-lg transition-shadow"
   >
     <!-- 이미지 영역 -->
-    <div class="flex justify-center items-center flex-1 p-6">
+    <div class="flex justify-center items-center flex-1 p-3 md:p-6">
       <img
         :src="resolvedImage"
         alt="대표 이미지"
-        class="w-40 h-40 object-contain"
+        class="w-24 h-24 md:w-40 md:h-40 object-contain"
       />
     </div>
 
     <!-- 텍스트 영역 -->
-    <div class="bg-gray-50 px-4 py-3 rounded-b-xl">
+    <div class="bg-gray-50 px-2 py-2 md:px-4 md:py-3 rounded-b-xl">
       <div class="text-xs text-gray-400 flex justify-between mb-1">
         <span>{{ participantText }}</span>
       </div>
-      <div class="text-sm text-gray-800 font-paper">{{ location }}</div>
+      <div class="text-xs md:text-sm text-gray-800 font-paper truncate">{{ location }}</div>
     </div>
   </router-link>
 </template>
