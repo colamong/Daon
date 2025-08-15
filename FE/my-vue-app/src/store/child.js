@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { childService } from "@/services/childService.js";
 import { useAuthStore } from "@/store/auth";
 import { assignColorToChild } from "@/utils/colorManager.js";
+import dayjs from "@/utils/dayjs";
 
 export const useChildStore = defineStore("child", {
   state: () => ({
@@ -167,7 +168,7 @@ export const useChildStore = defineStore("child", {
         this.children[idx].hasTodayDiary = hasTodayDiary;
         console.log(`아이 ${childId}의 당일 그림일기 상태 업데이트:`, hasTodayDiary);
 
-        const today = new Date().toDateString();
+        const today = dayjs().tz('Asia/Seoul').format('YYYY-MM-DD');
         const auth = useAuthStore();
         const userId = auth.user?.id || "anonymous";
 
@@ -189,7 +190,7 @@ export const useChildStore = defineStore("child", {
 
     // 특정 아이의 당일 그림일기 상태 확인
     getChildTodayDiary(childId) {
-      const today = new Date().toDateString();
+      const today = dayjs().tz('Asia/Seoul').format('YYYY-MM-DD');
       const auth = useAuthStore();
       const userId = auth.user?.id || "anonymous";
       const diaryStatusKey = `todayDiary_${userId}_${today}`;
@@ -204,7 +205,7 @@ export const useChildStore = defineStore("child", {
 
     // 특정 아이의 당일 conversationResultId 조회
     getChildTodayConversationId(childId) {
-      const today = new Date().toDateString();
+      const today = dayjs().tz('Asia/Seoul').format('YYYY-MM-DD');
       const auth = useAuthStore();
       const userId = auth.user?.id || "anonymous";
       const conversationIdKey = `todayConversationId_${userId}_${today}`;
@@ -219,7 +220,7 @@ export const useChildStore = defineStore("child", {
         child.hasTodayDiary = false;
       });
 
-      const today = new Date().toDateString();
+      const today = dayjs().tz('Asia/Seoul').format('YYYY-MM-DD');
       const auth = useAuthStore();
       const userId = auth.user?.id || "anonymous";
 
@@ -233,7 +234,7 @@ export const useChildStore = defineStore("child", {
 
     // 날짜 변경 체크 및 초기화
     checkAndResetTodayDiaries() {
-      const today = new Date().toDateString();
+      const today = dayjs().tz('Asia/Seoul').format('YYYY-MM-DD');
       const auth = useAuthStore();
       const userId = auth.user?.id || "anonymous";
       const lastResetDateKey = `lastDiaryResetDate_${userId}`;
