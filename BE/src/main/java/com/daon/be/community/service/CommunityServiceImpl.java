@@ -17,8 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -82,11 +80,7 @@ public class CommunityServiceImpl implements CommunityService {
         // (과거 참여 이력과 관계없이 현재 상태에서 새로 입장하는 경우)
         boolean shouldShowJoinMessage = true; // 현재 참여 중이 아니었으므로 입장 메시지 표시
         
-        // 한국 시간대 사용
-        ZonedDateTime koreaTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
-        LocalDateTime koreaLocalTime = koreaTime.toLocalDateTime();
-        
-        CommunityParticipation participation = new CommunityParticipation(community, user, koreaLocalTime);
+        CommunityParticipation participation = new CommunityParticipation(community, user, LocalDateTime.now());
         participationRepository.save(participation);
         
         community.setCurrentParticipants(community.getCurrentParticipants() + 1);
@@ -108,11 +102,7 @@ public class CommunityServiceImpl implements CommunityService {
         CommunityParticipation participation = participationRepository.findByCommunityAndUserAndLeftAtIsNull(community, user)
                 .orElseThrow(() -> new RuntimeException("User is not participating in this community"));
         
-        // 한국 시간대 사용
-        ZonedDateTime koreaTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
-        LocalDateTime koreaLocalTime = koreaTime.toLocalDateTime();
-        
-        participation.setLeftAt(koreaLocalTime);
+        participation.setLeftAt(LocalDateTime.now());
         participationRepository.save(participation);
         
         community.setCurrentParticipants(community.getCurrentParticipants() - 1);
@@ -141,16 +131,11 @@ public class CommunityServiceImpl implements CommunityService {
     
     private void createAndSendJoinMessage(Community community, User user) {
         String joinMessage = user.getNickname() + "님이 채팅방에 입장하셨습니다.";
-        
-        // 한국 시간대 사용으로 수정
-        ZonedDateTime koreaTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
-        LocalDateTime koreaLocalTime = koreaTime.toLocalDateTime();
-        
         ChatMessage systemMessage = new ChatMessage(
                 community, 
                 user, 
                 joinMessage, 
-                koreaLocalTime,  // LocalDateTime.now() 대신 koreaLocalTime 사용
+                LocalDateTime.now(), 
                 ChatMessage.MessageType.SYSTEM_JOIN
         );
         
@@ -164,16 +149,11 @@ public class CommunityServiceImpl implements CommunityService {
     
     private void createAndSendLeaveMessage(Community community, User user) {
         String leaveMessage = user.getNickname() + "님이 채팅방을 나가셨습니다.";
-        
-        // 한국 시간대 사용으로 수정
-        ZonedDateTime koreaTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
-        LocalDateTime koreaLocalTime = koreaTime.toLocalDateTime();
-        
         ChatMessage systemMessage = new ChatMessage(
                 community, 
                 user, 
                 leaveMessage, 
-                koreaLocalTime,  // LocalDateTime.now() 대신 koreaLocalTime 사용
+                LocalDateTime.now(), 
                 ChatMessage.MessageType.SYSTEM_LEAVE
         );
         
