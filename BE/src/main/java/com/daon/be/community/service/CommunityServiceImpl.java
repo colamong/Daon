@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -80,7 +80,12 @@ public class CommunityServiceImpl implements CommunityService {
 
         boolean shouldShowJoinMessage = true;
 
-        CommunityParticipation participation = new CommunityParticipation(community, user, LocalDateTime.now());
+        // KST 기준 저장
+        CommunityParticipation participation = new CommunityParticipation(
+                community,
+                user,
+                LocalDateTime.now(ZoneId.of("Asia/Seoul"))
+        );
         participationRepository.save(participation);
 
         community.setCurrentParticipants(community.getCurrentParticipants() + 1);
@@ -103,7 +108,8 @@ public class CommunityServiceImpl implements CommunityService {
                 participationRepository.findByCommunityAndUserAndLeftAtIsNull(community, user)
                         .orElseThrow(() -> new RuntimeException("User is not participating in this community"));
 
-        participation.setLeftAt(LocalDateTime.now());
+        // KST 기준 저장
+        participation.setLeftAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
         participationRepository.save(participation);
 
         community.setCurrentParticipants(community.getCurrentParticipants() - 1);
@@ -136,7 +142,7 @@ public class CommunityServiceImpl implements CommunityService {
                 community,
                 user,
                 joinMessage,
-                LocalDateTime.now(),
+                LocalDateTime.now(ZoneId.of("Asia/Seoul")),
                 ChatMessage.MessageType.SYSTEM_JOIN
         );
 
@@ -154,7 +160,7 @@ public class CommunityServiceImpl implements CommunityService {
                 community,
                 user,
                 leaveMessage,
-                LocalDateTime.now(),
+                LocalDateTime.now(ZoneId.of("Asia/Seoul")),
                 ChatMessage.MessageType.SYSTEM_LEAVE
         );
 

@@ -16,13 +16,13 @@ spring:
       hibernate:
         format_sql: true
         jdbc:
-          time_zone: UTC   # <<--- 추가 (Hibernate JDBC 연결 타임존을 UTC로 고정)
+          time_zone: Asia/Seoul   # ✅ UTC → Asia/Seoul
     open-in-view: false
 
   jackson:
-    time-zone: UTC                  # <<--- 추가 (Jackson 직렬화/역직렬화 기본 타임존 UTC)
+    time-zone: Asia/Seoul        # ✅ UTC → Asia/Seoul
     serialization:
-      write-dates-as-timestamps: false  # <<--- 추가 (날짜를 epoch 숫자 대신 ISO-8601 문자열로 출력)
+      write-dates-as-timestamps: false
 
   data:
     redis:
@@ -81,5 +81,5 @@ tesseract:
 logging:
   level:
     root: INFO
-    com.daon.be: DEBUG # 우리 패키지 로그를 디버그로
-    org.springframework.web: DEBUG # 웹 요청 처리 로그
+    com.daon.be: DEBUG
+    org.springframework.web: DEBUG
