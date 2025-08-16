@@ -6,22 +6,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 @Getter
 @Setter
 @NoArgsConstructor
 public class ChatMessageResponseDto {
-    
+
     private Long id;
     private Long communityId;
     private Long userId;
     private String userName;
     private String userProfileImg;
     private String message;
-    private LocalDateTime sentAt;
+    private OffsetDateTime sentAt; // LocalDateTime → OffsetDateTime(UTC) 변경
     private MessageType messageType;
-    
+
     public ChatMessageResponseDto(ChatMessage chatMessage) {
         this.id = chatMessage.getId();
         this.communityId = chatMessage.getCommunity().getId();
@@ -29,7 +30,10 @@ public class ChatMessageResponseDto {
         this.userName = chatMessage.getUser().getNickname();
         this.userProfileImg = chatMessage.getUser().getProfileImg();
         this.message = chatMessage.getMessage();
-        this.sentAt = chatMessage.getSentAt();
+        // LocalDateTime → OffsetDateTime(UTC) 변환
+        this.sentAt = chatMessage.getSentAt() != null
+                ? chatMessage.getSentAt().atOffset(ZoneOffset.UTC)
+                : null;
         this.messageType = chatMessage.getMessageType();
     }
 }
