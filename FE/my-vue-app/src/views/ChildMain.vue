@@ -191,12 +191,26 @@ function goToDrawing() {
 // 서버에서 당일 그림일기 확인하여 localStorage 업데이트
 async function checkAndUpdateTodayDiary(currentChildId) {
   try {
+    // 로컬 시간 기준으로 날짜 생성
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth() + 1;
-    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    const day = today.getDate();
+    const todayStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     
-    console.log(`[ChildMain] 당일 그림일기 확인: ${currentChildId}, ${todayStr}`);
+    // 현재 시간 정보 로깅
+    const currentTime = new Date();
+    const localTime = currentTime.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+    const utcTime = currentTime.toISOString();
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    console.log(`[ChildMain] 당일 그림일기 확인 시작`);
+    console.log(`[ChildMain] 아이 ID: ${currentChildId}`);
+    console.log(`[ChildMain] 확인 날짜: ${todayStr}`);
+    console.log(`[ChildMain] 현재 시간 (로컬): ${localTime}`);
+    console.log(`[ChildMain] 현재 시간 (UTC): ${utcTime}`);
+    console.log(`[ChildMain] 시간대: ${timezone}`);
+    console.log(`[ChildMain] 시간 기준: 브라우저 로컬 시간 (${timezone})`);
     
     const response = await childService.getMonthlyDiaries(currentChildId, year, month);
     const diaries = Array.isArray(response) ? response : (response ? [response] : []);
