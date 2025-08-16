@@ -114,6 +114,10 @@ export const childService = {
       const { data } = await api.put(`/users/${userId}/children/${childId}/image`, form);
       return data; // ApiResponse<Void>
     } catch (error) {
+      // 413 에러에 대한 명확한 안내
+      if (error.response?.status === 413) {
+        throw new Error('이미지 파일이 너무 큽니다. 더 작은 크기의 이미지를 선택해주세요.');
+      }
       handleError(error, '자녀 프로필 이미지 업로드 중 오류가 발생했습니다.');
     }
   },
