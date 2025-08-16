@@ -40,11 +40,10 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         User user = userRepository.findById(requestDto.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        // 한국 시간대 사용
-        ZonedDateTime koreaTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
-        LocalDateTime koreaLocalTime = koreaTime.toLocalDateTime();
+        // 시스템 메시지와 동일한 시간 처리 방식 사용
+        LocalDateTime currentTime = LocalDateTime.now();
         
-        ChatMessage chatMessage = new ChatMessage(community, user, requestDto.getMessage(), koreaLocalTime);
+        ChatMessage chatMessage = new ChatMessage(community, user, requestDto.getMessage(), currentTime);
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
         
         return convertToResponseDto(savedMessage);
