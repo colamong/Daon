@@ -122,6 +122,13 @@ import { useAuthStore } from "@/store/auth.js";
 import websocketService from "@/services/websocketService.js";
 import { communityService } from "@/services/communityService.js";
 
+// ① 추가: 표시 시점만 KST 보정 상쇄용 (9시간 빼서 ISO 반환)
+const toSeoulISOString = (input) => {
+  if (!input) return input;
+  const d = typeof input === "number" ? new Date(input) : new Date(String(input));
+  return new Date(d.getTime() - 9 * 60 * 60 * 1000).toISOString();
+};
+
 // 라우터 & 스토어
 const route = useRoute();
 const $router = useRouter();
@@ -305,8 +312,12 @@ const loadMessages = async () => {
       currentCommunity.value.id,
       authStore.user.id
     );
-    chatMessages.value = messages || [];
-    // WebSocket 서비스에도 메시지 설정
+    // ② 표시 시점 보정: ChatWindow가 tz 보정을 한다면 상쇄하도록 sentAt만 -9h ISO로
+    chatMessages.value = (messages || []).map((m) => ({
+      ...m,
+      sentAt: toSeoulISOString(m.sentAt),
+    }));
+    // WebSocket 서비스에는 원본 그대로 유지
     websocketService.setMessages(messages || []);
   } catch (error) {
     console.error("메시지 목록 로드 실패:", error);
@@ -339,7 +350,8 @@ const connectWebSocket = async () => {
               userId: wsMsg.userId,
               userName: wsMsg.userName,
               userProfileImg: wsMsg.userProfileImg,
-              sentAt: wsMsg.timestamp, // websocketService에서는 timestamp 필드 사용
+              // ③ 실시간 수신 보정: sentAt만 -9h ISO로
+              sentAt: toSeoulISOString(wsMsg.timestamp),
               messageType: wsMsg.messageType || 'USER',
             });
           }
