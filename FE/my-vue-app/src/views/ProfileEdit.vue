@@ -249,7 +249,7 @@ function triggerCameraInput() {
   cameraInput.value?.click();
 }
 
-function handleImageChange(event) {
+async function handleImageChange(event) {
   const file = event.target.files?.[0];
   if (!file) return;
 
@@ -267,12 +267,65 @@ function handleImageChange(event) {
     return;
   }
 
-  // 파일 저장 및 미리보기 설정
-  formData.newImageFile = file;
-  formData.previewImage = URL.createObjectURL(file);
+  try {
+    // 이미지 압축 (최대 800x800, 품질 0.8)
+    const compressedFile = await compressImage(file, 800, 0.8);
+    
+    // 압축된 파일 저장 및 미리보기 설정
+    formData.newImageFile = compressedFile;
+    formData.previewImage = URL.createObjectURL(compressedFile);
+  } catch (error) {
+    console.error("이미지 압축 실패:", error);
+    // 압축 실패 시 원본 파일 사용
+    formData.newImageFile = file;
+    formData.previewImage = URL.createObjectURL(file);
+  }
   
   // 같은 파일 다시 선택 가능하도록 초기화
   event.target.value = '';
+}
+
+// 이미지 압축 함수
+function compressImage(file, maxWidth = 800, quality = 0.8) {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // 비율 유지하면서 크기 조정
+      let { width, height } = img;
+      if (width > height) {
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxWidth) {
+          width = (width * maxWidth) / height;
+          height = maxWidth;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // 이미지 그리기
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Blob으로 변환
+      canvas.toBlob((blob) => {
+        // File 객체로 변환
+        const compressedFile = new File([blob], file.name, {
+          type: file.type,
+          lastModified: Date.now()
+        });
+        resolve(compressedFile);
+      }, file.type, quality);
+    };
+    
+    img.src = URL.createObjectURL(file);
+  });
 }
 
 async function handleUpdateProfile() {
