@@ -15,7 +15,14 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        jdbc:
+          time_zone: UTC   # <<--- 추가 (Hibernate JDBC 연결 타임존을 UTC로 고정)
     open-in-view: false
+
+  jackson:
+    time-zone: UTC                  # <<--- 추가 (Jackson 직렬화/역직렬화 기본 타임존 UTC)
+    serialization:
+      write-dates-as-timestamps: false  # <<--- 추가 (날짜를 epoch 숫자 대신 ISO-8601 문자열로 출력)
 
   data:
     redis:

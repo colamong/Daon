@@ -16,8 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,13 +23,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ChatMessageServiceImpl implements ChatMessageService {
-    
+
     private final ChatMessageRepository chatMessageRepository;
     private final CommunityRepository communityRepository;
     private final CommunityParticipationRepository communityParticipationRepository;
     private final UserRepository userRepository;
     private final S3Uploader s3Uploader;
-    
+
     @Override
     @Transactional
     public ChatMessageResponseDto sendMessage(Long communityId, ChatMessageRequestDto requestDto) {
@@ -39,16 +37,15 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .orElseThrow(() -> new RuntimeException("Community not found"));
         User user = userRepository.findById(requestDto.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        // 시스템 메시지와 동일한 시간 처리 방식 사용
+
         LocalDateTime currentTime = LocalDateTime.now();
-        
+
         ChatMessage chatMessage = new ChatMessage(community, user, requestDto.getMessage(), currentTime);
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
-        
+
         return convertToResponseDto(savedMessage);
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public List<ChatMessageResponseDto> getMessagesByCommunityId(Long communityId) {
@@ -57,35 +54,32 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public List<ChatMessageResponseDto> getMessagesByCommunityIdForUser(Long communityId, Long userId) {
-        // 사용자의 채팅방 참여 정보 조회
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new RuntimeException("Community not found"));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        Optional<CommunityParticipation> participation = 
+
+        Optional<CommunityParticipation> participation =
                 communityParticipationRepository.findByCommunityAndUserAndLeftAtIsNull(community, user);
-        
+
         if (participation.isEmpty()) {
-            // 참여하지 않은 사용자는 빈 리스트 반환
             return List.of();
         }
-        
+
         LocalDateTime enteredAt = participation.get().getEnteredAt();
-        
-        // 참여 시점 이후의 메시지만 조회
-        List<ChatMessage> messages = chatMessageRepository.findByCommunityIdAndSentAtGreaterThanEqualOrderBySentAtAsc(
-                communityId, enteredAt);
-        
+
+        List<ChatMessage> messages =
+                chatMessageRepository.findByCommunityIdAndSentAtGreaterThanEqualOrderBySentAtAsc(communityId, enteredAt);
+
         return messages.stream()
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public List<ChatMessageResponseDto> getMessagesByUserId(Long userId) {
@@ -94,18 +88,15 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
     }
-    
-    // ChatMessage를 ChatMessageResponseDto로 변환 (S3 URL 포함)
+
     private ChatMessageResponseDto convertToResponseDto(ChatMessage chatMessage) {
         ChatMessageResponseDto dto = new ChatMessageResponseDto(chatMessage);
-        
-        // S3 key를 presigned URL로 변환
+
         String profileImg = chatMessage.getUser().getProfileImg();
         if (profileImg != null && !profileImg.isEmpty()) {
             String presignedUrl = s3Uploader.presignGetUrl(profileImg);
             dto.setUserProfileImg(presignedUrl);
         }
-        
         return dto;
     }
 }
