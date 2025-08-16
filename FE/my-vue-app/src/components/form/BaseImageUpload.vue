@@ -142,9 +142,11 @@ import { ref } from "vue";
 import IconButton from "@/components/button/IconButton.vue";
 import cameraIcon from "@/assets/icons/camera.png";
 import galleryIcon from "@/assets/icons/image-placeholder.svg";
+import { useNotification } from "@/composables/useNotification.js";
 
 const emit = defineEmits(["upload:image"]);
 const preview = ref(null);
+const { showError } = useNotification();
 
 function handleChange(e) {
   const file = e.target.files[0];
@@ -154,10 +156,70 @@ function handleDrop(e) {
   processFile(e.dataTransfer.files[0]);
 }
 
-function processFile(file) {
+async function processFile(file) {
   if (!file || !file.type.startsWith("image/")) return;
-  emit("upload:image", file);
-  preview.value = URL.createObjectURL(file);
+  
+  // 파일 크기 검증 (5MB 제한)
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    showError("파일 크기가 너무 큽니다. 5MB 이하의 이미지를 선택해주세요.", "파일 크기 초과");
+    return;
+  }
+  
+  try {
+    // 이미지 압축 (최대 800x800, 품질 0.8)
+    const compressedFile = await compressImage(file, 800, 0.8);
+    emit("upload:image", compressedFile);
+    preview.value = URL.createObjectURL(compressedFile);
+  } catch (error) {
+    console.error("이미지 압축 실패:", error);
+    // 압축 실패 시 원본 파일 사용
+    emit("upload:image", file);
+    preview.value = URL.createObjectURL(file);
+  }
+}
+
+// 이미지 압축 함수
+function compressImage(file, maxWidth = 800, quality = 0.8) {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // 비율 유지하면서 크기 조정
+      let { width, height } = img;
+      if (width > height) {
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxWidth) {
+          width = (width * maxWidth) / height;
+          height = maxWidth;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // 이미지 그리기
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Blob으로 변환
+      canvas.toBlob((blob) => {
+        // File 객체로 변환
+        const compressedFile = new File([blob], file.name, {
+          type: file.type,
+          lastModified: Date.now()
+        });
+        resolve(compressedFile);
+      }, file.type, quality);
+    };
+    
+    img.src = URL.createObjectURL(file);
+  });
 }
 
 function clearPreview() {
