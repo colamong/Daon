@@ -331,7 +331,8 @@ async function loadEvents(year, month) {
   try {
     events.value = await fetchMonthlyEvents(year, month);
   } catch (e) {
-    console.error("일정 불러오기 실패:", e);
+    // 일정 로드 실패 시 빈 배열로 설정
+    events.value = [];
   }
 }
 
@@ -390,7 +391,7 @@ onMounted(async () => {
       await childStore.loadChildren();
     }
   } catch (e) {
-    console.warn("직접 자녀 목록 로드 실패:", e?.message || e);
+    // 자녀 목록 로드 실패 시 무시
   }
 
   if (
@@ -515,7 +516,6 @@ async function loadTodayActivity() {
 
     todayActivity.value = found || null;
   } catch (e) {
-    console.error("월별 다이어리 조회 실패:", e);
     todayActivity.value = null;
   } finally {
     isLoadingActivity.value = false;
