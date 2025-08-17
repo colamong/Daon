@@ -319,28 +319,21 @@ const connectWebSocket = async () => {
       isConnected.value = connected;
     });
 
-    // websocketService의 messages 배열 감시
-    watch(
-      () => websocketService.messages.length,
-      () => {
-        const wsMessages = websocketService.messages;
-        wsMessages.forEach((wsMsg) => {
-          // 중복 체크
-          const exists = chatMessages.value.some((msg) => msg.id === wsMsg.id);
-          if (!exists) {
-            chatMessages.value.push({
-              id: wsMsg.id,
-              message: wsMsg.text, // websocketService에서는 text 필드 사용
-              userId: wsMsg.userId,
-              userName: wsMsg.userName,
-              userProfileImg: wsMsg.userProfileImg,
-              sentAt: wsMsg.timestamp, // websocketService에서는 timestamp 필드 사용
-              messageType: wsMsg.messageType || 'USER',
-            });
-          }
+    // WebSocket 메시지 콜백으로 직접 처리 (중복 방지)
+    websocketService.onMessage((chatMessage) => {
+      const exists = chatMessages.value.some((msg) => msg.id === chatMessage.id);
+      if (!exists) {
+        chatMessages.value.push({
+          id: chatMessage.id,
+          message: chatMessage.message,
+          userId: chatMessage.userId,
+          userName: chatMessage.userName,
+          userProfileImg: chatMessage.userProfileImg,
+          sentAt: chatMessage.sentAt,
+          messageType: chatMessage.messageType || 'USER',
         });
       }
-    );
+    });
   } catch (error) {
     isConnected.value = false;
   }

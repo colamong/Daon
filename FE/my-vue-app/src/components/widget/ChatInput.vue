@@ -2,7 +2,9 @@
   <div class="flex gap-2">
     <input
       v-model="inputText"
-      @keydown.enter.prevent="emitSend"
+      @keydown.enter.prevent="handleEnter"
+      @compositionstart="isComposing = true"
+      @compositionend="isComposing = false"
       placeholder="메세지를 입력하세요."
       class="flex-1 p-2 border rounded-lg dark:bg-zinc-700 dark:text-white dark:border-zinc-600 text-sm font-paper"
       id="chatInput"
@@ -39,20 +41,33 @@ watch(inputText, (val) => {
   emit("update:modelValue", val);
 });
 
-const isSending = ref(false);
+let lastSendTime = 0;
+const isComposing = ref(false);
+
+function handleEnter() {
+  if (isComposing.value) {
+    // 한글 조합 중이면 잠시 대기
+    setTimeout(() => {
+      emitSend();
+    }, 10);
+  } else {
+    emitSend();
+  }
+}
 
 function emitSend() {
-  if (!inputText.value.trim() || isSending.value) return;
+  const message = inputText.value.trim();
+  if (!message) return;
   
-  isSending.value = true;
-  const message = inputText.value;
-  inputText.value = "";
+  const now = Date.now();
+  if (now - lastSendTime < 150) {
+    return; // 150ms 내 중복 전송 차단
+  }
   
+  lastSendTime = now;
+  
+  // 전송하고 나서 입력창 비우기
   emit("send", message);
-  
-  // 짧은 지연 후 플래그 해제
-  setTimeout(() => {
-    isSending.value = false;
-  }, 100);
+  inputText.value = "";
 }
 </script>

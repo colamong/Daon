@@ -1,13 +1,14 @@
 // 시간 포맷팅 유틸리티
 import dayjs from '@/utils/dayjs'
 
-// UTC 시간을 한국 시간으로 변환하는 유틸리티 함수
-export const toKoreanTime = (utcDateString) => {
-  if (!utcDateString) return null;
-  return dayjs(utcDateString).tz('Asia/Seoul');
+// 서버 시간에서 9시간을 빼서 한국 시간으로 맞추는 함수
+export const toKoreanTime = (serverDateString) => {
+  if (!serverDateString) return null;
+  // 서버 시간에서 9시간을 빼서 한국 시간으로 맞춤
+  return dayjs(serverDateString).subtract(9, 'hour');
 };
 
-// 채팅 시간 포맷 (HH:MM) - UTC를 한국 시간으로 변환
+// 채팅 시간 포맷 (HH:MM) - 서버 시간에서 9시간을 빼서 한국 시간으로 표시
 export const formatChatTime = (dateTimeString) => {
   if (!dateTimeString) return '';
   
@@ -20,7 +21,7 @@ export const formatChatTime = (dateTimeString) => {
   }
 };
 
-// 채팅 날짜 포맷 (MM/DD) - UTC를 한국 시간으로 변환
+// 채팅 날짜 포맷 (MM/DD) - 서버 시간에서 9시간을 빼서 한국 시간으로 표시
 export const formatChatDate = (dateTimeString) => {
   if (!dateTimeString) return '';
   
