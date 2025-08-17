@@ -141,7 +141,6 @@ async function stopAndUpload() {
 
   // 4) 업로드 직전 pronunciationService.js 내부에서 ensureMono16kWav 실행됨
   const res = await evaluatePronunciation(props.questionId, rawBlob)
-  console.log('[Pronunciation] evaluate response:', res)
 
   // 5) 백엔드가 0~100 정수 점수 반환 
   score.value = Number.isFinite(res?.score) ? res.score : 0
