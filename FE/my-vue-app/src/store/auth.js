@@ -116,7 +116,7 @@ export const useAuthStore = defineStore("auth", {
         localStorage.setItem("auth_user", JSON.stringify(this.user));
         return this.user;
       } catch (error) {
-        if (error.message?.includes('인증이 만료')) this.logout();
+        if (error.message?.includes('인증이 만료')) this.handleTokenExpired();
         throw error;
       }
     },
@@ -127,7 +127,7 @@ export const useAuthStore = defineStore("auth", {
         await this.getCurrentUser();
         return result;
       } catch (error) {
-        if (error.message?.includes('인증이 만료')) this.logout();
+        if (error.message?.includes('인증이 만료')) this.handleTokenExpired();
         throw error;
       }
     },
@@ -162,6 +162,22 @@ export const useAuthStore = defineStore("auth", {
       localStorage.removeItem("auth_user");
     },
 
+    // 토큰 만료 시 호출되는 메서드
+    handleTokenExpired() {
+      this.logout();
+      
+      // 라우터가 있는 경우에만 라우팅 처리
+      if (typeof window !== 'undefined') {
+        // Vue Router 사용 (동적 import로 순환 참조 방지)
+        import('@/router').then(({ default: router }) => {
+          router.push({ name: 'Landing' });
+        }).catch(() => {
+          // 라우터 접근 실패 시 직접 페이지 이동
+          window.location.href = '/';
+        });
+      }
+    },
+
     async checkAuthStatus() {
       try {
         const userData = await userService.getCurrentUser();
@@ -183,8 +199,9 @@ export const useAuthStore = defineStore("auth", {
         localStorage.setItem("auth_user", JSON.stringify(this.user));
         localStorage.setItem("auth_token", "cookie-based-auth");
         return true;
-      } catch (_) {
-        this.logout();
+      } catch (error) {
+        // 토큰 만료 등의 인증 오류 시 완전한 로그아웃 처리
+        this.handleTokenExpired();
         return false;
       }
     },
