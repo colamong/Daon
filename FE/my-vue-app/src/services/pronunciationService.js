@@ -5,9 +5,7 @@ const API_BASE = import.meta.env.VITE_PRONUN_API_BASE || 'http://localhost:8000'
 export async function evaluatePronunciation(questionId, fileOrBlob) {
   const wavBlob = await ensureMono16kWav(fileOrBlob);  
 
-  console.log('[UPLOAD] type/size', wavBlob.type, wavBlob.size);
-  const meta = await readWavMeta(wavBlob);
-  console.log('[UPLOAD] wav meta', meta); 
+  const meta = await readWavMeta(wavBlob); 
   
   const form = new FormData();
   form.append('audio', new File([wavBlob], 'speech.wav', { type: 'audio/wav' }));

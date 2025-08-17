@@ -268,7 +268,6 @@ const leaveRoom = async (roomId) => {
       $router.push("/dashboard/community");
     }
   } catch (error) {
-    console.error("채팅방 나가기 실패:", error);
     alert("채팅방 나가기에 실패했습니다.");
   }
 };
@@ -276,7 +275,6 @@ const leaveRoom = async (roomId) => {
 // 메시지 전송(WebSocket)
 const handleSendMessage = async (message) => {
   if (!currentCommunity.value || !authStore.user?.id) {
-    console.error("커뮤니티 또는 사용자 정보가 없습니다.");
     return;
   }
 
@@ -288,11 +286,9 @@ const handleSendMessage = async (message) => {
         authStore.user.id
       );
     } else {
-      console.error("WebSocket이 연결되지 않았습니다.");
       alert("연결이 끊어졌습니다. 페이지를 새로고침해주세요.");
     }
   } catch (error) {
-    console.error("메시지 전송 실패:", error);
     alert("메시지 전송에 실패했습니다. 다시 시도해주세요.");
   }
 };
@@ -309,7 +305,6 @@ const loadMessages = async () => {
     // WebSocket 서비스에도 메시지 설정
     websocketService.setMessages(messages || []);
   } catch (error) {
-    console.error("메시지 목록 로드 실패:", error);
   }
 };
 
@@ -347,7 +342,6 @@ const connectWebSocket = async () => {
       }
     );
   } catch (error) {
-    console.error("WebSocket 연결 실패:", error);
     isConnected.value = false;
   }
 };
@@ -373,7 +367,6 @@ const loadCommunityData = async () => {
     );
 
     if (!currentCommunity.value) {
-      console.error("해당 커뮤니티를 찾을 수 없습니다.");
       $router.push("/dashboard/community");
       return;
     }
@@ -395,7 +388,6 @@ const loadCommunityData = async () => {
     // 현재 커뮤니티 구독
     websocketService.subscribeToCommunity(communityId);
   } catch (error) {
-    console.error("채팅방 로드 실패:", error);
     alert("채팅방을 불러오는데 실패했습니다.");
     $router.push("/dashboard/community");
   }
