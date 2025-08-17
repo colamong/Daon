@@ -51,6 +51,23 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     // console.error('API 오류:', error?.response?.status, error?.config?.url);
+    
+    // 401 또는 403 에러 시 토큰 만료 처리
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      // 동적 import로 순환 참조 방지
+      import('@/store/auth').then(({ useAuthStore }) => {
+        const authStore = useAuthStore();
+        authStore.handleTokenExpired();
+      }).catch(() => {
+        // store 접근 실패 시 직접 localStorage 정리
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      });
+    }
+    
     return Promise.reject(error);
   }
 );
