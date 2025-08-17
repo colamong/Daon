@@ -374,7 +374,6 @@ const loadSuccessSound = async () => {
     successAudio.value.volume = 0.7;
     successAudio.value.preload = "auto";
   } catch (error) {
-    console.warn("효과음 로드 실패:", error);
   }
 };
 
@@ -421,7 +420,6 @@ const handleCorrectAnswer = async (answer) => {
 // 성공 효과음 재생
 const playSuccessSound = async () => {
   if (!successAudio.value) {
-    console.warn("효과음이 아직 로드되지 않았습니다.");
     return;
   }
 
@@ -433,14 +431,11 @@ const playSuccessSound = async () => {
     if (playPromise !== undefined) {
       playPromise
         .then(() => {
-          console.log("효과음 재생 성공");
         })
         .catch((error) => {
-          console.warn("효과음 재생 실패 - 사용자 상호작용 필요:", error);
         });
     }
   } catch (error) {
-    console.warn("효과음 재생 중 오류:", error);
   }
 };
 

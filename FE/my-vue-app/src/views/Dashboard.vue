@@ -362,6 +362,15 @@ const selectedChildIndex = computed({
 
 /* 마운트 시 로딩 */
 onMounted(async () => {
+  // 사용자 정보 동기화 (이미지 URL 갱신)
+  if (auth.isAuthenticated) {
+    try {
+      await auth.checkAuthStatus();
+    } catch (error) {
+      // checkAuthStatus 실패해도 다른 로직은 계속 진행
+    }
+  }
+
   const [year, month] = selectedMonth.value.split("-").map(Number);
   await loadEvents(year, month);
 

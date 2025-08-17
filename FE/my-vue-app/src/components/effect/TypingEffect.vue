@@ -80,11 +80,11 @@ const startTypingSound = () => {
     typingAudio.value.loop = true;
     typingAudio.value.volume = 0.3;
     typingAudio.value.playbackRate = 2.0;
-    typingAudio.value.play().catch(error => {
-      console.warn('타이핑 효과음 재생 실패:', error);
+    typingAudio.value.play().catch(() => {
+      // 타이핑 효과음 재생 실패 (사용자 상호작용 필요)
     });
   } catch (error) {
-    console.warn('타이핑 효과음 로드 실패:', error);
+    // 타이핑 효과음 로드 실패
   }
 };
 
