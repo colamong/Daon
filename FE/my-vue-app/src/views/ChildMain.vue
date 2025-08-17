@@ -204,13 +204,6 @@ async function checkAndUpdateTodayDiary(currentChildId) {
     const utcTime = currentTime.toISOString();
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     
-    console.log(`[ChildMain] 당일 그림일기 확인 시작`);
-    console.log(`[ChildMain] 아이 ID: ${currentChildId}`);
-    console.log(`[ChildMain] 확인 날짜: ${todayStr}`);
-    console.log(`[ChildMain] 현재 시간 (로컬): ${localTime}`);
-    console.log(`[ChildMain] 현재 시간 (UTC): ${utcTime}`);
-    console.log(`[ChildMain] 시간대: ${timezone}`);
-    console.log(`[ChildMain] 시간 기준: 브라우저 로컬 시간 (${timezone})`);
     
     const response = await childService.getMonthlyDiaries(currentChildId, year, month);
     const diaries = Array.isArray(response) ? response : (response ? [response] : []);
@@ -224,13 +217,10 @@ async function checkAndUpdateTodayDiary(currentChildId) {
     if (todayDiary) {
       const conversationResultId = todayDiary.conversationResultId || todayDiary.id;
       childStore.setChildTodayDiary(currentChildId, true, conversationResultId);
-      console.log(`[ChildMain] 당일 그림일기 존재 - localStorage 업데이트 완료`);
-    } else {
-      console.log(`[ChildMain] 당일 그림일기 없음`);
     }
     
   } catch (error) {
-    console.error('[ChildMain] 당일 그림일기 확인 실패:', error);
+    // 당일 그림일기 확인 실패 시 무시
   }
 }
 
@@ -246,7 +236,7 @@ async function playHoverSound() {
     const decideModule = await import("@/assets/effects/decide.mp3");
     audioManager.playEffect(decideModule.default, 0.4);
   } catch (error) {
-    console.warn("호버 효과음 로드 실패:", error);
+    // 호버 효과음 로드 실패 시 무시
   }
 }
 </script>

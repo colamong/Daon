@@ -128,23 +128,19 @@ router.beforeEach((to, from, next) => {
   
   // 페이지 이동 시 모든 BGM 강제 정지 (오디오 겹침 방지)
   if (from.name && (from.name === 'ChildMain' || from.name === 'ChildDrawing')) {
-    console.log(`[Router] ${from.name}에서 ${to.name}으로 이동 - BGM 정지`);
     audioManager.stopAllBGM();
   }
   
   // 인증이 필요한 페이지인데 로그인하지 않은 경우
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
-    console.log('인증 필요 - Landing으로 이동');
     return next({ name: "Landing" });
   }
   
   // 이미 로그인한 사용자가 랜딩 페이지 접근 시 대시보드로 이동
   if (to.name === "Landing" && auth.isAuthenticated) {
-    console.log('이미 로그인됨 - Dashboard로 이동');
     return next({ name: "Dashboard" });
   }
   
-  console.log('라우터 가드 통과:', to.name, '인증상태:', auth.isAuthenticated);
   next();
 });
 

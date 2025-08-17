@@ -239,17 +239,13 @@ const updateHighlight = async () => {
   
   // target이 없거나 빈 문자열인 경우 하이라이트 적용하지 않음
   if (!step.target || step.target.trim() === "") {
-    console.log("No target specified for this step, skipping highlight");
     return;
   }
 
   const targetElement = document.querySelector(step.target);
 
-  console.log("Looking for:", step.target);
-  console.log("Found element:", targetElement);
 
   if (!targetElement) {
-    console.log("Element not found!");
     return;
   }
 

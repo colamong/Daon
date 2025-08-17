@@ -16,7 +16,6 @@ class AudioManager {
       // 기존 BGM 완전 정지
       this.stopAllBGM();
 
-      console.log(`[AudioManager] BGM 재생 시도: ${pageId}`);
       
       const audio = new Audio(audioSrc);
       audio.loop = true;
@@ -33,10 +32,10 @@ class AudioManager {
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            console.log(`[AudioManager] BGM 재생 성공: ${pageId}`);
+            // BGM 재생 성공
           })
           .catch((error) => {
-            console.log(`[AudioManager] 자동 재생 차단됨: ${pageId}`, error);
+            // 자동 재생 차단됨
             // 차단된 경우 첫 번째 클릭/터치 이벤트에서 재생
             document.addEventListener("click", () => this.playBGM(pageId, audioSrc), { once: true });
             document.addEventListener("touchstart", () => this.playBGM(pageId, audioSrc), { once: true });
@@ -45,7 +44,7 @@ class AudioManager {
 
       return audio;
     } catch (error) {
-      console.error(`[AudioManager] BGM 생성 실패: ${pageId}`, error);
+      // BGM 생성 실패 시 무시
     }
   }
 
@@ -55,7 +54,6 @@ class AudioManager {
   stopBGM(pageId) {
     const audio = this.audioInstances.get(pageId);
     if (audio) {
-      console.log(`[AudioManager] BGM 정지: ${pageId}`);
       audio.pause();
       audio.currentTime = 0;
       audio.src = '';
@@ -71,10 +69,8 @@ class AudioManager {
    * 모든 BGM 강제 정지
    */
   stopAllBGM() {
-    console.log(`[AudioManager] 모든 BGM 정지 - 총 ${this.audioInstances.size}개`);
     
     this.audioInstances.forEach((audio, pageId) => {
-      console.log(`[AudioManager] 정지 중: ${pageId}`);
       audio.pause();
       audio.currentTime = 0;
       audio.src = '';
@@ -88,7 +84,6 @@ class AudioManager {
    * 페이지 전환 시 호출
    */
   onPageLeave(pageId) {
-    console.log(`[AudioManager] 페이지 떠남: ${pageId}`);
     this.stopBGM(pageId);
   }
 
@@ -96,7 +91,6 @@ class AudioManager {
    * 브라우저 탭/창 닫기 시 모든 오디오 정리
    */
   cleanup() {
-    console.log('[AudioManager] 전체 정리');
     this.stopAllBGM();
   }
 
@@ -118,7 +112,7 @@ class AudioManager {
       
       return audio;
     } catch (error) {
-      console.warn('[AudioManager] 효과음 재생 실패:', error);
+      // 효과음 재생 실패 시 무시
     }
   }
 

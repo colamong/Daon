@@ -209,7 +209,6 @@ export const childService = {
   // 펭귄 상태 조회 API
   async getPetStatus(childId) {
     try {
-      console.log('펫 상태 조회 시도 - childId:', childId);
       const response = await axios.get(`${API_BASE_URL}/pet/${childId}`, {
         timeout: 30000,
         headers: {
@@ -217,10 +216,8 @@ export const childService = {
           'Content-Type': 'application/json'
         }
       });
-      console.log('펫 상태 조회 성공:', response.data);
       return response.data;
     } catch (error) {
-      console.error('펫 상태 조회 실패:', error.response?.status, error.response?.data);
       
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
         throw new Error('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
@@ -279,7 +276,6 @@ export const childService = {
       return data.data; // AI 추천 관심사 배열 반환
     } catch (error) {
       // AI 추천이 없거나 오류일 경우 빈 배열 반환 (에러를 throw하지 않음)
-      console.warn('AI 추천 관심사 조회 중 오류:', error);
       return [];
     }
   },
