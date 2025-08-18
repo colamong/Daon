@@ -98,7 +98,7 @@
 |--------|---------------------|----------------------------------------------------------------------------------------------------------------------------|
 | 김호정  | 팀장, Backend, AI     | ERD 설계, 아이 발화 요약 및 그림일기 생성 API 개발, Whisper + gpt 4o mini tts 적용, 한국어 발음 평가 FastAPI 개발, AWS S3 업로드 로직 구현, 일정 생성 CRUD API 개발 |
 | 김현재  | Frontend, Backend, Infra | Widget, Button, Icon Component 개발, 백엔드 아이 프로필 CRUD, OCR 개발, AWS S3 연결, EC2 환경설정, 영상 포트폴리오 제작                               |
-| 류지선  | Frontend, Backend   |                                                                                                                            |
+| 류지선  | Frontend, Backend   | 와이어프레임 설계, UI 컴포넌트 개발 (layout / form / navigation / widget), 커뮤니티·채팅 기능 구현, WebSocket 기반 실시간 채팅, 한글 IME 입력 시 전송 안정화                          |
 | 임유나  | Frontend, Design    | 와이어프레임, 목업, 프로토타입 제작, 디자인-개발 간 일관성 유지 및 품질 관리, 웹 애플리케이션 사용자 인터페이스 개발, API 연동 및 데이터 바인딩                                     |
 | 장민석  | Backend, AI         | 아이와 대화 진행 AI, AI 캐릭터 성장 시스템, 대화 내용에서 관심사 키워드 추출 및 추천, 로그인/회원가입                                                             |
 | 장준우  | Backend, Infra      | 애플리케이션 인프라 담당, 배포 환경 구성, CI/CD 자동화 구축, 학습 기능 백엔드 개발                                                                        |
