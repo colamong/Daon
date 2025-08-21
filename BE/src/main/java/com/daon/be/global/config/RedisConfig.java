@@ -28,4 +28,9 @@ public class RedisConfig {
 		return template;
 	}
 
+	@Bean
+	public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory cf) {
+		return new StringRedisTemplate(cf);
+	}
+
 }

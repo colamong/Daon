@@ -22,6 +22,10 @@ spring:
       host: redis
       port: 6379
 
+  conversation:
+    flush:
+      mode: async   # sync | async  (동기 / 비동기 - 배포 직전에는 async)
+
   security:
     oauth2:
       client:
@@ -44,6 +48,7 @@ spring:
       multipart:
         max-file-size: 15MB
         max-request-size: 15MB
+
 
 gms:
   api:
